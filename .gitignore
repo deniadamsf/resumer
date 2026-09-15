@@ -1,0 +1,41 @@
+﻿# Credentials & Sensitive Files (STRICTLY FORBIDDEN FROM GIT)
+api_keys_dan_credentials.txt
+database dan SSH Access.txt
+*.key
+*.pem
+*.tar.gz
+*.zip
+
+# Environment & Config Secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Laravel Backend
+backend/vendor/
+backend/node_modules/
+backend/public/storage
+backend/public/hot
+backend/storage/*.key
+backend/.phpunit.result.cache
+
+# Flutter Mobile
+mobile/.dart_tool/
+mobile/.flutter-plugins-dependencies
+mobile/.pub-cache/
+mobile/.pub/
+mobile/build/
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+
+# Agent, IDE & OS
+.agents/
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

@@ -1,0 +1,91 @@
+{
+  "common": {
+    "app_name": "Resumer",
+    "tagline": "AI ATS CV Maker & Score Checker",
+    "save": "Simpan Perubahan",
+    "cancel": "Batal",
+    "continue": "Lanjutkan",
+    "delete": "Hapus",
+    "edit": "Ubah",
+    "loading": "Sedang diproses oleh AI...",
+    "success": "Berhasil",
+    "error": "Terjadi kendala",
+    "close": "Tutup",
+    "preview": "Pratinjau CV",
+    "export_pdf": "Unduh PDF"
+  },
+  "auth": {
+    "login_title": "Tingkatkan Karir dengan AI",
+    "login_subtitle": "Masuk 1-klik dengan Google untuk menyusun CV ATS profesional standar korporat dunia.",
+    "sign_in_google": "Masuk dengan Google",
+    "oauth_notice": "Tanpa repot kata sandi. Autentikasi aman via Google OAuth."
+  },
+  "quota": {
+    "daily_label": "Jatah Kuota AI Harian",
+    "remaining_count": "Tersisa {0} dari 5 Pembuatan AI Hari Ini",
+    "limit_reached": "Batas kuota hari ini telah tercapai (5/5). Reset pukul 00:00 tengah malam.",
+    "resets_info": "Reset otomatis tengah malam pukul 00:00."
+  },
+  "form": {
+    "title": "Editor CV ATS",
+    "template_selection": "Pilihan Template",
+    "template_asian": "Asian ATS Standard (Pas Foto)",
+    "template_western": "Western Strict ATS (Teks Murni)",
+    "personal_info": "Informasi Pribadi & Kontak",
+    "full_name": "Nama Lengkap",
+    "professional_title": "Posisi / Jabatan Target",
+    "email": "Alamat Email",
+    "phone": "Nomor WhatsApp / Telepon",
+    "location": "Kota, Negara",
+    "linkedin": "Tautan LinkedIn / Portofolio",
+    "summary": "Ringkasan Eksekutif Profesional",
+    "summary_hint": "3-4 kalimat padat yang memuat nilai jual utama, keahlian, dan capaian karir...",
+    "experience": "Pengalaman Kerja",
+    "add_experience": "Tambah Pengalaman",
+    "company": "Nama Perusahaan",
+    "position": "Jabatan",
+    "start_date": "Tanggal Mulai",
+    "end_date": "Tanggal Selesai (atau Sekarang)",
+    "highlights": "Pencapaian Kunci (Formula Google XYZ)",
+    "education": "Riwayat Pendidikan",
+    "add_education": "Tambah Pendidikan",
+    "institution": "Nama Kampus / Sekolah",
+    "degree": "Jenjang / Jurusan",
+    "grad_year": "Tahun Kelulusan",
+    "skills": "Keahlian Inti & Kompetensi",
+    "skills_hint": "Ketik keahlian lalu tekan Enter",
+    "photo_label": "Pas Foto Formal (Diproses di HP)",
+    "photo_change": "Ganti Foto",
+    "photo_notice": "100% aman & privat. Foto hanya disimpan di perangkat HP."
+  },
+  "ats": {
+    "checker_title": "Pengecek Skor Kualitas ATS",
+    "checker_subtitle": "Simulasi Robot Parser HRD & Rekomendasi Perbaikan",
+    "score_label": "Skor ATS",
+    "run_check": "Uji Skor ATS CV",
+    "auto_fix_btn": "Perbaiki Otomatis dengan AI",
+    "auto_fix_desc": "Otomatis poles kalimat pengalaman dengan formula Google XYZ dan kata kerja aktif.",
+    "breakdown_title": "Rincian Penilaian Skor",
+    "keyword_match": "Kesesuaian Kata Kunci Industri",
+    "impact_verbs": "Kata Kerja Aksi & Metrik Capaian",
+    "readability": "Keterbacaan Robot Parser ATS",
+    "completeness": "Kelengkapan Profil & Kontak",
+    "feedback_title": "Rekomendasi Konkret Tim HRD"
+  },
+  "job_match": {
+    "title": "Pencocok Loker AI (Job Matcher)",
+    "subtitle": "Bandingkan CV Anda dengan kualifikasi lowongan kerja",
+    "upload_screenshot": "Unggah Screenshot Poster Loker",
+    "paste_text": "Tempel Teks Syarat Loker",
+    "match_btn": "Cek Tingkat Kecocokan",
+    "score_label": "Skor Kecocokan Loker",
+    "matched_keywords": "Kata Kunci yang Cocok",
+    "missing_keywords": "Kata Kunci yang Perlu Ditambahkan"
+  },
+  "ad": {
+    "reward_prompt_generate": "Tonton 1 iklan singkat untuk meramu CV berstandar tinggi dengan AI.",
+    "reward_prompt_check": "Tonton 1 iklan singkat untuk membuka analisis skor ATS mendalam.",
+    "reward_prompt_autofix": "Tonton 1 iklan singkat untuk menerapkan 1-Click ATS Auto-Fix.",
+    "reward_prompt_download": "Tonton 1 iklan singkat untuk mengunduh PDF resolusi tinggi."
+  }
+}

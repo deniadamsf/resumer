@@ -1,0 +1,91 @@
+{
+  "common": {
+    "app_name": "Resumer",
+    "tagline": "AI ATS CV Maker & Score Checker",
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Processing with AI...",
+    "success": "Success",
+    "error": "An error occurred",
+    "close": "Close",
+    "preview": "Live Preview",
+    "export_pdf": "Download PDF"
+  },
+  "auth": {
+    "login_title": "Elevate Your Career with AI",
+    "login_subtitle": "1-Click sign in with Google to craft bespoke, enterprise-grade ATS resumes.",
+    "sign_in_google": "Continue with Google",
+    "oauth_notice": "Zero password hassle. Secure OAuth authentication."
+  },
+  "quota": {
+    "daily_label": "Daily AI Quota",
+    "remaining_count": "{0} / 5 AI Generations Left Today",
+    "limit_reached": "Daily quota reached (5/5). Resets at midnight.",
+    "resets_info": "Resets tonight at 00:00."
+  },
+  "form": {
+    "title": "Resume Editor",
+    "template_selection": "Template Style",
+    "template_asian": "Asian ATS Standard (Photo)",
+    "template_western": "Western Strict ATS (Text-Only)",
+    "personal_info": "Personal & Contact Information",
+    "full_name": "Full Name",
+    "professional_title": "Target Role / Professional Title",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "location": "City, Country",
+    "linkedin": "LinkedIn / Portfolio URL",
+    "summary": "Executive Summary",
+    "summary_hint": "Crafted 3-4 impactful sentences summarizing core value proposition...",
+    "experience": "Work Experience",
+    "add_experience": "Add Work Experience",
+    "company": "Company Name",
+    "position": "Job Title",
+    "start_date": "Start Date",
+    "end_date": "End Date (or Present)",
+    "highlights": "Key Achievements (Google XYZ Formula)",
+    "education": "Education",
+    "add_education": "Add Education",
+    "institution": "University / Institution",
+    "degree": "Degree / Major",
+    "grad_year": "Graduation Year",
+    "skills": "Core Skills & Competencies",
+    "skills_hint": "Type a skill and press Enter",
+    "photo_label": "Formal Profile Photo (Processed Locally)",
+    "photo_change": "Change Photo",
+    "photo_notice": "100% private. Stored on device only."
+  },
+  "ats": {
+    "checker_title": "ATS Quality Score Checker",
+    "checker_subtitle": "Enterprise Parser Simulation & Actionable Feedback",
+    "score_label": "ATS Score",
+    "run_check": "Analyze ATS Score",
+    "auto_fix_btn": "1-Click ATS Auto-Fix",
+    "auto_fix_desc": "Automatically optimize bullet points with Google XYZ formula & power verbs.",
+    "breakdown_title": "Score Breakdown",
+    "keyword_match": "Keyword & Industry Match",
+    "impact_verbs": "Impact & Action Verbs",
+    "readability": "Parser Readability",
+    "completeness": "Profile Completeness",
+    "feedback_title": "Actionable HR Recommendations"
+  },
+  "job_match": {
+    "title": "AI Job Matcher",
+    "subtitle": "Match your CV against any job vacancy",
+    "upload_screenshot": "Upload Job Screenshot",
+    "paste_text": "Paste Job Description Text",
+    "match_btn": "Check Compatibility",
+    "score_label": "Job Match Compatibility",
+    "matched_keywords": "Matched Keywords",
+    "missing_keywords": "Missing Keywords"
+  },
+  "ad": {
+    "reward_prompt_generate": "Watch a quick sponsored ad to generate your AI ATS resume.",
+    "reward_prompt_check": "Watch a quick sponsored ad to unlock full ATS score breakdown.",
+    "reward_prompt_autofix": "Watch a quick sponsored ad to apply 1-Click ATS Auto-Fix.",
+    "reward_prompt_download": "Watch a quick sponsored ad to download high-resolution PDF."
+  }
+}
