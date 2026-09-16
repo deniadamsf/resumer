@@ -149,7 +149,8 @@ class CvController extends Controller
         try {
             $analysis = $this->gemini->checkAtsScore(
                 $request->input('cv_text'),
-                $request->input('target_role')
+                $request->input('target_role'),
+                $request->input('language', 'id_ID')
             );
 
             // Save history record
@@ -192,7 +193,8 @@ class CvController extends Controller
         try {
             $improved = $this->gemini->autoFixAts(
                 $request->input('cv_text'),
-                $request->input('suggestions', [])
+                $request->input('suggestions', []),
+                $request->input('language', 'id_ID')
             );
 
             // Deduct quota on success
@@ -268,7 +270,8 @@ class CvController extends Controller
             $letter = $this->gemini->generateCoverLetter(
                 $request->input('cv_text'),
                 $request->input('company_name'),
-                $request->input('target_role')
+                $request->input('target_role'),
+                $request->input('language', 'id_ID')
             );
 
             return response()->json([

@@ -54,37 +54,43 @@ class ResumerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Resumer',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: AppColors.oysterCanvas,
-        colorScheme: const ColorScheme.light(
-          primary: AppColors.midnightNavy,
-          secondary: AppColors.mutedSteelSlate,
-          surface: AppColors.cardSurface,
-        ),
-        textTheme: GoogleFonts.outfitTextTheme(Theme.of(context).textTheme),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.dark,
-            statusBarBrightness: Brightness.light,
-            systemNavigationBarColor: Colors.transparent,
-            systemNavigationBarIconBrightness: Brightness.dark,
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.instance.localeNotifier,
+      builder: (context, currentLocale, _) {
+        return MaterialApp(
+          key: ValueKey(currentLocale),
+          title: 'Resumer',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            useMaterial3: true,
+            scaffoldBackgroundColor: AppColors.oysterCanvas,
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.midnightNavy,
+              secondary: AppColors.mutedSteelSlate,
+              surface: AppColors.cardSurface,
+            ),
+            textTheme: GoogleFonts.outfitTextTheme(Theme.of(context).textTheme),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+                statusBarBrightness: Brightness.light,
+                systemNavigationBarColor: Colors.transparent,
+                systemNavigationBarIconBrightness: Brightness.dark,
+              ),
+            ),
           ),
-        ),
-      ),
-      builder: (context, child) {
-        // Enforce anti-text blowout textScaler clamping per GEMINI.md Bagian 4
-        return ResponsiveWrapper(child: child!);
+          builder: (context, child) {
+            // Enforce anti-text blowout textScaler clamping per GEMINI.md Bagian 4
+            return ResponsiveWrapper(child: child!);
+          },
+          home: ApiService.instance.isAuthenticated
+              ? const MainNavigationShell()
+              : const LoginScreen(),
+        );
       },
-      home: ApiService.instance.isAuthenticated
-          ? const MainNavigationShell()
-          : const LoginScreen(),
     );
   }
 }

@@ -243,10 +243,13 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                               : const Icon(Icons.refresh_rounded, size: 18, color: AppColors.midnightNavy),
                           label: Text(
                             'ats.run_check'.tr,
-                            style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
+                            style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                             side: const BorderSide(color: AppColors.borderHairline),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -260,7 +263,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                           icon: const Icon(Icons.auto_fix_high_rounded, size: 18, color: Colors.white),
                           label: Text(
                             'ats.auto_fix_btn'.tr,
-                            style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700),
+                            style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w700),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -268,6 +271,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                             backgroundColor: AppColors.forestPine,
                             foregroundColor: Colors.white,
                             minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),

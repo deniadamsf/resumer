@@ -10,7 +10,7 @@ void main() {
     await AppLocalizations.instance.init('id_ID');
   });
 
-  testWidgets('MainNavigationShell renders 4 tabs without overflow', (WidgetTester tester) async {
+  testWidgets('MainNavigationShell renders 5 tabs without overflow and handles profile navigation', (WidgetTester tester) async {
     // Set standard phone screen size 390x844 (iPhone 12/13/14 or Android 360-400 width)
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
@@ -23,11 +23,12 @@ void main() {
     );
     await tester.pump();
 
-    // Verify all 4 tab labels exist
+    // Verify all 5 tab labels exist
     expect(find.text('Editor'), findsWidgets);
     expect(find.text('Skor ATS'), findsOneWidget);
     expect(find.text('Job Match'), findsOneWidget);
     expect(find.text('Surat Lamaran'), findsOneWidget);
+    expect(find.text('Profil'), findsOneWidget);
 
     // Verify Quick Action buttons inside Editor do not overflow and show correct text
     expect(find.text('Poles AI'), findsOneWidget);
@@ -44,6 +45,15 @@ void main() {
     // Tap on 'Surat Lamaran' tab
     await tester.tap(find.text('Surat Lamaran'));
     await tester.pumpAndSettle();
+
+    // Tap on 'Profil' tab
+    await tester.tap(find.text('Profil'));
+    await tester.pumpAndSettle();
+
+    // Verify Profile screen components are rendered
+    expect(find.text('Bahasa Aplikasi & AI'), findsOneWidget);
+    expect(find.text('Jatah AI Harian'), findsOneWidget);
+    expect(find.text('Kelola Variasi CV (Maksimal 3)'), findsOneWidget);
 
     // Tap back to 'Editor' tab
     await tester.tap(find.text('Editor'));

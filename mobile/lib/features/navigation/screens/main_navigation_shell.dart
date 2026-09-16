@@ -9,6 +9,7 @@ import '../../ats_checker/screens/ats_checker_screen.dart';
 import '../../cover_letter/screens/cover_letter_screen.dart';
 import '../../cv_editor/screens/cv_editor_screen.dart';
 import '../../job_matcher/screens/job_matcher_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 
 /// Modern Executive Navigation Shell with Frosted Bottom Tab Bar
 /// Adheres 100% to UI UX Pro Max and Bespoke Executive Standards
@@ -32,6 +33,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     AtsCheckerScreen(),
     JobMatcherScreen(showBackButton: false),
     CoverLetterScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -84,8 +86,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           padding: EdgeInsets.only(
             top: 8,
             bottom: bottomPadding > 0 ? bottomPadding : 10,
-            left: 8,
-            right: 8,
+            left: 4,
+            right: 4,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -113,6 +115,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 label: 'tabs.cover_letter'.tr,
                 activeIcon: Icons.mail_rounded,
                 inactiveIcon: Icons.mail_outline_rounded,
+              ),
+              _buildTabItem(
+                index: 4,
+                label: 'tabs.profile'.tr,
+                activeIcon: Icons.person_rounded,
+                inactiveIcon: Icons.person_outline_rounded,
               ),
             ],
           ),
@@ -145,7 +153,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.midnightNavy.withValues(alpha: 0.08)

@@ -62,8 +62,8 @@
     "checker_title": "Pengecek Skor Kualitas ATS",
     "checker_subtitle": "Simulasi Robot Parser HRD & Rekomendasi Perbaikan",
     "score_label": "Skor ATS",
-    "run_check": "Uji Skor ATS CV",
-    "auto_fix_btn": "Perbaiki Otomatis dengan AI",
+    "run_check": "Uji Skor ATS",
+    "auto_fix_btn": "Auto-Fix AI",
     "auto_fix_desc": "Otomatis poles kalimat pengalaman dengan formula Google XYZ dan kata kerja aktif.",
     "breakdown_title": "Rincian Penilaian Skor",
     "keyword_match": "Kesesuaian Kata Kunci Industri",
@@ -139,7 +139,27 @@
     "target_role_hint": "cth: Lead Mobile Architect",
     "synced": "Tersimpan",
     "saving": "Menyimpan...",
-    "switched": "Beralih ke Profil {0}"
+    "switched": "Beralih ke Profil {0}",
+    "account_title": "Akun Pengguna",
+    "account_subtitle": "Tersinkronisasi via Google OAuth",
+    "language_title": "Bahasa Aplikasi & AI",
+    "language_subtitle": "AI meramu CV dan rekomendasi sesuai bahasa yang dipilih",
+    "lang_indonesian": "Bahasa Indonesia",
+    "lang_english": "English (US)",
+    "lang_changed": "Bahasa berhasil diubah ke {0}",
+    "variations_title": "Kelola Variasi CV (Maksimal 3)",
+    "variations_subtitle": "Pilih profil aktif untuk diedit dan dianalisis",
+    "active_badge": "Aktif Digunakan",
+    "set_active": "Jadikan Profil Aktif",
+    "quota_title": "Jatah AI Harian",
+    "quota_desc": "Reset otomatis setiap pukul 00:00 tengah malam",
+    "privacy_title": "Privasi & Keamanan Data",
+    "privacy_desc": "Foto & render PDF diproses 100% lokal di HP Anda. Gemini API Key dilindungi aman di reverse proxy server.",
+    "sign_out": "Keluar dari Akun",
+    "sign_out_confirm": "Apakah Anda yakin ingin keluar?",
+    "digital_signature": "Tanda Tangan Digital",
+    "signature_active": "Tanda tangan aktif tersemat",
+    "signature_empty": "Belum membubuhkan tanda tangan"
   },
   "ats_simulation": {
     "title": "Mode Robot ATS (Teks Murni)",
@@ -161,6 +181,7 @@
     "editor": "Editor",
     "ats_score": "Skor ATS",
     "job_match": "Job Match",
-    "cover_letter": "Surat Lamaran"
+    "cover_letter": "Surat Lamaran",
+    "profile": "Profil"
   }
 }

@@ -62,8 +62,8 @@
     "checker_title": "ATS Quality Score Checker",
     "checker_subtitle": "Enterprise Parser Simulation & Actionable Feedback",
     "score_label": "ATS Score",
-    "run_check": "Analyze ATS Score",
-    "auto_fix_btn": "1-Click ATS Auto-Fix",
+    "run_check": "Check Score",
+    "auto_fix_btn": "Auto-Fix AI",
     "auto_fix_desc": "Automatically optimize bullet points with Google XYZ formula & power verbs.",
     "breakdown_title": "Score Breakdown",
     "keyword_match": "Keyword & Industry Match",
@@ -139,7 +139,27 @@
     "target_role_hint": "e.g. Lead Mobile Architect",
     "synced": "Saved",
     "saving": "Saving...",
-    "switched": "Switched to Profile {0}"
+    "switched": "Switched to Profile {0}",
+    "account_title": "User Account",
+    "account_subtitle": "Synchronized via Google OAuth",
+    "language_title": "App & AI Language",
+    "language_subtitle": "AI crafts resumes and recommendations in the selected language",
+    "lang_indonesian": "Bahasa Indonesia",
+    "lang_english": "English (US)",
+    "lang_changed": "Language successfully changed to {0}",
+    "variations_title": "Manage CV Variations (Max 3)",
+    "variations_subtitle": "Select active profile to edit and analyze",
+    "active_badge": "Currently Active",
+    "set_active": "Set as Active Profile",
+    "quota_title": "Daily AI Quota",
+    "quota_desc": "Automatically resets at 00:00 midnight",
+    "privacy_title": "Data Privacy & Security",
+    "privacy_desc": "Profile photos & PDF rendering are processed 100% client-side on your device. Gemini API keys are securely protected on the reverse proxy server.",
+    "sign_out": "Sign Out",
+    "sign_out_confirm": "Are you sure you want to sign out?",
+    "digital_signature": "Digital Signature",
+    "signature_active": "Active signature attached",
+    "signature_empty": "No signature added yet"
   },
   "ats_simulation": {
     "title": "ATS Robot Simulation (Plain Text)",
@@ -161,6 +181,7 @@
     "editor": "Editor",
     "ats_score": "ATS Score",
     "job_match": "Job Match",
-    "cover_letter": "Cover Letter"
+    "cover_letter": "Cover Letter",
+    "profile": "Profile"
   }
 }

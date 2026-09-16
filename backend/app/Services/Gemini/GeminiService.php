@@ -24,6 +24,12 @@ class GeminiService
      */
     public function generateCv(array $input): array
     {
+        $locale = $input['language'] ?? 'id_ID';
+        $isEnglish = str_starts_with(strtolower($locale), 'en');
+        $langInstruction = $isEnglish
+            ? "CRITICAL LANGUAGE REQUIREMENT: Generate ALL resume text (summary, highlights/bullet points, project descriptions, skills) strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Generate ALL resume text (summary, highlights/bullet points, project descriptions, skills) strictly in professional formal Indonesian (Bahasa Indonesia baku HRD & korporat).";
+
         $systemPrompt = <<<PROMPT
 You are a premier Executive ATS CV Architect for elite Fortune 500 and global tech standards.
 Your objective is to polish the candidate's data into a world-class ATS-ready resume.
@@ -31,7 +37,8 @@ Rules:
 1. Apply Google XYZ formula: "Accomplished [X] as measured by [Y], by doing [Z]" using strong action verbs (Spearheaded, Orchestrated, Engineered, Accelerated).
 2. Professional Summary: 3-4 impactful sentences summarizing core value proposition, key competencies, and career trajectory.
 3. Work Experience: Rephrase each bullet point with high-impact action verbs and estimated realistic metrics.
-4. Output strict JSON only. Do not add markdown backticks outside JSON.
+4. {$langInstruction}
+5. Output strict JSON only. Do not add markdown backticks outside JSON.
 
 Output JSON structure:
 {
@@ -81,9 +88,13 @@ PROMPT;
     /**
      * Evaluate CV and calculate ATS Score (0 - 100) with detailed breakdown and recommendations.
      */
-    public function checkAtsScore(string $cvText, ?string $targetRole = null): array
+    public function checkAtsScore(string $cvText, ?string $targetRole = null, string $locale = 'id_ID'): array
     {
         $roleContext = $targetRole ? "Target Role: {$targetRole}\n" : "";
+        $isEnglish = str_starts_with(strtolower($locale), 'en');
+        $langInstruction = $isEnglish
+            ? "CRITICAL LANGUAGE REQUIREMENT: Write all strengths, improvements, verdict, and actionable feedback strictly in English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Write all strengths, improvements, verdict, and actionable feedback strictly in Bahasa Indonesia.";
 
         $systemPrompt = <<<PROMPT
 You are an advanced ATS Parser and Corporate HR Recruiter evaluating a resume.
@@ -92,6 +103,7 @@ Score the CV rigorously from 0 to 100 based on modern enterprise ATS standards:
 2. Impact & Action Verbs (0-25)
 3. Format & Readability (0-25)
 4. Completeness & Profile Strength (0-25)
+5. {$langInstruction}
 
 Note: If the CV is already highly structured with action verbs and quantifiable metrics, award 90-98 points.
 
@@ -129,11 +141,19 @@ PROMPT;
     /**
      * 1-Click ATS Auto-Fix: Transforms a lower-scoring CV into a 95+ score ATS resume.
      */
-    public function autoFixAts(string $cvText, array $suggestions = []): array
+    public function autoFixAts(string $cvText, array $suggestions = [], string $locale = 'id_ID'): array
     {
+        $isEnglish = str_starts_with(strtolower($locale), 'en');
+        $langInstruction = $isEnglish
+            ? "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, and changes_made strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, and changes_made strictly in formal Indonesian (Bahasa Indonesia baku HRD).";
+
         $systemPrompt = <<<PROMPT
 You are an expert ATS Optimization Engine.
 Your task is to take the provided CV text and suggestions, and completely rewrite weak bullet points into high-impact Google XYZ statements, inject missing industry keywords, and optimize for 95+ ATS readability.
+Rules:
+1. {$langInstruction}
+2. Apply Google XYZ formula to experience bullets.
 
 Output strict JSON:
 {
@@ -210,8 +230,13 @@ PROMPT;
     /**
      * AI Cover Letter Generator tailored to target company and role, grounded strictly in candidate CV.
      */
-    public function generateCoverLetter(string $cvText, string $company, string $role): array
+    public function generateCoverLetter(string $cvText, string $company, string $role, string $locale = 'id_ID'): array
     {
+        $isEnglish = str_starts_with(strtolower($locale), 'en');
+        $langInstruction = $isEnglish
+            ? "CRITICAL LANGUAGE REQUIREMENT: Draft the entire cover letter (salutation, 3 body paragraphs, signoff) strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Draft the entire cover letter (salutation, 3 body paragraphs, signoff) strictly in formal corporate Indonesian (Bahasa Indonesia formal).";
+
         $systemPrompt = <<<PROMPT
 You are an Executive Communications Specialist and HR Recruiter.
 Draft a bespoke, highly compelling 3-paragraph corporate cover letter for the candidate applying to {$company} for the target position of {$role}.
@@ -223,6 +248,7 @@ CRITICAL GROUNDING RULES:
 3. Paragraf 2 (Korelasi Bukti & Capaian CV): Ambil 2-3 pencapaian nyata, metrik persentase/skala, proyek, atau keahlian spesifik dari riwayat kerja di CV kandidat. Tunjukkan korelasi bagaimana pencapaian masa lalu tersebut akan langsung menyelesaikan tantangan bisnis atau mendorong target strategis di {$company}. DILARANG MENGARANG fakta di luar CV!
 4. Paragraf 3 (Visi Kontribusi & Penutup): Sampaikan visi kontribusi kandidat terhadap inovasi dan pertumbuhan {$company}, serta seruan aksi (call to action) untuk tahap wawancara dengan sopan dan percaya diri.
 5. Signoff: Penutup profesional satu baris tanpa menyertakan nama (misal: "Sincerely," atau "Hormat saya,"). Nama dan tanda tangan kandidat akan disematkan secara dinamis oleh sistem.
+6. {$langInstruction}
 
 Output strict JSON:
 {

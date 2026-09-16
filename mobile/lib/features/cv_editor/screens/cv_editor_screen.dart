@@ -187,6 +187,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
         'educations': _cv.educations.map((e) => e.toJson()).toList(),
         'skills': _cv.skills,
         'certifications': _cv.certifications,
+        'language': AppLocalizations.instance.currentLocale,
       };
 
       final response = await ApiService.instance.generateCv(payload);
@@ -195,56 +196,92 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
         final List<String> changesApplied = [];
 
         // Apply improved summary
-        if (data['summary'] != null && (data['summary'] as String).isNotEmpty) {
+        if (data['summary'] != null && data['summary'] is String && (data['summary'] as String).isNotEmpty) {
           _cv.summary = data['summary'];
           _summaryController.text = data['summary'];
           changesApplied.add('Summary');
         }
 
         // Apply improved experiences (bullet_points / highlights)
-        if (data['experiences'] != null && (data['experiences'] as List).isNotEmpty) {
+        if (data['experiences'] != null && data['experiences'] is List) {
           final expList = data['experiences'] as List;
           for (int i = 0; i < expList.length && i < _cv.experiences.length; i++) {
-            final expItem = expList[i] as Map<String, dynamic>;
-            // Update bullet_points / highlights
-            if (expItem['bullet_points'] != null && (expItem['bullet_points'] as List).isNotEmpty) {
-              _cv.experiences[i].highlights = List<String>.from(expItem['bullet_points']);
-            } else if (expItem['highlights'] != null && (expItem['highlights'] as List).isNotEmpty) {
-              _cv.experiences[i].highlights = List<String>.from(expItem['highlights']);
-            }
-            // Update position/title if improved
-            if (expItem['position'] != null && (expItem['position'] as String).isNotEmpty) {
-              _cv.experiences[i].position = expItem['position'];
+            final expItem = expList[i];
+            if (expItem is Map) {
+              // Update bullet_points / highlights
+              if (expItem['bullet_points'] != null && expItem['bullet_points'] is List) {
+                _cv.experiences[i].highlights = (expItem['bullet_points'] as List).map((e) => e.toString()).toList();
+              } else if (expItem['highlights'] != null && expItem['highlights'] is List) {
+                _cv.experiences[i].highlights = (expItem['highlights'] as List).map((e) => e.toString()).toList();
+              }
+              // Update position/title if improved
+              if (expItem['position'] != null && expItem['position'] is String && (expItem['position'] as String).isNotEmpty) {
+                _cv.experiences[i].position = expItem['position'];
+              }
             }
           }
-          changesApplied.add('Work Experience');
+          if (expList.isNotEmpty) {
+            changesApplied.add('Work Experience');
+          }
         }
 
-        // Apply improved skills
-        if (data['skills'] != null && (data['skills'] as List).isNotEmpty) {
-          _cv.skills = List<String>.from(data['skills']);
-          changesApplied.add('Skills');
+        // Apply improved skills (supports both List and categorised Map: technical, soft, tools)
+        if (data['skills'] != null) {
+          final skillsRaw = data['skills'];
+          final Set<String> extractedSkills = {};
+
+          if (skillsRaw is List) {
+            for (final s in skillsRaw) {
+              if (s != null && s.toString().trim().isNotEmpty) {
+                extractedSkills.add(s.toString().trim());
+              }
+            }
+          } else if (skillsRaw is Map) {
+            for (final value in skillsRaw.values) {
+              if (value is List) {
+                for (final item in value) {
+                  if (item != null && item.toString().trim().isNotEmpty) {
+                    extractedSkills.add(item.toString().trim());
+                  }
+                }
+              } else if (value != null && value.toString().trim().isNotEmpty) {
+                extractedSkills.add(value.toString().trim());
+              }
+            }
+          }
+
+          if (extractedSkills.isNotEmpty) {
+            _cv.skills = extractedSkills.toList();
+            changesApplied.add('Skills');
+          }
         }
 
         // Apply improved educations if present
-        if (data['educations'] != null && (data['educations'] as List).isNotEmpty) {
+        if (data['educations'] != null && data['educations'] is List) {
           final eduList = data['educations'] as List;
           for (int i = 0; i < eduList.length && i < _cv.educations.length; i++) {
-            final eduItem = eduList[i] as Map<String, dynamic>;
-            if (eduItem['degree'] != null && (eduItem['degree'] as String).isNotEmpty) {
-              _cv.educations[i].degree = eduItem['degree'];
-            }
-            if (eduItem['field_of_study'] != null && (eduItem['field_of_study'] as String).isNotEmpty) {
-              _cv.educations[i].fieldOfStudy = eduItem['field_of_study'];
+            final eduItem = eduList[i];
+            if (eduItem is Map) {
+              if (eduItem['degree'] != null && eduItem['degree'] is String && (eduItem['degree'] as String).isNotEmpty) {
+                _cv.educations[i].degree = eduItem['degree'];
+              }
+              if (eduItem['field_of_study'] != null && eduItem['field_of_study'] is String && (eduItem['field_of_study'] as String).isNotEmpty) {
+                _cv.educations[i].fieldOfStudy = eduItem['field_of_study'];
+              }
             }
           }
-          changesApplied.add('Education');
+          if (eduList.isNotEmpty) {
+            changesApplied.add('Education');
+          }
         }
 
         // Apply improved certifications if present
-        if (data['certifications'] != null && (data['certifications'] as List).isNotEmpty) {
-          _cv.certifications = List<String>.from(data['certifications']);
-          changesApplied.add('Certifications');
+        if (data['certifications'] != null) {
+          final certsRaw = data['certifications'];
+          if (certsRaw is List) {
+            _cv.certifications = certsRaw.map((c) => c.toString()).toList();
+            changesApplied.add('Certifications');
+          }
         }
 
         // Update quota
