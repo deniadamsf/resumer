@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -16,14 +17,30 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: '1047047792857-idood18l4f3m7lpr4klqedl0rid9dm6c.apps.googleusercontent.com',
     scopes: ['email', 'profile'],
   );
+
+  Future<void> _handleDeveloperBypass() async {
+    setState(() => _isLoading = true);
+    try {
+      final mockResponse =
+          await ApiService.instance.googleLogin('mock_token_dev_user_123');
+      if (mounted && mockResponse['success'] == true) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const CvEditorScreen()),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
 
     try {
-      final googleAccount = await _googleSignIn.signIn();
+      final googleAccount = await _googleSignIn.signIn().timeout(const Duration(seconds: 3));
       if (googleAccount != null) {
         final googleAuth = await googleAccount.authentication;
         final idToken = googleAuth.idToken ?? 'mock_token_${googleAccount.id}';
@@ -185,6 +202,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: AppColors.textSecondary,
                   ),
                 ),
+                if (kDebugMode) ...[
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: _isLoading ? null : _handleDeveloperBypass,
+                    child: Text(
+                      'Masuk Sekali Klik (Dev Mode)',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.mutedSteelSlate,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

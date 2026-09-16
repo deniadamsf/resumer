@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash-lite'),
+    ],
+
+    'google' => [
+        'web_client_id' => env('GOOGLE_WEB_CLIENT_ID'),
+    ],
+
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS', 'storage/app/firebase-service-account.json'),
+    ],
+
 ];

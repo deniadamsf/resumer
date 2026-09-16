@@ -77,15 +77,77 @@
     "subtitle": "Bandingkan CV Anda dengan kualifikasi lowongan kerja",
     "upload_screenshot": "Unggah Screenshot Poster Loker",
     "paste_text": "Tempel Teks Syarat Loker",
+    "tab_text": "Tempel Teks",
+    "tab_image": "Screenshot Loker",
+    "text_hint": "Tempel deskripsi pekerjaan, tanggung jawab, dan kualifikasi yang dicari di sini...",
+    "image_hint": "Pilih tangkapan layar (screenshot) poster lowongan dari galeri atau kamera",
+    "paste_clipboard": "Tempel dari Clipboard",
+    "clear_image": "Hapus Gambar",
+    "ocr_secure_notice": "Ekstraksi OCR multimodal AI 100% aman & terlindungi.",
     "match_btn": "Cek Tingkat Kecocokan",
     "score_label": "Skor Kecocokan Loker",
     "matched_keywords": "Kata Kunci yang Cocok",
-    "missing_keywords": "Kata Kunci yang Perlu Ditambahkan"
+    "missing_keywords": "Kata Kunci yang Perlu Ditambahkan",
+    "tailoring_title": "Rekomendasi Penyesuaian CV",
+    "tailor_cv_btn": "Sesuaikan CV dengan Loker Ini",
+    "tailor_cv_desc": "AI otomatis menambahkan kata kunci relevan ke daftar keahlian CV Anda.",
+    "tailor_success": "Kata kunci loker berhasil ditambahkan ke CV Anda!",
+    "no_input_error": "Silakan tempel teks loker atau pilih screenshot terlebih dahulu."
   },
   "ad": {
     "reward_prompt_generate": "Tonton 1 iklan singkat untuk meramu CV berstandar tinggi dengan AI.",
     "reward_prompt_check": "Tonton 1 iklan singkat untuk membuka analisis skor ATS mendalam.",
     "reward_prompt_autofix": "Tonton 1 iklan singkat untuk menerapkan 1-Click ATS Auto-Fix.",
-    "reward_prompt_download": "Tonton 1 iklan singkat untuk mengunduh PDF resolusi tinggi."
+    "reward_prompt_download": "Tonton 1 iklan singkat untuk mengunduh PDF resolusi tinggi.",
+    "reward_prompt_job_match": "Tonton 1 iklan singkat untuk mencocokkan CV dengan syarat lowongan kerja.",
+    "reward_prompt_cover_letter": "Tonton 1 iklan singkat untuk meramu surat lamaran kerja profesional dengan AI."
+  },
+  "cover_letter": {
+    "title": "Surat Lamaran AI",
+    "subtitle": "Ramu surat lamaran kerja profesional 3 paragraf sesuai perusahaan target",
+    "company_label": "Nama Perusahaan Tujuan",
+    "company_hint": "cth: PT Bank Central Asia Tbk / GoTo",
+    "role_label": "Posisi yang Dilamar",
+    "role_hint": "cth: Senior Data Specialist / BI Engineer",
+    "generate_btn": "Buat Surat Lamaran AI",
+    "preview_title": "Draf Surat Lamaran Formal",
+    "copy_btn": "Salin ke Clipboard",
+    "copied": "Surat lamaran berhasil disalin ke clipboard!",
+    "pdf_btn": "Cetak / Ekspor PDF",
+    "edit_btn": "Ubah Target Perusahaan",
+    "empty_error": "Mohon isi nama perusahaan dan posisi target.",
+    "signature_title": "Tanda Tangan Digital",
+    "signature_hint": "Goreskan tanda tangan Anda di dalam area kanvas di bawah ini",
+    "add_signature": "Bubuhkan Tanda Tangan",
+    "change_signature": "Ubah Tanda Tangan",
+    "clear_signature": "Hapus",
+    "save_signature": "Simpan Tanda Tangan",
+    "signature_saved": "Tanda tangan berhasil disimpan di perangkat",
+    "signature_removed": "Tanda tangan berhasil dihapus",
+    "signature_status": "Tanda Tangan Tersemat",
+    "cv_reference_title": "Referensi Profil CV Aktif",
+    "cv_reference_note": "AI menyelaraskan surat lamaran dengan pengalaman kerja, capaian Google XYZ, dan keahlian profil ini.",
+    "skills_highlight": "Keahlian Unggulan Profil"
+  },
+  "profile": {
+    "switcher_title": "Profil CV",
+    "variation_1": "Variasi 1",
+    "variation_2": "Variasi 2",
+    "variation_3": "Variasi 3",
+    "rename_title": "Ubah Nama Profil",
+    "rename_hint": "cth: Versi IT Architect / Corporate",
+    "target_role_hint": "cth: Lead Mobile Architect",
+    "synced": "Tersimpan",
+    "saving": "Menyimpan...",
+    "switched": "Beralih ke Profil {0}"
+  },
+  "ats_simulation": {
+    "title": "Mode Robot ATS (Teks Murni)",
+    "subtitle": "Simulasi linieritas teks yang dibaca oleh parser ATS HRD",
+    "copy_text": "Salin Teks Robot",
+    "copied": "Teks ATS disalin ke clipboard"
+  },
+  "validation": {
+    "core_fields_missing": "Mohon lengkapi Nama Lengkap, Kontak, minimal 1 Riwayat/Pendidikan, dan 3 Keahlian sebelum memoles dengan AI."
   }
 }

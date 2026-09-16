@@ -93,6 +93,11 @@ class AuthController extends Controller
 
             if ($response->successful()) {
                 $payload = $response->json();
+                $webClientId = config('services.google.web_client_id');
+                if (!empty($webClientId) && isset($payload['aud']) && $payload['aud'] !== $webClientId) {
+                    Log::warning('Google OAuth aud mismatch: expected ' . $webClientId . ', got ' . $payload['aud']);
+                    return null;
+                }
                 if (isset($payload['sub'], $payload['email'])) {
                     return $payload;
                 }

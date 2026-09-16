@@ -15,7 +15,7 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY', ''));
-        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-2.5-flash-lite'));
+        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.5-flash-lite'));
         $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
     }
 
@@ -208,28 +208,37 @@ PROMPT;
     }
 
     /**
-     * AI Cover Letter Generator tailored to target company and role.
+     * AI Cover Letter Generator tailored to target company and role, grounded strictly in candidate CV.
      */
     public function generateCoverLetter(string $cvText, string $company, string $role): array
     {
         $systemPrompt = <<<PROMPT
-You are an Executive Communications Specialist.
-Draft a compelling 3-paragraph corporate cover letter for the candidate applying to {$company} for the position of {$role}.
-Tone: Confident, professional, tailored, and results-oriented.
+You are an Executive Communications Specialist and HR Recruiter.
+Draft a bespoke, highly compelling 3-paragraph corporate cover letter for the candidate applying to {$company} for the target position of {$role}.
+Tone: Confident, sophisticated, bespoke executive, and strictly grounded in the candidate's actual qualifications.
+
+CRITICAL GROUNDING RULES:
+1. Menganalisis secara mendalam seluruh isi CV kandidat yang diberikan (posisi saat ini, riwayat pekerjaan, pencapaian berformula Google XYZ dengan metrik terukur, keahlian utama, dan pendidikan).
+2. Paragraf 1 (Pembuka): Nyatakan antusiasme melamar posisi {$role} di {$company}. Kemukakan ringkasan nilai jual utama (unique selling proposition) kandidat yang berakar langsung pada rekam jejak spesialisasi CV-nya.
+3. Paragraf 2 (Korelasi Bukti & Capaian CV): Ambil 2-3 pencapaian nyata, metrik persentase/skala, proyek, atau keahlian spesifik dari riwayat kerja di CV kandidat. Tunjukkan korelasi bagaimana pencapaian masa lalu tersebut akan langsung menyelesaikan tantangan bisnis atau mendorong target strategis di {$company}. DILARANG MENGARANG fakta di luar CV!
+4. Paragraf 3 (Visi Kontribusi & Penutup): Sampaikan visi kontribusi kandidat terhadap inovasi dan pertumbuhan {$company}, serta seruan aksi (call to action) untuk tahap wawancara dengan sopan dan percaya diri.
+5. Signoff: Penutup profesional satu baris tanpa menyertakan nama (misal: "Sincerely," atau "Hormat saya,"). Nama dan tanda tangan kandidat akan disematkan secara dinamis oleh sistem.
 
 Output strict JSON:
 {
   "salutation": "Dear Hiring Team at {$company},",
-  "paragraph_1": "Introduction and immediate value hook...",
-  "paragraph_2": "Core achievements from CV aligned with the role...",
-  "paragraph_3": "Forward-looking closing and call to action...",
-  "signoff": "Sincerely,\n[Candidate Name]"
+  "paragraph_1": "...",
+  "paragraph_2": "...",
+  "paragraph_3": "...",
+  "signoff": "Sincerely,"
 }
 PROMPT;
 
         $userPrompt = "Candidate CV:\n" . $cvText;
-
-        return $this->callGeminiJson($systemPrompt, $userPrompt);
+        $result = $this->callGeminiJson($systemPrompt, $userPrompt);
+        $result['company'] = !empty($result['company']) ? $result['company'] : $company;
+        $result['role'] = !empty($result['role']) ? $result['role'] : $role;
+        return $result;
     }
 
     /**
@@ -254,9 +263,9 @@ PROMPT;
      */
     protected function callGeminiWithContents(string $systemPrompt, array $contents): array
     {
-        if (empty($this->apiKey)) {
-            // If no API key configured (e.g. initial dev test), return mock structured response
-            Log::warning('Gemini API key is empty. Returning mock response for testing.');
+        if (empty($this->apiKey) || app()->environment('testing')) {
+            // If in test environment or no API key configured, return mock structured response
+            Log::info('Returning mock response for testing environment.');
             return $this->getMockResponse();
         }
 
@@ -275,7 +284,9 @@ PROMPT;
             ]
         ];
 
-        $response = Http::timeout(30)->post($url, $payload);
+        $response = Http::timeout(30)
+            ->withOptions(['force_ip_resolve' => 'v4'])
+            ->post($url, $payload);
 
         if (!$response->successful()) {
             Log::error('Gemini API Error: ' . $response->body());
@@ -312,11 +323,45 @@ PROMPT;
             ],
             'actionable_feedback' => [
                 [
-                    'section' => 'General',
-                    'issue' => 'None',
-                    'suggestion' => 'CV is already primed for modern ATS scanners.'
+                    'section' => 'Experience',
+                    'issue' => 'Include more quantifiable metrics in past roles',
+                    'suggestion' => 'Highlight performance gains and team leadership scale'
                 ]
-            ]
+            ],
+            'improved_cv_data' => [
+                'summary' => 'Accomplished Senior Mobile Engineer with proven track record in architecting high-performance Flutter applications.',
+                'experiences' => [
+                    [
+                        'company' => 'Tech Enterprise',
+                        'position' => 'Senior Mobile Engineer',
+                        'period' => '2021 - Present',
+                        'bullet_points' => [
+                            'Spearheaded mobile architecture optimization, reducing crash rates by 45% across 200,000+ active users.',
+                            'Architected clean state management pipeline resulting in 30% faster feature delivery.'
+                        ]
+                    ]
+                ],
+                'skills' => ['Flutter', 'Dart', 'CI/CD', 'REST API', 'Clean Architecture']
+            ],
+            'estimated_new_score' => 96,
+            'changes_made' => [
+                'Converted passive voice to Google XYZ impact formula',
+                'Injected enterprise ATS keywords'
+            ],
+            // Job Matcher mock fields
+            'match_score' => 88,
+            'matched_keywords' => ['Flutter', 'Dart', 'REST API', 'State Management', 'Clean Architecture'],
+            'missing_keywords' => ['CI/CD Pipelines', 'Automated Testing', 'Docker'],
+            'tailoring_suggestions' => [
+                'Tambahkan pengalaman mengenai integrasi CI/CD dan unit test pada ringkasan kerja',
+                'Tonjolkan pencapaian optimasi performa dan skalabilitas arsitektur'
+            ],
+            // Cover Letter mock fields
+            'salutation' => 'Dear Hiring Team,',
+            'paragraph_1' => 'I am writing to express my strong interest in the open position...',
+            'paragraph_2' => 'With extensive background in high-performance application engineering...',
+            'paragraph_3' => 'I welcome the opportunity to discuss how my skill set aligns with your goals...',
+            'signoff' => 'Sincerely,'
         ];
     }
 }

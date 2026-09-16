@@ -1,8 +1,9 @@
 # ATURAN PROYEK RESUMER (AI ATS CV MAKER, SCORE CHECKER & JOB MATCHER)
 
 > **ATURAN MUTLAK (MANDATORY & ALWAYS ENFORCED):**
-> Setiap kali akan **membuat**, **mengubah**, **mengevaluasi**, atau **merestrukturisasi** file apa pun di dalam repositori ini, asisten **WAJIB** membaca dan merujuk secara mendalam pada dokumen rancang bangun utama:
-> `d:/StudioProject/RESUMER/rangkuman_konsultasi_aplikasi.md`
+> 1. Setiap kali akan **membuat**, **mengubah**, **mengevaluasi**, atau **merestrukturisasi** file apa pun di dalam repositori ini, asisten **WAJIB** membaca dan merujuk secara mendalam pada dokumen rancang bangun utama:
+>    `d:/StudioProject/RESUMER/rangkuman_konsultasi_aplikasi.md`
+> 2. Untuk setiap perancangan, implementasi, dan perbaikan tampilan antarmuka (UI/UX) pada Flutter, asisten **WAJIB SELALU MENGGUNAKAN SKILL `ui-ux-pro-max`** secara ketat dan konsisten.
 >
 > Seluruh implementasi teknis, keputusan arsitektur, penamaan variabel, alur monetisasi, hingga detail desain UI/UX **HARUS SELARAS 100%** dengan dokumen tersebut tanpa deviasi sepihak.
 
@@ -49,7 +50,8 @@
 
 ---
 
-## 4. Standar UI/UX "Quiet Luxury & Bespoke Executive"
+## 4. Standar UI/UX "Quiet Luxury & Bespoke Executive" (UI UX Pro Max)
+* Seluruh implementasi antarmuka wajib mematuhi standar skill **`ui-ux-pro-max`** secara menyeluruh.
 * **Palet Warna Resmi:**
   * Primary: `Midnight Oxford Navy` (`#0B132B`), `Muted Steel Slate` (`#1C2541`, `#3A506B`), `Subtle Slate Tint` (`#F1F5F9`).
   * Status/Skor ATS: `Deep Forest Pine` (`#065F46` / `#047857` untuk skor 85-100), `Antique Bronze` (`#92400E` / `#B45309` untuk skor 60-84), `Crimson Bordeaux` (`#881337` / `#991B1B` untuk skor <60).
@@ -67,6 +69,11 @@
   * Seluruh badge/tags/skills **WAJIB menggunakan Wrap**, dilarang `Row` kaku.
   * Elemen teks sebaris dalam `Row` wajib dibungkus `Expanded` atau `Flexible` dengan `ellipsis`.
   * Bottom padding formulir/halaman wajib minimal `65px - 80px` agar tidak tertutup AdMob Adaptive Banner atau Floating Bar.
+* **Standar Ikonografi Eksekutif (Anti-Icon Murahan):**
+  * **DILARANG KERAS** menggunakan icon pensil untuk edit, icon petir untuk kuota/energi, emoji kekanak-kanakan, atau icon warna-warni menyala (kuning amber neon, dsb.) yang membuat aplikasi tampak murahan ala game arcade.
+  * **Aksi Edit & Opsi Lanjutan:** Wajib menggunakan tombol titik tiga (`Icons.more_horiz_rounded` atau `Icons.more_vert_rounded`) yang menampilkan menu/modal dengan teks aksi jelas ("Ubah Profil", "Kelola Data").
+  * **Indikator Kuota / Metrik:** Wajib menggunakan icon eksekutif minimalis dan elegan (misal `Icons.donut_large_rounded`, `Icons.data_usage_rounded`, atau `Icons.tune_rounded`) dengan palet monokromatik yang tenang.
+  * **Warna Icon:** Wajib serasi dan monokromatik mengikuti palet Quiet Luxury (`Midnight Oxford Navy`, `Muted Steel Slate`, atau putih pada tombol). Dilarang menyisipkan warna-warni kontras murahan.
 
 ---
 

@@ -77,15 +77,77 @@
     "subtitle": "Match your CV against any job vacancy",
     "upload_screenshot": "Upload Job Screenshot",
     "paste_text": "Paste Job Description Text",
+    "tab_text": "Paste Text",
+    "tab_image": "Screenshot Poster",
+    "text_hint": "Paste job requirements, responsibilities, and qualifications here...",
+    "image_hint": "Select a job vacancy poster screenshot from gallery or camera",
+    "paste_clipboard": "Paste from Clipboard",
+    "clear_image": "Remove Image",
+    "ocr_secure_notice": "Multimodal AI OCR extraction is 100% private & secure.",
     "match_btn": "Check Compatibility",
     "score_label": "Job Match Compatibility",
     "matched_keywords": "Matched Keywords",
-    "missing_keywords": "Missing Keywords"
+    "missing_keywords": "Missing Keywords to Add",
+    "tailoring_title": "CV Tailoring Recommendations",
+    "tailor_cv_btn": "Tailor CV to this Job",
+    "tailor_cv_desc": "AI automatically injects relevant job keywords into your CV skills.",
+    "tailor_success": "Job keywords successfully tailored into your CV!",
+    "no_input_error": "Please paste job text or select a job screenshot first."
   },
   "ad": {
     "reward_prompt_generate": "Watch a quick sponsored ad to generate your AI ATS resume.",
     "reward_prompt_check": "Watch a quick sponsored ad to unlock full ATS score breakdown.",
     "reward_prompt_autofix": "Watch a quick sponsored ad to apply 1-Click ATS Auto-Fix.",
-    "reward_prompt_download": "Watch a quick sponsored ad to download high-resolution PDF."
+    "reward_prompt_download": "Watch a quick sponsored ad to download high-resolution PDF.",
+    "reward_prompt_job_match": "Watch a quick sponsored ad to match your CV with job requirements.",
+    "reward_prompt_cover_letter": "Watch a quick sponsored ad to generate an executive AI Cover Letter."
+  },
+  "cover_letter": {
+    "title": "AI Cover Letter",
+    "subtitle": "Craft a tailored 3-paragraph executive cover letter from your CV",
+    "company_label": "Target Company Name",
+    "company_hint": "e.g. Google, Microsoft, Accenture",
+    "role_label": "Target Role",
+    "role_hint": "e.g. Senior Data Specialist / BI Engineer",
+    "generate_btn": "Generate AI Cover Letter",
+    "preview_title": "Formal Cover Letter Draft",
+    "copy_btn": "Copy to Clipboard",
+    "copied": "Cover letter copied to clipboard!",
+    "pdf_btn": "Print / Export PDF",
+    "edit_btn": "Change Company & Role",
+    "empty_error": "Please fill in target company name and role.",
+    "signature_title": "Digital Signature",
+    "signature_hint": "Draw your signature inside the canvas area below",
+    "add_signature": "Add Digital Signature",
+    "change_signature": "Change Signature",
+    "clear_signature": "Clear",
+    "save_signature": "Save Signature",
+    "signature_saved": "Signature saved to device successfully",
+    "signature_removed": "Signature removed",
+    "signature_status": "Signature Embedded",
+    "cv_reference_title": "Active CV Profile Reference",
+    "cv_reference_note": "AI aligns this cover letter directly with the work experience, Google XYZ metrics, and skills of this profile.",
+    "skills_highlight": "Featured Profile Skills"
+  },
+  "profile": {
+    "switcher_title": "CV Profiles",
+    "variation_1": "Variation 1",
+    "variation_2": "Variation 2",
+    "variation_3": "Variation 3",
+    "rename_title": "Rename Profile",
+    "rename_hint": "e.g. IT Architect / Tech Lead",
+    "target_role_hint": "e.g. Lead Mobile Architect",
+    "synced": "Saved",
+    "saving": "Saving...",
+    "switched": "Switched to Profile {0}"
+  },
+  "ats_simulation": {
+    "title": "ATS Robot Simulation (Plain Text)",
+    "subtitle": "Simulate exact linearity read by corporate ATS parsers",
+    "copy_text": "Copy Robot Text",
+    "copied": "ATS plain text copied to clipboard"
+  },
+  "validation": {
+    "core_fields_missing": "Please fill in Full Name, Contact, at least 1 Experience/Education, and 3 Skills before polishing with AI."
   }
 }

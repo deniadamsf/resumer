@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../cv_editor/models/cv_model.dart';
+import '../cover_letter/models/cover_letter_model.dart';
 
 class PdfGenerator {
   /// Generate 100% Client-Side ATS Compliant PDF Document
@@ -270,4 +271,131 @@ class PdfGenerator {
       ),
     );
   }
+
+  /// Generate 100% Client-Side Formal Executive Cover Letter PDF
+  static Future<Uint8List> generateCoverLetterPdf(
+    CoverLetterModel letter,
+    CvDocument cv, {
+    Uint8List? signatureBytes,
+  }) async {
+    final pdf = pw.Document();
+    final accentColor = PdfColor.fromHex(cv.accentColor);
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 36),
+        build: (pw.Context context) {
+          final signoffText = letter.signoff.split('\n').first.trim();
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Candidate Header
+              pw.Text(
+                cv.personalInfo.fullName.toUpperCase(),
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                  color: accentColor,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              if (cv.personalInfo.professionalTitle.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  cv.personalInfo.professionalTitle,
+                  style: const pw.TextStyle(fontSize: 10.5, color: PdfColors.grey700),
+                ),
+              ],
+              pw.SizedBox(height: 4),
+              pw.Row(
+                children: [
+                  if (cv.personalInfo.email.isNotEmpty)
+                    pw.Text(cv.personalInfo.email, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+                  if (cv.personalInfo.phone.isNotEmpty) ...[
+                    pw.Text('  |  ', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey400)),
+                    pw.Text(cv.personalInfo.phone, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+                  ],
+                  if (cv.personalInfo.location.isNotEmpty) ...[
+                    pw.Text('  |  ', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey400)),
+                    pw.Text(cv.personalInfo.location, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+                  ],
+                ],
+              ),
+              pw.SizedBox(height: 12),
+              pw.Divider(thickness: 1, color: accentColor),
+              pw.SizedBox(height: 16),
+
+              // Recipient & Role Details
+              pw.Text('To:', style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+              pw.Text('Hiring Committee & Recruitment Team', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey800)),
+              pw.Text(letter.companyName, style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 4),
+              pw.Text('RE: Application for ${letter.targetRole}',
+                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: accentColor)),
+              pw.SizedBox(height: 16),
+
+              // Salutation
+              pw.Text(
+                letter.salutation,
+                style: const pw.TextStyle(fontSize: 10.5, color: PdfColors.black),
+              ),
+              pw.SizedBox(height: 12),
+
+              // Paragraph 1
+              pw.Text(
+                letter.paragraph1,
+                style: const pw.TextStyle(fontSize: 10, lineSpacing: 1.4),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 12),
+
+              // Paragraph 2
+              pw.Text(
+                letter.paragraph2,
+                style: const pw.TextStyle(fontSize: 10, lineSpacing: 1.4),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 12),
+
+              // Paragraph 3
+              pw.Text(
+                letter.paragraph3,
+                style: const pw.TextStyle(fontSize: 10, lineSpacing: 1.4),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 18),
+
+              // Signoff & Signature
+              pw.Text(
+                signoffText.isNotEmpty ? signoffText : 'Hormat saya,',
+                style: const pw.TextStyle(fontSize: 10.5, color: PdfColors.black),
+              ),
+              pw.SizedBox(height: 6),
+              if (signatureBytes != null && signatureBytes.isNotEmpty) ...[
+                pw.Container(
+                  height: 44,
+                  alignment: pw.Alignment.centerLeft,
+                  child: pw.Image(
+                    pw.MemoryImage(signatureBytes),
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+              ] else ...[
+                pw.SizedBox(height: 38),
+              ],
+              pw.Text(
+                cv.personalInfo.fullName,
+                style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
 }
+

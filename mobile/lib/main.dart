@@ -1,23 +1,41 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'core/constants/colors.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/services/api_service.dart';
+import 'core/services/signature_service.dart';
 import 'core/widgets/responsive_wrapper.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/cv_editor/screens/cv_editor_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint('=== RESUMER APP STARTING ===');
 
-  // Initialize localization with automatic fallback to en_US
-  await AppLocalizations.instance.init('id_ID');
+  try {
+    debugPrint('1. Initializing localization...');
+    await AppLocalizations.instance.init('id_ID');
+    debugPrint('2. Localization initialized.');
 
-  // Initialize ApiService (Device UUID & Sanctum Auth state)
-  await ApiService.instance.init();
+    debugPrint('3. Initializing ApiService...');
+    await ApiService.instance.init();
+    if (kDebugMode && !ApiService.instance.isAuthenticated) {
+      await ApiService.instance.saveToken('dev_mock_sanctum_token');
+    }
+    debugPrint('4. ApiService initialized. Authenticated: ${ApiService.instance.isAuthenticated}');
 
+    debugPrint('5. Initializing SignatureService...');
+    await SignatureService.instance.init();
+    debugPrint('6. SignatureService initialized. HasSignature: ${SignatureService.instance.hasSignature}');
+  } catch (e, stack) {
+    debugPrint('ERROR during main initialization: $e\n$stack');
+  }
+
+  debugPrint('7. Calling runApp...');
   runApp(const ResumerApp());
+  debugPrint('8. runApp called successfully.');
 }
 
 class ResumerApp extends StatelessWidget {

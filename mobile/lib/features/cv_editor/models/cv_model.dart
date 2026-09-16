@@ -41,6 +41,12 @@ class CvDocument {
     );
   }
 
+  CvDocument clone() {
+    final doc = CvDocument.fromJson(toJson());
+    doc.personalInfo.localPhotoPath = personalInfo.localPhotoPath;
+    return doc;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'template_id': templateId,
@@ -261,4 +267,32 @@ class Education {
       gpa: json['gpa'] as String? ?? '',
     );
   }
+}
+
+class CvProfileMeta {
+  final int profileIndex;
+  String title;
+  String targetJob;
+  int? atsScore;
+
+  CvProfileMeta({
+    required this.profileIndex,
+    required this.title,
+    this.targetJob = '',
+    this.atsScore,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'profile_index': profileIndex,
+        'title': title,
+        'target_job': targetJob,
+        'ats_score': atsScore,
+      };
+
+  factory CvProfileMeta.fromJson(Map<String, dynamic> json) => CvProfileMeta(
+        profileIndex: json['profile_index'] as int? ?? 1,
+        title: json['title'] as String? ?? 'CV ${json['profile_index'] ?? 1}',
+        targetJob: json['target_job'] as String? ?? '',
+        atsScore: json['ats_score'] as int?,
+      );
 }

@@ -204,6 +204,43 @@ class ResumerApiTest extends TestCase
     }
 
     /**
+     * Test ATS Auto-Fix endpoint consumes 1 quota on success.
+     */
+    public function test_ats_autofix_consumes_quota(): void
+    {
+        $user = User::factory()->create(['device_uuid' => 'device-autofix-test']);
+        $quota = DailyQuota::getTodayQuota($user->id, 'device-autofix-test');
+        $this->assertEquals(5, $quota->remainingCount());
+
+        $response = $this->actingAs($user)
+            ->withHeader('X-Device-UUID', 'device-autofix-test')
+            ->postJson('/api/v1/cv/ats-autofix', [
+                'cv_text' => 'Junior web developer who helped create some websites using HTML and CSS and fixed various bugs reported by testers.',
+                'suggestions' => ['Use Google XYZ formula', 'Inject action verbs'],
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'quota' => [
+                    'remaining' => 4,
+                    'limit' => 5,
+                ],
+            ])
+            ->assertJsonStructure([
+                'improved_cv' => [
+                    'improved_cv_data',
+                    'estimated_new_score',
+                    'changes_made',
+                ],
+            ]);
+
+        $quota->refresh();
+        $this->assertEquals(1, $quota->used_count);
+        $this->assertEquals(4, $quota->remainingCount());
+    }
+
+    /**
      * Test Privacy Policy static view.
      */
     public function test_privacy_policy_page_loads(): void
@@ -213,4 +250,72 @@ class ResumerApiTest extends TestCase
             ->assertSee('Privacy Policy')
             ->assertSee('Zero Server Photo Processing Guarantee');
     }
+
+    /**
+     * Test Job Matcher endpoint with text and mock image input.
+     */
+    public function test_job_match_analysis_with_text_and_image(): void
+    {
+        $user = User::factory()->create(['device_uuid' => 'device-jobmatch-test']);
+
+        $response = $this->actingAs($user)
+            ->withHeader('X-Device-UUID', 'device-jobmatch-test')
+            ->postJson('/api/v1/cv/job-match', [
+                'cv_text' => 'Experienced Flutter Engineer with deep knowledge of Dart, Clean Architecture, and RESTful APIs.',
+                'job_text' => 'We are looking for a Senior Mobile Engineer proficient in Flutter, CI/CD, and Automated Testing.',
+                'job_image' => 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD...',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ])
+            ->assertJsonStructure([
+                'match_result' => [
+                    'match_score',
+                    'verdict',
+                    'matched_keywords',
+                    'missing_keywords',
+                    'tailoring_suggestions',
+                ]
+            ]);
+
+        $this->assertIsInt($response->json('match_result.match_score'));
+        $this->assertIsArray($response->json('match_result.matched_keywords'));
+        $this->assertIsArray($response->json('match_result.missing_keywords'));
+    }
+
+    /**
+     * Test AI Cover Letter Generator endpoint.
+     */
+    public function test_cover_letter_generation(): void
+    {
+        $user = User::factory()->create(['device_uuid' => 'device-cover-letter-test']);
+
+        $response = $this->actingAs($user)
+            ->withHeader('X-Device-UUID', 'device-cover-letter-test')
+            ->postJson('/api/v1/cv/cover-letter', [
+                'cv_text' => 'Senior Data Specialist with 6 years of experience architecting data pipelines and executive dashboards.',
+                'company_name' => 'Acme Global Corp',
+                'target_role' => 'Lead Business Intelligence Architect',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ])
+            ->assertJsonStructure([
+                'cover_letter' => [
+                    'salutation',
+                    'paragraph_1',
+                    'paragraph_2',
+                    'paragraph_3',
+                    'signoff',
+                ]
+            ]);
+
+        $this->assertStringContainsString('Dear Hiring Team', $response->json('cover_letter.salutation'));
+        $this->assertNotEmpty($response->json('cover_letter.paragraph_1'));
+    }
 }
+

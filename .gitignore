@@ -1,4 +1,4 @@
-﻿# Credentials & Sensitive Files (STRICTLY FORBIDDEN FROM GIT)
+# Credentials & Sensitive Files (STRICTLY FORBIDDEN FROM GIT)
 api_keys_dan_credentials.txt
 database dan SSH Access.txt
 *.key
@@ -31,6 +31,16 @@ mobile/build/
 mobile/android/app/debug/
 mobile/android/app/profile/
 mobile/android/app/release/
+mobile/android/app/google-services.json
+!mobile/android/app/google-services.json.example
+
+# Temporary & Local Audit Reports
+*.png
+*.jpg
+*.jpeg
+!mobile/assets/**
+laporan_*.md
+persiapan_*.md
 
 # Agent, IDE & OS
 .agents/
@@ -39,3 +49,4 @@ mobile/android/app/release/
 *.iml
 .DS_Store
 Thumbs.db
+
