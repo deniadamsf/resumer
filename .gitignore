@@ -32,7 +32,9 @@ mobile/android/app/debug/
 mobile/android/app/profile/
 mobile/android/app/release/
 mobile/android/app/google-services.json
-!mobile/android/app/google-services.json.example
+google-services.json
+**/google-services.json
+!**/google-services.json.example
 
 # Temporary & Local Audit Reports
 *.png
