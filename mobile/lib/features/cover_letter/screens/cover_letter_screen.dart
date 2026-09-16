@@ -1,43 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/ad_service.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/signature_service.dart';
-import '../../cv_editor/models/cv_model.dart';
+import '../../../core/widgets/frosted_app_bar.dart';
+import '../../cv_editor/services/cv_profile_manager.dart';
 import '../../pdf_engine/pdf_generator.dart';
 import '../../pdf_engine/pdf_preview_screen.dart';
 import '../models/cover_letter_model.dart';
-import 'signature_pad_modal.dart';
+import '../widgets/signature_pad_modal.dart';
 
-/// Quiet Luxury AI Cover Letter Modal Bottom Sheet
-/// Complies 100% with UI UX Pro Max and Bespoke Executive Standards
-class CoverLetterModal extends StatefulWidget {
-  final CvDocument cv;
-  final String? profileName;
-
-  const CoverLetterModal({
-    super.key,
-    required this.cv,
-    this.profileName,
-  });
-
-  static Future<void> show(BuildContext context, CvDocument cv, {String? profileName}) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => CoverLetterModal(cv: cv, profileName: profileName),
-    );
-  }
+/// Full-screen AI Cover Letter Screen as Tab 3
+/// Adheres 100% to UI UX Pro Max and Bespoke Executive Standards
+class CoverLetterScreen extends StatefulWidget {
+  const CoverLetterScreen({super.key});
 
   @override
-  State<CoverLetterModal> createState() => _CoverLetterModalState();
+  State<CoverLetterScreen> createState() => _CoverLetterScreenState();
 }
 
-class _CoverLetterModalState extends State<CoverLetterModal> {
+class _CoverLetterScreenState extends State<CoverLetterScreen> {
+  final _profileMgr = CvProfileManager.instance;
   late TextEditingController _companyController;
   late TextEditingController _roleController;
   bool _isLoading = false;
@@ -49,11 +36,26 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
     super.initState();
     _companyController = TextEditingController();
     _roleController = TextEditingController(
-      text: widget.cv.personalInfo.professionalTitle.isNotEmpty
-          ? widget.cv.personalInfo.professionalTitle
+      text: _profileMgr.currentCv.personalInfo.professionalTitle.isNotEmpty
+          ? _profileMgr.currentCv.personalInfo.professionalTitle
           : '',
     );
     _loadSignature();
+    _profileMgr.addListener(_onProfileUpdate);
+  }
+
+  @override
+  void dispose() {
+    _profileMgr.removeListener(_onProfileUpdate);
+    _companyController.dispose();
+    _roleController.dispose();
+    super.dispose();
+  }
+
+  void _onProfileUpdate() {
+    if (mounted && _roleController.text.isEmpty) {
+      _roleController.text = _profileMgr.currentCv.personalInfo.professionalTitle;
+    }
   }
 
   Future<void> _loadSignature() async {
@@ -87,13 +89,6 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
     }
   }
 
-  @override
-  void dispose() {
-    _companyController.dispose();
-    _roleController.dispose();
-    super.dispose();
-  }
-
   Future<void> _handleGenerate() async {
     final company = _companyController.text.trim();
     final role = _roleController.text.trim();
@@ -104,7 +99,6 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
       return;
     }
 
-    // Rewarded Ad 4 Gating
     await AdService.instance.showRewardedAd(
       context: context,
       prompt: 'ad.reward_prompt_cover_letter'.tr,
@@ -115,8 +109,9 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
   Future<void> _executeGenerate(String company, String role) async {
     setState(() => _isLoading = true);
     try {
+      final cv = _profileMgr.currentCv;
       final response = await ApiService.instance.generateCoverLetter(
-        widget.cv.toPlainText(),
+        cv.toPlainText(),
         company,
         role,
       );
@@ -140,8 +135,9 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
 
   void _copyToClipboard() {
     if (_generatedLetter == null) return;
+    final cv = _profileMgr.currentCv;
     Clipboard.setData(ClipboardData(
-      text: _generatedLetter!.toFormattedText(candidateName: widget.cv.personalInfo.fullName),
+      text: _generatedLetter!.toFormattedText(candidateName: cv.personalInfo.fullName),
     ));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -154,102 +150,67 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
   Future<void> _exportPdf() async {
     if (_generatedLetter == null) return;
     final letter = _generatedLetter!;
-    final cv = widget.cv;
+    final cv = _profileMgr.currentCv;
     final sigBytes = _signatureBytes;
     final fileName = 'Cover_Letter_${cv.personalInfo.fullName.replaceAll(' ', '_')}.pdf';
 
-    // Capture the parent navigator before popping the modal
-    final navigator = Navigator.of(context);
-
-    // Close the modal first
-    navigator.pop();
-
-    // Open preview screen using the captured navigator
-    navigator.push(
-      MaterialPageRoute(
-        builder: (_) => PdfPreviewScreen(
-          pdfBuilder: () => PdfGenerator.generateCoverLetterPdf(
-            letter,
-            cv,
-            signatureBytes: sigBytes,
-          ),
-          fileName: fileName,
-        ),
+    await PdfPreviewScreen.open(
+      context,
+      pdfBuilder: () => PdfGenerator.generateCoverLetterPdf(
+        letter,
+        cv,
+        signatureBytes: sigBytes,
       ),
+      fileName: fileName,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        left: 20,
-        right: 20,
-        top: 14,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.cardSurface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 38,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.mutedSteelSlate.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
-              ),
+    return Scaffold(
+      backgroundColor: AppColors.oysterCanvas,
+      appBar: FrostedAppBar(
+        title: 'cover_letter.title'.tr,
+        showBackButton: false,
+        actions: [
+          if (_generatedLetter != null) ...[
+            IconButton(
+              onPressed: _copyToClipboard,
+              icon: const Icon(Icons.copy_rounded, color: AppColors.midnightNavy, size: 20),
+              tooltip: 'cover_letter.copy_btn'.tr,
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'cover_letter.title'.tr,
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.midnightNavy,
-                ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: SingleChildScrollView(
-              child: _generatedLetter == null ? _buildInputForm() : _buildLetterPreview(),
+            IconButton(
+              onPressed: _exportPdf,
+              icon: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.midnightNavy, size: 20),
+              tooltip: 'cover_letter.pdf_btn'.tr,
             ),
-          ),
+          ],
         ],
+      ),
+      body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        // UI UX Pro Max: bottom padding 120px to prevent being obscured by bottom navigation bar
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
+        child: _generatedLetter == null ? _buildInputForm() : _buildLetterPreview(),
       ),
     );
   }
 
   Widget _buildCvReferenceCard() {
-    final title = widget.profileName ?? 'CV';
-    final role = widget.cv.personalInfo.professionalTitle.isNotEmpty
-        ? widget.cv.personalInfo.professionalTitle
-        : widget.cv.personalInfo.fullName;
-    final skills = widget.cv.skills.take(4).toList();
+    final title = _profileMgr.currentMeta.title;
+    final cv = _profileMgr.currentCv;
+    final role = cv.personalInfo.professionalTitle.isNotEmpty
+        ? cv.personalInfo.professionalTitle
+        : cv.personalInfo.fullName;
+    final skills = cv.skills.take(4).toList();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.subtleSlateTint.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderHairline),
       ),
       child: Column(
@@ -265,22 +226,14 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
                 ),
                 child: Text(
                   title,
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
+                  style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   role,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.midnightNavy,
-                  ),
+                  style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -290,31 +243,23 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
           const SizedBox(height: 6),
           Text(
             'cover_letter.cv_reference_note'.tr,
-            style: GoogleFonts.outfit(
-              fontSize: 11.5,
-              color: AppColors.textSecondary,
-              height: 1.35,
-            ),
+            style: GoogleFonts.outfit(fontSize: 11.5, color: AppColors.textSecondary, height: 1.35),
           ),
           if (skills.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 6,
               runSpacing: 4,
               children: skills.map((s) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.subtleSlateTint,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: AppColors.borderHairline),
                 ),
                 child: Text(
                   s,
-                  style: GoogleFonts.outfit(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.mutedSteelSlate,
-                  ),
+                  style: GoogleFonts.outfit(fontSize: 10.5, fontWeight: FontWeight.w500, color: AppColors.mutedSteelSlate),
                 ),
               )).toList(),
             ),
@@ -333,16 +278,18 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
           'cover_letter.subtitle'.tr,
           style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         _buildTextField('cover_letter.company_label'.tr, _companyController, 'cover_letter.company_hint'.tr),
         const SizedBox(height: 14),
         _buildTextField('cover_letter.role_label'.tr, _roleController, 'cover_letter.role_hint'.tr),
+        const SizedBox(height: 20),
+        _buildSignatureSection(),
         const SizedBox(height: 24),
         ElevatedButton.icon(
           onPressed: _isLoading ? null : _handleGenerate,
           icon: _isLoading
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Icon(Icons.auto_awesome_outlined, size: 20, color: Colors.white),
+              : const Icon(Icons.auto_awesome_rounded, size: 20, color: Colors.white),
           label: Text(
             _isLoading ? 'common.loading'.tr : 'cover_letter.generate_btn'.tr,
             style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w700),
@@ -374,7 +321,7 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: AppColors.oysterCanvas,
+            fillColor: AppColors.cardSurface,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.borderHairline)),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.borderHairline)),
@@ -386,30 +333,26 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
   }
 
   Widget _buildLetterPreview() {
+    final cv = _profileMgr.currentCv;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: AppColors.subtleSlateTint,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: AppColors.borderHairline),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_outline_rounded, size: 14, color: AppColors.forestPine),
-              const SizedBox(width: 6),
-              Flexible(
+              const Icon(Icons.check_circle_rounded, size: 16, color: AppColors.forestPine),
+              const SizedBox(width: 8),
+              Expanded(
                 child: Text(
-                  '${'cover_letter.cv_reference_title'.tr}: ${widget.profileName ?? "CV"} • ${widget.cv.personalInfo.fullName}',
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.midnightNavy,
-                  ),
+                  '${_generatedLetter!.companyName} • ${_generatedLetter!.targetRole}',
+                  style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -417,14 +360,17 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
           ),
         ),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.oysterCanvas,
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.cardSurface,
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: AppColors.borderHairline),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
           ),
           child: SelectableText(
-            _generatedLetter!.toFormattedText(candidateName: widget.cv.personalInfo.fullName),
+            _generatedLetter!.toFormattedText(candidateName: cv.personalInfo.fullName),
             style: GoogleFonts.outfit(fontSize: 13, height: 1.5, color: AppColors.textPrimary),
           ),
         ),
@@ -462,11 +408,12 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Center(
-          child: TextButton(
+          child: TextButton.icon(
             onPressed: () => setState(() => _generatedLetter = null),
-            child: Text(
+            icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.textSecondary),
+            label: Text(
               'cover_letter.edit_btn'.tr,
               style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
             ),
@@ -481,7 +428,7 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.oysterCanvas,
+          color: AppColors.cardSurface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.borderHairline),
         ),
@@ -494,12 +441,9 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.borderHairline.withValues(alpha: 0.6)),
+                border: Border.all(color: AppColors.borderHairline),
               ),
-              child: Image.memory(
-                _signatureBytes!,
-                fit: BoxFit.contain,
-              ),
+              child: Image.memory(_signatureBytes!, fit: BoxFit.contain),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -509,19 +453,12 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
                 children: [
                   Text(
                     'cover_letter.signature_status'.tr,
-                    style: GoogleFonts.outfit(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.midnightNavy,
-                    ),
+                    style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'form.photo_notice'.tr,
-                    style: GoogleFonts.outfit(
-                      fontSize: 10.5,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: GoogleFonts.outfit(fontSize: 10.5, color: AppColors.textSecondary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -529,15 +466,8 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
               ),
             ),
             PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.more_horiz_rounded,
-                color: AppColors.midnightNavy,
-                size: 20,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: AppColors.borderHairline),
-              ),
+              icon: const Icon(Icons.more_horiz_rounded, color: AppColors.midnightNavy, size: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: AppColors.borderHairline)),
               color: Colors.white,
               elevation: 3,
               onSelected: (val) {
@@ -554,14 +484,7 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
                     children: [
                       const Icon(Icons.draw_outlined, size: 18, color: AppColors.midnightNavy),
                       const SizedBox(width: 10),
-                      Text(
-                        'cover_letter.change_signature'.tr,
-                        style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.midnightNavy,
-                        ),
-                      ),
+                      Text('cover_letter.change_signature'.tr, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.midnightNavy)),
                     ],
                   ),
                 ),
@@ -571,14 +494,7 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
                     children: [
                       const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.crimsonBordeaux),
                       const SizedBox(width: 10),
-                      Text(
-                        'cover_letter.clear_signature'.tr,
-                        style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.crimsonBordeaux,
-                        ),
-                      ),
+                      Text('cover_letter.clear_signature'.tr, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.crimsonBordeaux)),
                     ],
                   ),
                 ),
@@ -595,7 +511,7 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.oysterCanvas,
+          color: AppColors.cardSurface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.borderHairline),
         ),
@@ -607,11 +523,7 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
                 color: AppColors.midnightNavy.withValues(alpha: 0.06),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.draw_outlined,
-                size: 18,
-                color: AppColors.midnightNavy,
-              ),
+              child: const Icon(Icons.draw_outlined, size: 18, color: AppColors.midnightNavy),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -619,32 +531,13 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'cover_letter.add_signature'.tr,
-                    style: GoogleFonts.outfit(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.midnightNavy,
-                    ),
-                  ),
+                  Text('cover_letter.add_signature'.tr, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.midnightNavy)),
                   const SizedBox(height: 2),
-                  Text(
-                    'cover_letter.signature_hint'.tr,
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Text('cover_letter.signature_hint'.tr, style: GoogleFonts.outfit(fontSize: 11, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: AppColors.textSecondary,
-            ),
+            const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
           ],
         ),
       ),

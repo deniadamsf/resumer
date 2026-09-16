@@ -38,6 +38,7 @@ mobile/android/app/google-services.json
 *.png
 *.jpg
 *.jpeg
+*.pdf
 !mobile/assets/**
 laporan_*.md
 persiapan_*.md

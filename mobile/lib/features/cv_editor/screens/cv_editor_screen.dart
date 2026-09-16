@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:printing/printing.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/ad_service.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
-import '../../ats_checker/widgets/ats_report_bottom_sheet.dart';
-import '../../cover_letter/widgets/cover_letter_modal.dart';
 import '../../job_matcher/screens/job_matcher_screen.dart';
 import '../../pdf_engine/pdf_generator.dart';
+import '../../pdf_engine/pdf_preview_screen.dart';
 import '../models/cv_model.dart';
 import '../services/cv_profile_manager.dart';
 import '../widgets/ats_plain_text_dialog.dart';
@@ -178,160 +176,96 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     try {
       final payload = {
         'full_name': _cv.personalInfo.fullName,
+        'professional_title': _cv.personalInfo.professionalTitle,
         'contact': {
           'email': _cv.personalInfo.email,
           'phone': _cv.personalInfo.phone,
           'location': _cv.personalInfo.location,
         },
+        'summary': _cv.summary,
         'experiences': _cv.experiences.map((e) => e.toJson()).toList(),
         'educations': _cv.educations.map((e) => e.toJson()).toList(),
         'skills': _cv.skills,
+        'certifications': _cv.certifications,
       };
 
       final response = await ApiService.instance.generateCv(payload);
       if (response['success'] == true && mounted) {
         final data = response['cv_data'];
-        if (data['summary'] != null) {
-          _summaryController.text = data['summary'];
+        final List<String> changesApplied = [];
+
+        // Apply improved summary
+        if (data['summary'] != null && (data['summary'] as String).isNotEmpty) {
           _cv.summary = data['summary'];
+          _summaryController.text = data['summary'];
+          changesApplied.add('Summary');
         }
-        if (response['quota']?['remaining'] != null) {
-          _remainingQuota = response['quota']['remaining'];
-        }
-        await _profileMgr.saveCurrentProfile(_cv);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('common.success'.tr)));
-        }
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'] ?? 'common.error'.tr)),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${'common.error'.tr}: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
 
-  Future<void> _handleAtsCheck() async {
-    if (!mounted) return;
-    await AdService.instance.showRewardedAd(
-      context: context,
-      prompt: 'ad.reward_prompt_check'.tr,
-      onRewarded: _executeAtsCheck,
-    );
-  }
-
-  Future<void> _executeAtsCheck() async {
-    _syncModelFromControllers();
-    setState(() => _isLoading = true);
-
-    try {
-      final plainText = _cv.toPlainText();
-      final response = await ApiService.instance.checkAtsScore(
-        plainText,
-        targetRole: _cv.personalInfo.professionalTitle,
-      );
-
-      if (response['success'] == true && mounted) {
-        final result = response['ats_result'];
-        final score = (result['total_score'] as num?)?.toInt() ?? 92;
-        await _profileMgr.saveCurrentProfile(_cv, atsScore: score);
-
-        if (!mounted) return;
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => AtsReportBottomSheet(
-            score: score,
-            verdict: result['verdict'],
-            breakdown: result['breakdown'],
-            feedback: result['actionable_feedback'],
-            candidateName: _cv.personalInfo.fullName,
-            targetRole: _cv.personalInfo.professionalTitle,
-            onAutoFixTap: () {
-              Navigator.pop(ctx);
-              _handleAutoFix();
-            },
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${'common.error'.tr}: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _handleAutoFix() async {
-    if (_remainingQuota <= 0) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('quota.limit_reached'.tr)),
-        );
-      }
-      return;
-    }
-
-    if (!mounted) return;
-    await AdService.instance.showRewardedAd(
-      context: context,
-      prompt: 'ad.reward_prompt_autofix'.tr,
-      onRewarded: _executeAutoFix,
-    );
-  }
-
-  Future<void> _executeAutoFix() async {
-    _syncModelFromControllers();
-    setState(() => _isLoading = true);
-
-    try {
-      final plainText = _cv.toPlainText();
-      final response = await ApiService.instance.autoFixAts(plainText);
-
-      if (response['success'] == true && mounted) {
-        final improved = response['improved_cv'];
-        final improvedData = improved?['improved_cv_data'];
-
-        if (improvedData != null) {
-          if (improvedData['summary'] != null) {
-            _cv.summary = improvedData['summary'];
-            _summaryController.text = improvedData['summary'];
-          }
-          if (improvedData['experiences'] != null && (improvedData['experiences'] as List).isNotEmpty) {
-            final expList = improvedData['experiences'] as List;
-            for (int i = 0; i < expList.length && i < _cv.experiences.length; i++) {
-              final expItem = expList[i];
-              if (expItem['bullet_points'] != null) {
-                _cv.experiences[i].highlights = List<String>.from(expItem['bullet_points']);
-              }
+        // Apply improved experiences (bullet_points / highlights)
+        if (data['experiences'] != null && (data['experiences'] as List).isNotEmpty) {
+          final expList = data['experiences'] as List;
+          for (int i = 0; i < expList.length && i < _cv.experiences.length; i++) {
+            final expItem = expList[i] as Map<String, dynamic>;
+            // Update bullet_points / highlights
+            if (expItem['bullet_points'] != null && (expItem['bullet_points'] as List).isNotEmpty) {
+              _cv.experiences[i].highlights = List<String>.from(expItem['bullet_points']);
+            } else if (expItem['highlights'] != null && (expItem['highlights'] as List).isNotEmpty) {
+              _cv.experiences[i].highlights = List<String>.from(expItem['highlights']);
+            }
+            // Update position/title if improved
+            if (expItem['position'] != null && (expItem['position'] as String).isNotEmpty) {
+              _cv.experiences[i].position = expItem['position'];
             }
           }
-          if (improvedData['skills'] != null && (improvedData['skills'] as List).isNotEmpty) {
-            _cv.skills = List<String>.from(improvedData['skills']);
-          }
+          changesApplied.add('Work Experience');
         }
 
-        final newScore = (improved?['estimated_new_score'] as num?)?.toInt() ?? 96;
+        // Apply improved skills
+        if (data['skills'] != null && (data['skills'] as List).isNotEmpty) {
+          _cv.skills = List<String>.from(data['skills']);
+          changesApplied.add('Skills');
+        }
+
+        // Apply improved educations if present
+        if (data['educations'] != null && (data['educations'] as List).isNotEmpty) {
+          final eduList = data['educations'] as List;
+          for (int i = 0; i < eduList.length && i < _cv.educations.length; i++) {
+            final eduItem = eduList[i] as Map<String, dynamic>;
+            if (eduItem['degree'] != null && (eduItem['degree'] as String).isNotEmpty) {
+              _cv.educations[i].degree = eduItem['degree'];
+            }
+            if (eduItem['field_of_study'] != null && (eduItem['field_of_study'] as String).isNotEmpty) {
+              _cv.educations[i].fieldOfStudy = eduItem['field_of_study'];
+            }
+          }
+          changesApplied.add('Education');
+        }
+
+        // Apply improved certifications if present
+        if (data['certifications'] != null && (data['certifications'] as List).isNotEmpty) {
+          _cv.certifications = List<String>.from(data['certifications']);
+          changesApplied.add('Certifications');
+        }
+
+        // Update quota
         if (response['quota']?['remaining'] != null) {
           _remainingQuota = response['quota']['remaining'];
         }
 
-        await _profileMgr.saveCurrentProfile(_cv, atsScore: newScore);
+        await _profileMgr.saveCurrentProfile(_cv);
+
+        // Refresh all controllers from the updated model
+        _syncControllersFromModel();
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('CV berhasil dioptimalkan! Skor ATS melonjak ke $newScore+'),
-              backgroundColor: AppColors.forestPine,
-            ),
-          );
+          final changesSummary = changesApplied.isNotEmpty
+              ? changesApplied.join(', ')
+              : 'Summary';
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('CV berhasil dipoles AI! Bagian yang diperbaiki: $changesSummary'),
+            backgroundColor: AppColors.forestPine,
+            duration: const Duration(seconds: 3),
+          ));
           setState(() {});
         }
       } else if (mounted) {
@@ -359,21 +293,14 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
 
   Future<void> _executeExportPdf() async {
     _syncModelFromControllers();
-    setState(() => _isLoading = true);
 
-    try {
-      final pdfBytes = await PdfGenerator.generatePdf(_cv);
-      await Printing.layoutPdf(
-        onLayout: (format) async => pdfBytes,
-        name: '${_cv.personalInfo.fullName}_Resume.pdf',
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('PDF Error: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    if (!mounted) return;
+    final cv = _cv;
+    await PdfPreviewScreen.open(
+      context,
+      pdfBuilder: () => PdfGenerator.generatePdf(cv),
+      fileName: '${cv.personalInfo.fullName}_Resume.pdf',
+    );
   }
 
   void _openJobMatcher() {
@@ -394,15 +321,6 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     );
   }
 
-  void _handleCoverLetter() {
-    _syncModelFromControllers();
-    CoverLetterModal.show(
-      context,
-      _cv,
-      profileName: _profileMgr.currentMeta.title,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -412,14 +330,12 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
         showBackButton: false,
         actions: [
           IconButton(
-            onPressed: _handleCoverLetter,
-            icon: const Icon(Icons.mail_outline_rounded, color: AppColors.midnightNavy),
-            tooltip: 'cover_letter.title'.tr,
-          ),
-          IconButton(
-            onPressed: _openJobMatcher,
-            icon: const Icon(Icons.work_outline_rounded, color: AppColors.midnightNavy),
-            tooltip: 'job_match.title'.tr,
+            onPressed: () {
+              _syncModelFromControllers();
+              AtsPlainTextDialog.show(context, _cv.toPlainText());
+            },
+            icon: const Icon(Icons.terminal_rounded, color: AppColors.midnightNavy),
+            tooltip: 'Mode Robot ATS',
           ),
           IconButton(
             onPressed: () {
@@ -520,13 +436,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
       bottomNavigationBar: EditorBottomBar(
         isLoading: _isLoading,
         isEligibleForAi: _isEligibleForAi,
-        onAtsCheck: _handleAtsCheck,
         onAiPolish: _handleGenerateAi,
-        onCoverLetter: _handleCoverLetter,
-        onPlainTextSimulation: () {
-          _syncModelFromControllers();
-          AtsPlainTextDialog.show(context, _cv.toPlainText());
-        },
         onExportPdf: _handleExportPdf,
       ),
     );

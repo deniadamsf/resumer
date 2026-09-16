@@ -1,11 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/api_service.dart';
-import '../../cv_editor/screens/cv_editor_screen.dart';
+import '../../navigation/screens/main_navigation_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,7 +28,15 @@ class _LoginScreenState extends State<LoginScreen> {
           await ApiService.instance.googleLogin('mock_token_dev_user_123');
       if (mounted && mockResponse['success'] == true) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const CvEditorScreen()),
+          MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+        );
+        return;
+      }
+      // If server doesn't respond or offline, save local token so user can still test offline features
+      await ApiService.instance.saveToken('guest_sanctum_token');
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainNavigationShell()),
         );
       }
     } finally {
@@ -49,19 +57,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (response['success'] == true && mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const CvEditorScreen()),
+            MaterialPageRoute(builder: (_) => const MainNavigationShell()),
           );
           return;
         }
       }
     } catch (e) {
-      // In local dev/emulator if Google Play Services isn't configured, provide seamless developer fallback
+      // In local dev/emulator or if Google Play Services isn't configured, provide seamless developer fallback
       final mockResponse =
           await ApiService.instance.googleLogin('mock_token_dev_user_123');
       if (mounted) {
         if (mockResponse['success'] == true) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const CvEditorScreen()),
+            MaterialPageRoute(builder: (_) => const MainNavigationShell()),
           );
           return;
         }
@@ -79,8 +87,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.oysterCanvas,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.oysterCanvas,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -202,26 +218,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: AppColors.textSecondary,
                   ),
                 ),
-                if (kDebugMode) ...[
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: _isLoading ? null : _handleDeveloperBypass,
-                    child: Text(
-                      'Masuk Sekali Klik (Dev Mode)',
-                      style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.mutedSteelSlate,
-                        decoration: TextDecoration.underline,
-                      ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: _isLoading ? null : _handleDeveloperBypass,
+                  child: Text(
+                    'Lanjutkan sebagai Tamu (Mode Demo)',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.mutedSteelSlate,
                     ),
                   ),
-                ],
+                ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

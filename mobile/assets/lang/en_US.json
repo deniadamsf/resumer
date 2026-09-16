@@ -113,7 +113,7 @@
     "preview_title": "Formal Cover Letter Draft",
     "copy_btn": "Copy to Clipboard",
     "copied": "Cover letter copied to clipboard!",
-    "pdf_btn": "Print / Export PDF",
+    "pdf_btn": "Export PDF",
     "edit_btn": "Change Company & Role",
     "empty_error": "Please fill in target company name and role.",
     "signature_title": "Digital Signature",
@@ -149,5 +149,18 @@
   },
   "validation": {
     "core_fields_missing": "Please fill in Full Name, Contact, at least 1 Experience/Education, and 3 Skills before polishing with AI."
+  },
+  "pdf_preview": {
+    "title": "PDF Preview",
+    "save_btn": "Save PDF",
+    "share": "Share",
+    "saved": "PDF saved to Downloads:",
+    "error": "Failed to generate PDF"
+  },
+  "tabs": {
+    "editor": "Editor",
+    "ats_score": "ATS Score",
+    "job_match": "Job Match",
+    "cover_letter": "Cover Letter"
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/colors.dart';
 
@@ -26,9 +27,17 @@ class FrostedAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.paddingOf(context).top;
 
-    return Container(
-      height: 56.0 + topPadding,
-      padding: EdgeInsets.only(top: topPadding, left: 16, right: 16),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Container(
+        height: 56.0 + topPadding,
+        padding: EdgeInsets.only(top: topPadding, left: 16, right: 16),
       child: ClipRRect(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
@@ -83,6 +92,7 @@ class FrostedAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

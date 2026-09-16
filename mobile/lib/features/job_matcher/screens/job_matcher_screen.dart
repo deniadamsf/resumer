@@ -21,13 +21,15 @@ import '../widgets/job_text_input_section.dart';
 /// Clean Orchestrator Screen for AI Job Matcher
 /// Follows 100% UI UX Pro Max & Quiet Luxury standards
 class JobMatcherScreen extends StatefulWidget {
-  final CvDocument currentCv;
+  final CvDocument? currentCv;
   final ValueChanged<CvDocument>? onCvUpdated;
+  final bool? showBackButton;
 
   const JobMatcherScreen({
     super.key,
-    required this.currentCv,
+    this.currentCv,
     this.onCvUpdated,
+    this.showBackButton,
   });
 
   @override
@@ -46,7 +48,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
   @override
   void initState() {
     super.initState();
-    _cv = widget.currentCv.clone();
+    _cv = (widget.currentCv ?? CvProfileManager.instance.currentCv).clone();
     _textController.text =
         'Dibutuhkan Senior Data Specialist / BI Engineer dengan kualifikasi:\n'
         '• Mahir dalam pemrograman Python & ekosistem Data Science\n'
@@ -163,11 +165,11 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       backgroundColor: AppColors.oysterCanvas,
       appBar: FrostedAppBar(
         title: 'job_match.title'.tr,
-        showBackButton: true,
+        showBackButton: widget.showBackButton ?? (Navigator.canPop(context)),
       ),
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 90),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

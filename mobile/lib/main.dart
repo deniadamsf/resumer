@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'core/constants/colors.dart';
@@ -8,10 +9,20 @@ import 'core/services/api_service.dart';
 import 'core/services/signature_service.dart';
 import 'core/widgets/responsive_wrapper.dart';
 import 'features/auth/screens/login_screen.dart';
-import 'features/cv_editor/screens/cv_editor_screen.dart';
+import 'features/navigation/screens/main_navigation_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
   debugPrint('=== RESUMER APP STARTING ===');
 
   try {
@@ -58,6 +69,13 @@ class ResumerApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarIconBrightness: Brightness.dark,
+          ),
         ),
       ),
       builder: (context, child) {
@@ -65,7 +83,7 @@ class ResumerApp extends StatelessWidget {
         return ResponsiveWrapper(child: child!);
       },
       home: ApiService.instance.isAuthenticated
-          ? const CvEditorScreen()
+          ? const MainNavigationShell()
           : const LoginScreen(),
     );
   }

@@ -25,12 +25,16 @@ class AtsFeedbackSection extends StatelessWidget {
             children: [
               const Icon(Icons.tune_rounded, size: 18, color: AppColors.midnightNavy),
               const SizedBox(width: 8),
-              Text(
-                'ats.feedback_title'.tr,
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: Text(
+                  'ats.feedback_title'.tr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

@@ -34,7 +34,7 @@ class PdfGenerator {
               _buildSectionTitle('EXECUTIVE SUMMARY', accentColor),
               pw.SizedBox(height: 4),
               pw.Text(
-                cv.summary,
+                _cleanText(cv.summary),
                 style: const pw.TextStyle(fontSize: 10),
                 textAlign: pw.TextAlign.justify,
               ),
@@ -84,9 +84,9 @@ class PdfGenerator {
                   child: pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('• ', style: const pw.TextStyle(fontSize: 10)),
+                      _buildBulletDot(accentColor),
                       pw.Expanded(
-                        child: pw.Text(cert, style: const pw.TextStyle(fontSize: 9.5)),
+                        child: pw.Text(_cleanText(cert), style: const pw.TextStyle(fontSize: 9.5)),
                       ),
                     ],
                   ),
@@ -214,14 +214,14 @@ class PdfGenerator {
           pw.SizedBox(height: 3),
           ...exp.highlights.map(
             (hl) => pw.Padding(
-              padding: const pw.EdgeInsets.only(bottom: 2),
+              padding: const pw.EdgeInsets.only(bottom: 2.5),
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text('• ', style: const pw.TextStyle(fontSize: 10)),
+                  _buildBulletDot(accentColor),
                   pw.Expanded(
                     child: pw.Text(
-                      hl,
+                      _cleanText(hl),
                       style: const pw.TextStyle(fontSize: 9.5),
                     ),
                   ),
@@ -337,14 +337,14 @@ class PdfGenerator {
 
               // Salutation
               pw.Text(
-                letter.salutation,
+                _cleanText(letter.salutation),
                 style: const pw.TextStyle(fontSize: 10.5, color: PdfColors.black),
               ),
               pw.SizedBox(height: 12),
 
               // Paragraph 1
               pw.Text(
-                letter.paragraph1,
+                _cleanText(letter.paragraph1),
                 style: const pw.TextStyle(fontSize: 10, lineSpacing: 1.4),
                 textAlign: pw.TextAlign.justify,
               ),
@@ -352,7 +352,7 @@ class PdfGenerator {
 
               // Paragraph 2
               pw.Text(
-                letter.paragraph2,
+                _cleanText(letter.paragraph2),
                 style: const pw.TextStyle(fontSize: 10, lineSpacing: 1.4),
                 textAlign: pw.TextAlign.justify,
               ),
@@ -360,7 +360,7 @@ class PdfGenerator {
 
               // Paragraph 3
               pw.Text(
-                letter.paragraph3,
+                _cleanText(letter.paragraph3),
                 style: const pw.TextStyle(fontSize: 10, lineSpacing: 1.4),
                 textAlign: pw.TextAlign.justify,
               ),
@@ -368,7 +368,7 @@ class PdfGenerator {
 
               // Signoff & Signature
               pw.Text(
-                signoffText.isNotEmpty ? signoffText : 'Hormat saya,',
+                _cleanText(signoffText.isNotEmpty ? signoffText : 'Hormat saya,'),
                 style: const pw.TextStyle(fontSize: 10.5, color: PdfColors.black),
               ),
               pw.SizedBox(height: 6),
@@ -386,7 +386,7 @@ class PdfGenerator {
                 pw.SizedBox(height: 38),
               ],
               pw.Text(
-                cv.personalInfo.fullName,
+                _cleanText(cv.personalInfo.fullName),
                 style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black),
               ),
             ],
@@ -396,6 +396,38 @@ class PdfGenerator {
     );
 
     return pdf.save();
+  }
+
+  /// Resolution-independent vector bullet dot.
+  /// Eliminates font-encoding issues (like Helvetica missing glyph '☒' boxes).
+  static pw.Widget _buildBulletDot(PdfColor color) {
+    return pw.Container(
+      width: 3.5,
+      height: 3.5,
+      margin: const pw.EdgeInsets.only(top: 4.5, right: 6),
+      decoration: pw.BoxDecoration(
+        color: color,
+        shape: pw.BoxShape.circle,
+      ),
+    );
+  }
+
+  /// Normalizes Unicode typographic characters (curly quotes, em-dashes, bullets)
+  /// to standard clean ASCII so PDF readers never display missing glyph boxes ('󰀀' or '☒').
+  static String _cleanText(String text) {
+    return text
+        .replaceAll('\u2018', "'") // ‘
+        .replaceAll('\u2019', "'") // ’
+        .replaceAll('\u201A', "'") // ‚
+        .replaceAll('\u201C', '"') // “
+        .replaceAll('\u201D', '"') // ”
+        .replaceAll('\u201E', '"') // „
+        .replaceAll('\u2014', ' - ') // em-dash —
+        .replaceAll('\u2013', '-') // en-dash –
+        .replaceAll('\u2022', '-') // bullet •
+        .replaceAll('\u2026', '...') // ellipsis …
+        .replaceAll('\u00A0', ' ') // non-breaking space
+        .replaceAll('\u200B', ''); // zero-width space
   }
 }
 

@@ -82,12 +82,16 @@ class JobInputToggleCard extends StatelessWidget {
               color: isSelected ? Colors.white : AppColors.textSecondary,
             ),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

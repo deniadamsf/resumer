@@ -40,14 +40,19 @@ class TemplateSelectorCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'form.template_selection'.tr,
-                style: GoogleFonts.outfit(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.midnightNavy,
+              Expanded(
+                child: Text(
+                  'form.template_selection'.tr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.midnightNavy,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               // Font dropdown
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -136,16 +141,22 @@ class TemplateSelectorCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? AppColors.midnightNavy : AppColors.textPrimary,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected ? AppColors.midnightNavy : AppColors.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (isSelected)
+                if (isSelected) ...[
+                  const SizedBox(width: 4),
                   const Icon(Icons.check_circle_rounded, size: 16, color: AppColors.forestPine),
+                ],
               ],
             ),
             const SizedBox(height: 2),

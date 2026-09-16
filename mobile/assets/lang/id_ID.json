@@ -113,7 +113,7 @@
     "preview_title": "Draf Surat Lamaran Formal",
     "copy_btn": "Salin ke Clipboard",
     "copied": "Surat lamaran berhasil disalin ke clipboard!",
-    "pdf_btn": "Cetak / Ekspor PDF",
+    "pdf_btn": "Ekspor PDF",
     "edit_btn": "Ubah Target Perusahaan",
     "empty_error": "Mohon isi nama perusahaan dan posisi target.",
     "signature_title": "Tanda Tangan Digital",
@@ -149,5 +149,18 @@
   },
   "validation": {
     "core_fields_missing": "Mohon lengkapi Nama Lengkap, Kontak, minimal 1 Riwayat/Pendidikan, dan 3 Keahlian sebelum memoles dengan AI."
+  },
+  "pdf_preview": {
+    "title": "Pratinjau PDF",
+    "save_btn": "Simpan PDF",
+    "share": "Bagikan",
+    "saved": "PDF berhasil disimpan ke Downloads:",
+    "error": "Gagal membuat PDF"
+  },
+  "tabs": {
+    "editor": "Editor",
+    "ats_score": "Skor ATS",
+    "job_match": "Job Match",
+    "cover_letter": "Surat Lamaran"
   }
 }
