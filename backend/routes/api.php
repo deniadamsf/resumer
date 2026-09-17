@@ -19,6 +19,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/user/profile', [AuthController::class, 'getProfile']);
         Route::put('/user/profile', [AuthController::class, 'updateProfile']);
+        Route::delete('/user/account', [AuthController::class, 'deleteAccount']);
         Route::get('/user/quota', [QuotaController::class, 'getQuota']);
 
         // Multi-Profile CV Management (Up to 3 variations, JSON ~2-5KB)

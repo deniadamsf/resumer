@@ -1,16 +1,20 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PrivacyPolicyController;
+use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\LegalController;
+use App\Http\Controllers\Web\AccountDeletionController;
 
-Route::get('/', function () {
-    return response()->json([
-        'app' => 'Resumer API Gateway',
-        'status' => 'online',
-        'version' => '1.0.0',
-        'documentation' => 'https://resumer.cellanoma.my.id/privacy-policy',
-        'timestamp' => now()->toIso8601String(),
-    ]);
-});
+// Executive Landing Page
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show'])->name('privacy-policy');
+// Direct APK Download
+Route::get('/download-apk', [HomeController::class, 'downloadApk'])->name('download-apk');
+
+// Legal Documents (Google Play Store & GDPR/CCPA Compliance)
+Route::get('/privacy-policy', [LegalController::class, 'privacyPolicy'])->name('privacy-policy');
+Route::get('/disclaimer', [LegalController::class, 'disclaimer'])->name('disclaimer');
+
+// Account Deletion Flow (Google Play Console Policy Compliance)
+Route::get('/delete-account', [AccountDeletionController::class, 'show'])->name('account-deletion');
+Route::post('/delete-account', [AccountDeletionController::class, 'submit'])->name('account-deletion.submit');

@@ -175,4 +175,35 @@ class AuthController extends Controller
             'message' => 'Logged out successfully.',
         ]);
     }
+
+    /**
+     * Permanently delete authenticated user account and all associated data.
+     */
+    public function deleteAccount(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        $email = $user->email;
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user) {
+            $user->tokens()->delete();
+            $user->cvProfiles()->delete();
+            $user->atsHistories()->delete();
+            $user->dailyQuotas()->delete();
+            $user->delete();
+        });
+
+        Log::info("Account permanently deleted via mobile API for user: {$email}");
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Akun dan seluruh data profil CV Anda telah berhasil dihapus secara permanen.',
+        ]);
+    }
 }
