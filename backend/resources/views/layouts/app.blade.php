@@ -102,10 +102,13 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .header-navbar .container {
             height: 72px;
             display: flex;
             align-items: center;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .nav-wrapper {
@@ -247,14 +250,18 @@
             border-radius: var(--radius-md);
         }
 
-        /* Mobile Hamburger */
+        /* Mobile Hamburger & Drawer (Hidden on Desktop) */
         .mobile-menu-btn {
-            display: none;
+            display: none !important;
             background: none;
             border: none;
             cursor: pointer;
             padding: 8px;
             color: var(--primary);
+        }
+
+        .mobile-menu-drawer {
+            display: none !important;
         }
 
         /* Flash Notifications */
@@ -388,13 +395,13 @@
 
         @media (max-width: 768px) {
             .nav-links, .nav-actions .desktop-only {
-                display: none;
+                display: none !important;
             }
             .mobile-menu-btn {
-                display: block;
+                display: block !important;
             }
             .mobile-menu-drawer {
-                display: none;
+                display: none !important;
                 flex-direction: column;
                 position: absolute;
                 top: 72px;
@@ -406,7 +413,7 @@
                 box-shadow: var(--shadow-md);
             }
             .mobile-menu-drawer.open {
-                display: flex;
+                display: flex !important;
             }
             .mobile-nav-list {
                 list-style: none;
@@ -414,6 +421,7 @@
                 flex-direction: column;
                 gap: 16px;
                 margin-bottom: 20px;
+                padding: 0;
             }
             .mobile-nav-list a {
                 font-size: 15px;
