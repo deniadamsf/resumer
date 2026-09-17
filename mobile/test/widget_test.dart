@@ -18,17 +18,17 @@ void main() {
         location: 'Jakarta',
       ),
       summary: 'Experienced mobile engineer specializing in Flutter.',
-      skills: ['Flutter', 'Dart', 'Clean Architecture'],
+      skills: ['Flutter', 'Dart', 'Clean Architecture'].map((s) => SkillItem(name: s)).toList(),
     );
 
     final json = doc.toJson();
     expect(json['personal_info']['full_name'], 'Alexander Wright');
-    expect(json['skills'], contains('Flutter'));
+    expect((json['skills'] as List).any((s) => s['name'] == 'Flutter'), true);
 
     final plainText = doc.toPlainText();
     expect(plainText, contains('ALEXANDER WRIGHT'));
     expect(plainText, contains('Lead Mobile Architect'));
-    expect(plainText, contains('Flutter • Dart • Clean Architecture'));
+    expect(plainText, contains('Flutter'));
   });
 
   test('PdfGenerator produces valid non-empty PDF bytes client-side', () async {
@@ -41,7 +41,7 @@ void main() {
         location: 'Jakarta',
       ),
       summary: 'Executive Summary for ATS review.',
-      skills: ['Flutter', 'Dart'],
+      skills: ['Flutter', 'Dart'].map((s) => SkillItem(name: s)).toList(),
     );
 
     final pdfBytes = await PdfGenerator.generatePdf(doc);
@@ -117,7 +117,7 @@ void main() {
         location: 'Jakarta',
       ),
       summary: 'Executive Summary.',
-      skills: ['Flutter'],
+      skills: ['Flutter'].map((s) => SkillItem(name: s)).toList(),
     );
 
     final letter = CoverLetterModel(

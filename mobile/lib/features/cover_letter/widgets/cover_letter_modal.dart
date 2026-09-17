@@ -309,7 +309,7 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
                   border: Border.all(color: AppColors.borderHairline),
                 ),
                 child: Text(
-                  s,
+                  s.name,
                   style: GoogleFonts.outfit(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w500,

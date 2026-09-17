@@ -37,62 +37,68 @@ class FrostedAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: Container(
         height: 56.0 + topPadding,
-        padding: EdgeInsets.only(top: topPadding, left: 16, right: 16),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.85),
-              border: const Border(
-                bottom: BorderSide(color: AppColors.borderHairline, width: 1),
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.transparent,
+        ),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              height: 56.0 + topPadding,
+              width: double.infinity,
+              padding: EdgeInsets.only(top: topPadding, left: 16, right: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                border: const Border(
+                  bottom: BorderSide(color: AppColors.borderHairline, width: 1),
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                if (showBackButton)
-                  leading ??
-                      InkWell(
-                        onTap: () => Navigator.of(context).maybePop(),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.borderHairline),
-                            color: Colors.white,
+              child: Row(
+                children: [
+                  if (showBackButton)
+                    leading ??
+                        InkWell(
+                          onTap: () => Navigator.of(context).maybePop(),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.borderHairline),
+                              color: Colors.white,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 16,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            size: 16,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      )
-                else
-                  const SizedBox(width: 8),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.4,
-                      color: AppColors.midnightNavy,
+                        )
+                  else
+                    const SizedBox(width: 8),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                        color: AppColors.midnightNavy,
+                      ),
                     ),
                   ),
-                ),
-                ...?actions,
-              ],
+                  ...?actions,
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

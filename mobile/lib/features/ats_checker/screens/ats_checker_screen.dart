@@ -6,6 +6,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/ad_service.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
+import '../../cv_editor/models/cv_model.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
 import '../../cv_editor/widgets/profile_switcher_bar.dart';
 import '../widgets/ats_breakdown_section.dart';
@@ -150,7 +151,9 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             }
           }
           if (improvedData['skills'] != null && (improvedData['skills'] as List).isNotEmpty) {
-            cv.skills = List<String>.from(improvedData['skills']);
+            cv.skills = (improvedData['skills'] as List)
+                .map((s) => SkillItem.fromJson(s))
+                .toList();
           }
         }
 

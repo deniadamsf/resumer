@@ -64,12 +64,27 @@ Output JSON structure:
       "gpa": "string"
     }
   ],
-  "skills": {
-    "technical": ["string"],
-    "soft": ["string"],
-    "tools": ["string"]
-  },
-  "certifications": ["string"],
+  "skills": [
+    {
+      "name": "string",
+      "description": "string (tools, frameworks, metrics, or context)"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "string",
+      "issuer": "string",
+      "year": "string",
+      "description": "string"
+    }
+  ],
+  "languages": [
+    {
+      "name": "string",
+      "proficiency": "string"
+    }
+  ],
+  "hobbies": ["string"],
   "projects": [
     {
       "title": "string",
@@ -167,7 +182,12 @@ Output strict JSON:
         "bullet_points": ["string"]
       }
     ],
-    "skills": ["string"]
+    "skills": [
+      {
+        "name": "string",
+        "description": "string"
+      }
+    ]
   },
   "estimated_new_score": 96,
   "changes_made": [

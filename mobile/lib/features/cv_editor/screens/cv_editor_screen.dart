@@ -17,6 +17,8 @@ import '../widgets/editor_bottom_bar.dart';
 import '../widgets/education_section.dart';
 import '../widgets/executive_summary_section.dart';
 import '../widgets/job_matcher_banner.dart';
+import '../widgets/languages_section.dart';
+import '../widgets/hobbies_section.dart';
 import '../widgets/personal_info_section.dart';
 import '../widgets/profile_switcher_bar.dart';
 import '../widgets/skills_section.dart';
@@ -185,8 +187,10 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
         'summary': _cv.summary,
         'experiences': _cv.experiences.map((e) => e.toJson()).toList(),
         'educations': _cv.educations.map((e) => e.toJson()).toList(),
-        'skills': _cv.skills,
-        'certifications': _cv.certifications,
+        'skills': _cv.skills.map((s) => s.toJson()).toList(),
+        'certifications': _cv.certifications.map((c) => c.toJson()).toList(),
+        'languages': _cv.languages.map((l) => l.toJson()).toList(),
+        'hobbies': _cv.hobbies,
         'language': AppLocalizations.instance.currentLocale,
       };
 
@@ -228,30 +232,30 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
         // Apply improved skills (supports both List and categorised Map: technical, soft, tools)
         if (data['skills'] != null) {
           final skillsRaw = data['skills'];
-          final Set<String> extractedSkills = {};
+          final List<SkillItem> extractedSkills = [];
 
           if (skillsRaw is List) {
             for (final s in skillsRaw) {
-              if (s != null && s.toString().trim().isNotEmpty) {
-                extractedSkills.add(s.toString().trim());
+              if (s != null) {
+                extractedSkills.add(SkillItem.fromJson(s));
               }
             }
           } else if (skillsRaw is Map) {
             for (final value in skillsRaw.values) {
               if (value is List) {
                 for (final item in value) {
-                  if (item != null && item.toString().trim().isNotEmpty) {
-                    extractedSkills.add(item.toString().trim());
+                  if (item != null) {
+                    extractedSkills.add(SkillItem.fromJson(item));
                   }
                 }
-              } else if (value != null && value.toString().trim().isNotEmpty) {
-                extractedSkills.add(value.toString().trim());
+              } else if (value != null) {
+                extractedSkills.add(SkillItem.fromJson(value));
               }
             }
           }
 
           if (extractedSkills.isNotEmpty) {
-            _cv.skills = extractedSkills.toList();
+            _cv.skills = extractedSkills;
             changesApplied.add('Skills');
           }
         }
@@ -279,9 +283,23 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
         if (data['certifications'] != null) {
           final certsRaw = data['certifications'];
           if (certsRaw is List) {
-            _cv.certifications = certsRaw.map((c) => c.toString()).toList();
+            _cv.certifications = certsRaw.map((c) => CertificationItem.fromJson(c)).toList();
             changesApplied.add('Certifications');
           }
+        }
+
+        // Apply improved languages if present
+        if (data['languages'] != null && data['languages'] is List) {
+          final langsRaw = data['languages'] as List;
+          _cv.languages = langsRaw.map((l) => LanguageItem.fromJson(l)).toList();
+          changesApplied.add('Languages');
+        }
+
+        // Apply improved hobbies if present
+        if (data['hobbies'] != null && data['hobbies'] is List) {
+          final hobbiesRaw = data['hobbies'] as List;
+          _cv.hobbies = hobbiesRaw.map((h) => h.toString()).toList();
+          changesApplied.add('Hobbies');
         }
 
         // Update quota
@@ -450,6 +468,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
               onToggle: (val) => setState(() => _cv.showEducation = val),
               onAddEducation: (edu) => setState(() => _cv.educations.add(edu)),
               onRemoveEducation: (idx) => setState(() => _cv.educations.removeAt(idx)),
+              onUpdateEducation: (idx, edu) => setState(() => _cv.educations[idx] = edu),
             ),
             const SizedBox(height: 14),
             SkillsSection(
@@ -457,7 +476,8 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
               isEnabled: _cv.showSkills,
               onToggle: (val) => setState(() => _cv.showSkills = val),
               onAddSkill: (s) => setState(() => _cv.skills.add(s)),
-              onRemoveSkill: (s) => setState(() => _cv.skills.remove(s)),
+              onRemoveSkill: (idx) => setState(() => _cv.skills.removeAt(idx)),
+              onUpdateSkill: (idx, s) => setState(() => _cv.skills[idx] = s),
             ),
             const SizedBox(height: 14),
             CertificationsSection(
@@ -465,7 +485,25 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
               isEnabled: _cv.showCertifications,
               onToggle: (val) => setState(() => _cv.showCertifications = val),
               onAddCertification: (c) => setState(() => _cv.certifications.add(c)),
-              onRemoveCertification: (c) => setState(() => _cv.certifications.remove(c)),
+              onRemoveCertification: (idx) => setState(() => _cv.certifications.removeAt(idx)),
+              onUpdateCertification: (idx, c) => setState(() => _cv.certifications[idx] = c),
+            ),
+            const SizedBox(height: 14),
+            LanguagesSection(
+              languages: _cv.languages,
+              isEnabled: _cv.showLanguages,
+              onToggle: (val) => setState(() => _cv.showLanguages = val),
+              onAddLanguage: (lang) => setState(() => _cv.languages.add(lang)),
+              onRemoveLanguage: (idx) => setState(() => _cv.languages.removeAt(idx)),
+              onUpdateLanguage: (idx, lang) => setState(() => _cv.languages[idx] = lang),
+            ),
+            const SizedBox(height: 14),
+            HobbiesSection(
+              hobbies: _cv.hobbies,
+              isEnabled: _cv.showHobbies,
+              onToggle: (val) => setState(() => _cv.showHobbies = val),
+              onAddHobby: (h) => setState(() => _cv.hobbies.add(h)),
+              onRemoveHobby: (idx) => setState(() => _cv.hobbies.removeAt(idx)),
             ),
           ],
         ),

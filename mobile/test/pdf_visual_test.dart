@@ -36,7 +36,9 @@ void main() {
           gpa: '3.85',
         ),
       ],
-      skills: ['Flutter', 'Dart', 'Clean Architecture', 'REST APIs', 'CI/CD', 'Docker'],
+      skills: ['Flutter', 'Dart', 'Clean Architecture', 'REST APIs', 'CI/CD', 'Docker']
+          .map((s) => SkillItem(name: s))
+          .toList(),
     );
 
     final cvBytes = await PdfGenerator.generatePdf(cv);

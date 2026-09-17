@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../models/cv_model.dart';
 
-/// Skills Section using Wrap chips (GEMINI.md Bagian 4 & UI UX Pro Max)
+/// Skills Section using Wrap chips & detailed description dialog (GEMINI.md Bagian 4 & UI UX Pro Max)
 class SkillsSection extends StatelessWidget {
-  final List<String> skills;
+  final List<SkillItem> skills;
   final bool isEnabled;
   final ValueChanged<bool> onToggle;
-  final ValueChanged<String> onAddSkill;
-  final ValueChanged<String> onRemoveSkill;
+  final ValueChanged<SkillItem> onAddSkill;
+  final ValueChanged<int> onRemoveSkill;
+  final void Function(int index, SkillItem updated)? onUpdateSkill;
 
   const SkillsSection({
     super.key,
@@ -18,11 +20,102 @@ class SkillsSection extends StatelessWidget {
     required this.onToggle,
     required this.onAddSkill,
     required this.onRemoveSkill,
+    this.onUpdateSkill,
   });
+
+  void _showSkillDialog(BuildContext context, [int? editIndex]) {
+    final isEditing = editIndex != null;
+    final initialSkill = isEditing ? skills[editIndex] : null;
+
+    final nameController = TextEditingController(text: initialSkill?.name ?? '');
+    final descController = TextEditingController(text: initialSkill?.description ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.cardSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          isEditing ? 'Ubah Keahlian' : 'form.skills'.tr,
+          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'form.skill_name'.tr,
+                style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                style: GoogleFonts.outfit(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'cth: Flutter, Financial Analysis, Python',
+                  hintStyle: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'form.skill_desc'.tr,
+                style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: descController,
+                maxLines: 3,
+                style: GoogleFonts.outfit(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'cth: State management BLoC, REST APIs, CI/CD, Unit Testing (Dapat di-improve oleh AI)',
+                  hintStyle: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('common.cancel'.tr, style: GoogleFonts.outfit(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              final desc = descController.text.trim();
+              if (name.isNotEmpty) {
+                if (isEditing) {
+                  onUpdateSkill?.call(editIndex, SkillItem(name: name, description: desc));
+                } else {
+                  onAddSkill(SkillItem(name: name, description: desc));
+                }
+              }
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.midnightNavy,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text(
+              isEditing ? 'Simpan' : 'Tambah',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = TextEditingController();
+    final quickController = TextEditingController();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -67,7 +160,7 @@ class SkillsSection extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: controller,
+                    controller: quickController,
                     style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'form.skills_hint'.tr,
@@ -86,8 +179,8 @@ class SkillsSection extends StatelessWidget {
                     ),
                     onSubmitted: (val) {
                       if (val.trim().isNotEmpty) {
-                        onAddSkill(val.trim());
-                        controller.clear();
+                        onAddSkill(SkillItem(name: val.trim()));
+                        quickController.clear();
                       }
                     },
                   ),
@@ -95,12 +188,15 @@ class SkillsSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton.filled(
                   onPressed: () {
-                    final val = controller.text.trim();
+                    final val = quickController.text.trim();
                     if (val.isNotEmpty) {
-                      onAddSkill(val);
-                      controller.clear();
+                      onAddSkill(SkillItem(name: val));
+                      quickController.clear();
+                    } else {
+                      _showSkillDialog(context);
                     }
                   },
+                  tooltip: 'Tambah Keahlian',
                   icon: const Icon(Icons.add_rounded, size: 20),
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.midnightNavy,
@@ -116,30 +212,89 @@ class SkillsSection extends StatelessWidget {
             Wrap(
               spacing: 8.0,
               runSpacing: 8.0,
-              children: skills
-                  .map(
-                    (skill) => Chip(
-                      label: Text(
-                        skill,
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.midnightNavy,
-                        ),
-                      ),
-                      backgroundColor: AppColors.subtleSlateTint,
-                      deleteIcon: const Icon(Icons.close, size: 14),
-                      onDeleted: () => onRemoveSkill(skill),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: const BorderSide(color: AppColors.borderHairline),
-                      ),
-                    ),
-                  )
-                  .toList(),
+              children: [
+                for (int i = 0; i < skills.length; i++)
+                  _buildSkillChip(context, i, skills[i]),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () => _showSkillDialog(context),
+              icon: const Icon(Icons.tune_rounded, size: 15, color: AppColors.accentSteel),
+              label: Text(
+                'Tambah Keahlian dengan Deskripsi/Tools',
+                style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accentSteel),
+              ),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildSkillChip(BuildContext context, int index, SkillItem skill) {
+    final hasDesc = skill.description.trim().isNotEmpty;
+
+    return InkWell(
+      onTap: () => _showSkillDialog(context, index),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.subtleSlateTint,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasDesc ? AppColors.accentSteel.withValues(alpha: 0.4) : AppColors.borderHairline,
+            width: hasDesc ? 1.2 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  skill.name,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.midnightNavy,
+                  ),
+                ),
+                if (hasDesc) ...[
+                  const SizedBox(height: 2),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 180),
+                    child: Text(
+                      skill.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        fontSize: 10,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(width: 6),
+            InkWell(
+              onTap: () => onRemoveSkill(index),
+              borderRadius: BorderRadius.circular(10),
+              child: const Padding(
+                padding: EdgeInsets.all(2),
+                child: Icon(Icons.close, size: 14, color: AppColors.textSecondary),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -273,7 +273,7 @@ class _CoverLetterScreenState extends State<CoverLetterScreen> {
                   border: Border.all(color: AppColors.borderHairline),
                 ),
                 child: Text(
-                  s,
+                  s.name,
                   style: GoogleFonts.outfit(fontSize: 10.5, fontWeight: FontWeight.w500, color: AppColors.mutedSteelSlate),
                 ),
               )).toList(),

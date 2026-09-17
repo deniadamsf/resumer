@@ -213,7 +213,9 @@ class CvProfileManager extends ChangeNotifier {
             gpa: '3.85',
           ),
         ],
-        skills: ['Flutter', 'Dart', 'Clean Architecture', 'REST APIs', 'CI/CD', 'Docker', 'SQLite'],
+        skills: ['Flutter', 'Dart', 'Clean Architecture', 'REST APIs', 'CI/CD', 'Docker', 'SQLite']
+            .map((s) => SkillItem(name: s))
+            .toList(),
       );
     }
 
@@ -231,9 +233,11 @@ class CvProfileManager extends ChangeNotifier {
           : 'Analytical Data Specialist proficient in predictive modeling, enterprise data pipelines, and executive dashboards.',
       experiences: [],
       educations: [],
-      skills: index == 2
-          ? ['Product Roadmapping', 'Agile/Scrum', 'User Research', 'A/B Testing', 'Growth Metrics']
-          : ['SQL', 'Python', 'PowerBI', 'Tableau', 'ETL Pipelines', 'BigQuery'],
+      skills: (index == 2
+              ? ['Product Roadmapping', 'Agile/Scrum', 'User Research', 'A/B Testing', 'Growth Metrics']
+              : ['SQL', 'Python', 'PowerBI', 'Tableau', 'ETL Pipelines', 'BigQuery'])
+          .map((s) => SkillItem(name: s))
+          .toList(),
     );
   }
 }

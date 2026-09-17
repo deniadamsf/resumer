@@ -55,43 +55,109 @@ class PdfGenerator {
             if (cv.showSkills && cv.skills.isNotEmpty) ...[
               _buildSectionTitle('CORE COMPETENCIES & SKILLS', accentColor),
               pw.SizedBox(height: 4),
-              pw.Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: cv.skills
-                    .map((skill) => pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: pw.BoxDecoration(
-                            color: PdfColors.grey100,
-                            borderRadius: pw.BorderRadius.circular(3),
-                            border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: cv.skills.map((skill) {
+                  final hasDesc = skill.description.trim().isNotEmpty;
+                  if (hasDesc) {
+                    return pw.Padding(
+                      padding: const pw.EdgeInsets.only(bottom: 3),
+                      child: pw.Row(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          _buildBulletDot(accentColor),
+                          pw.Expanded(
+                            child: pw.RichText(
+                              text: pw.TextSpan(
+                                children: [
+                                  pw.TextSpan(
+                                    text: '${_cleanText(skill.name)}: ',
+                                    style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                                  ),
+                                  pw.TextSpan(
+                                    text: _cleanText(skill.description),
+                                    style: const pw.TextStyle(fontSize: 9.5, color: PdfColors.grey800),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          child: pw.Text(
-                            skill,
-                            style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                        ],
+                      ),
+                    );
+                  } else {
+                    return pw.Padding(
+                      padding: const pw.EdgeInsets.only(bottom: 2.5),
+                      child: pw.Row(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          _buildBulletDot(accentColor),
+                          pw.Expanded(
+                            child: pw.Text(_cleanText(skill.name), style: const pw.TextStyle(fontSize: 9.5)),
                           ),
-                        ))
-                    .toList(),
+                        ],
+                      ),
+                    );
+                  }
+                }).toList(),
               ),
-              pw.SizedBox(height: 12),
+              pw.SizedBox(height: 8),
             ],
             if (cv.showCertifications && cv.certifications.isNotEmpty) ...[
               _buildSectionTitle('CERTIFICATIONS', accentColor),
               pw.SizedBox(height: 4),
               ...cv.certifications.map(
-                (cert) => pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 2),
-                  child: pw.Row(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      _buildBulletDot(accentColor),
-                      pw.Expanded(
-                        child: pw.Text(_cleanText(cert), style: const pw.TextStyle(fontSize: 9.5)),
-                      ),
-                    ],
-                  ),
-                ),
+                (cert) {
+                  final title = _cleanText(cert.displayTitle);
+                  final hasDesc = cert.description.trim().isNotEmpty;
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 3),
+                    child: pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        _buildBulletDot(accentColor),
+                        pw.Expanded(
+                          child: hasDesc
+                              ? pw.RichText(
+                                  text: pw.TextSpan(
+                                    children: [
+                                      pw.TextSpan(
+                                        text: '$title — ',
+                                        style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                                      ),
+                                      pw.TextSpan(
+                                        text: _cleanText(cert.description),
+                                        style: const pw.TextStyle(fontSize: 9.5, color: PdfColors.grey800),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : pw.Text(title, style: const pw.TextStyle(fontSize: 9.5)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
+              pw.SizedBox(height: 8),
+            ],
+            if (cv.showLanguages && cv.languages.isNotEmpty) ...[
+              _buildSectionTitle('LANGUAGES', accentColor),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                cv.languages.map((l) => '${_cleanText(l.name)} (${_cleanText(l.proficiency)})').join('   •   '),
+                style: const pw.TextStyle(fontSize: 9.5, color: PdfColors.grey800),
+              ),
+              pw.SizedBox(height: 8),
+            ],
+            if (cv.showHobbies && cv.hobbies.isNotEmpty) ...[
+              _buildSectionTitle('HOBBIES & INTERESTS', accentColor),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                cv.hobbies.map((h) => _cleanText(h)).join('   •   '),
+                style: const pw.TextStyle(fontSize: 9.5, color: PdfColors.grey800),
+              ),
+              pw.SizedBox(height: 8),
             ],
           ];
         },
@@ -260,9 +326,9 @@ class PdfGenerator {
                 edu.graduationYear,
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
               ),
-              if (edu.gpa.isNotEmpty)
+              if (edu.gpa.trim().isNotEmpty)
                 pw.Text(
-                  'GPA: ${edu.gpa}',
+                  'GPA: ${edu.gpa.trim()}',
                   style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
                 ),
             ],

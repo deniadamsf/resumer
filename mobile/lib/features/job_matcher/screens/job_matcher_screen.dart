@@ -140,10 +140,10 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
 
     try {
       // Inject missing keywords into skills without duplicating
-      final currentSkills = Set<String>.from(_cv.skills.map((s) => s.toLowerCase()));
+      final currentSkills = Set<String>.from(_cv.skills.map((s) => s.name.toLowerCase()));
       for (final kw in _result!.missingKeywords) {
         if (!currentSkills.contains(kw.toLowerCase())) {
-          _cv.skills.add(kw);
+          _cv.skills.add(SkillItem(name: kw));
           currentSkills.add(kw.toLowerCase());
         }
       }

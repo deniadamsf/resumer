@@ -9,10 +9,14 @@ class CvDocument {
   bool showExperience;
   List<Education> educations;
   bool showEducation;
-  List<String> skills;
+  List<SkillItem> skills;
   bool showSkills;
-  List<String> certifications;
+  List<CertificationItem> certifications;
   bool showCertifications;
+  List<LanguageItem> languages;
+  bool showLanguages;
+  List<String> hobbies;
+  bool showHobbies;
 
   CvDocument({
     this.templateId = 'asian_ats',
@@ -29,6 +33,10 @@ class CvDocument {
     this.showSkills = true,
     this.certifications = const [],
     this.showCertifications = true,
+    this.languages = const [],
+    this.showLanguages = false,
+    this.hobbies = const [],
+    this.showHobbies = false,
   });
 
   factory CvDocument.empty() {
@@ -38,6 +46,10 @@ class CvDocument {
       educations: [],
       skills: [],
       certifications: [],
+      languages: [],
+      showLanguages: false,
+      hobbies: [],
+      showHobbies: false,
     );
   }
 
@@ -59,10 +71,14 @@ class CvDocument {
       'show_experience': showExperience,
       'educations': educations.map((e) => e.toJson()).toList(),
       'show_education': showEducation,
-      'skills': skills,
+      'skills': skills.map((s) => s.toJson()).toList(),
       'show_skills': showSkills,
-      'certifications': certifications,
+      'certifications': certifications.map((c) => c.toJson()).toList(),
       'show_certifications': showCertifications,
+      'languages': languages.map((l) => l.toJson()).toList(),
+      'show_languages': showLanguages,
+      'hobbies': hobbies,
+      'show_hobbies': showHobbies,
     };
   }
 
@@ -86,11 +102,26 @@ class CvDocument {
               .toList() ??
           [],
       showEducation: json['show_education'] as bool? ?? true,
-      skills: (json['skills'] as List<dynamic>?)?.cast<String>() ?? [],
+      skills: (json['skills'] as List<dynamic>?)
+              ?.map((s) => SkillItem.fromJson(s))
+              .toList() ??
+          [],
       showSkills: json['show_skills'] as bool? ?? true,
-      certifications:
-          (json['certifications'] as List<dynamic>?)?.cast<String>() ?? [],
+      certifications: (json['certifications'] as List<dynamic>?)
+              ?.map((c) => CertificationItem.fromJson(c))
+              .toList() ??
+          [],
       showCertifications: json['show_certifications'] as bool? ?? true,
+      languages: (json['languages'] as List<dynamic>?)
+              ?.map((l) => LanguageItem.fromJson(l))
+              .toList() ??
+          [],
+      showLanguages: json['show_languages'] as bool? ?? false,
+      hobbies: (json['hobbies'] as List<dynamic>?)
+              ?.map((h) => h.toString())
+              .toList() ??
+          [],
+      showHobbies: json['show_hobbies'] as bool? ?? false,
     );
   }
 
@@ -129,7 +160,7 @@ class CvDocument {
       for (final edu in educations) {
         buffer.writeln('${edu.degree} in ${edu.fieldOfStudy}');
         buffer.writeln('${edu.institution} (${edu.graduationYear})');
-        if (edu.gpa.isNotEmpty) buffer.writeln('GPA: ${edu.gpa}');
+        if (edu.gpa.trim().isNotEmpty) buffer.writeln('GPA: ${edu.gpa.trim()}');
         buffer.writeln();
       }
     }
@@ -137,7 +168,13 @@ class CvDocument {
     if (showSkills && skills.isNotEmpty) {
       buffer.writeln('CORE COMPETENCIES & SKILLS');
       buffer.writeln('--------------------------');
-      buffer.writeln(skills.join(' • '));
+      for (final s in skills) {
+        if (s.description.trim().isNotEmpty) {
+          buffer.writeln('• ${s.name}: ${s.description.trim()}');
+        } else {
+          buffer.writeln('• ${s.name}');
+        }
+      }
       buffer.writeln();
     }
 
@@ -145,8 +182,27 @@ class CvDocument {
       buffer.writeln('CERTIFICATIONS');
       buffer.writeln('--------------');
       for (final cert in certifications) {
-        buffer.writeln('• $cert');
+        final title = cert.displayTitle;
+        if (cert.description.trim().isNotEmpty) {
+          buffer.writeln('• $title - ${cert.description.trim()}');
+        } else {
+          buffer.writeln('• $title');
+        }
       }
+      buffer.writeln();
+    }
+
+    if (showLanguages && languages.isNotEmpty) {
+      buffer.writeln('LANGUAGES');
+      buffer.writeln('---------');
+      buffer.writeln(languages.map((l) => '${l.name} (${l.proficiency})').join(' • '));
+      buffer.writeln();
+    }
+
+    if (showHobbies && hobbies.isNotEmpty) {
+      buffer.writeln('HOBBIES & INTERESTS');
+      buffer.writeln('-------------------');
+      buffer.writeln(hobbies.join(' • '));
       buffer.writeln();
     }
 
@@ -296,3 +352,104 @@ class CvProfileMeta {
         atsScore: json['ats_score'] as int?,
       );
 }
+
+class SkillItem {
+  String name;
+  String description;
+
+  SkillItem({
+    this.name = '',
+    this.description = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'description': description,
+      };
+
+  factory SkillItem.fromJson(dynamic json) {
+    if (json is String) {
+      return SkillItem(name: json);
+    }
+    if (json is Map) {
+      return SkillItem(
+        name: json['name'] as String? ?? '',
+        description: json['description'] as String? ?? '',
+      );
+    }
+    return SkillItem(name: json?.toString() ?? '');
+  }
+}
+
+class CertificationItem {
+  String name;
+  String issuer;
+  String year;
+  String description;
+
+  CertificationItem({
+    this.name = '',
+    this.issuer = '',
+    this.year = '',
+    this.description = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'issuer': issuer,
+        'year': year,
+        'description': description,
+      };
+
+  factory CertificationItem.fromJson(dynamic json) {
+    if (json is String) {
+      return CertificationItem(name: json);
+    }
+    if (json is Map) {
+      return CertificationItem(
+        name: json['name'] as String? ?? '',
+        issuer: json['issuer'] as String? ?? '',
+        year: json['year'] as String? ?? '',
+        description: json['description'] as String? ?? '',
+      );
+    }
+    return CertificationItem(name: json?.toString() ?? '');
+  }
+
+  String get displayTitle {
+    final parts = <String>[];
+    if (name.isNotEmpty) parts.add(name);
+    if (issuer.isNotEmpty) parts.add(issuer);
+    if (year.isNotEmpty) parts.add('($year)');
+    return parts.join(' — ');
+  }
+}
+
+class LanguageItem {
+  String name;
+  String proficiency; // 'Native / Bilingual', 'Fluent', 'Professional Working', 'Intermediate', 'Elementary / Basic'
+
+  LanguageItem({
+    this.name = '',
+    this.proficiency = 'Native / Bilingual',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'proficiency': proficiency,
+      };
+
+  factory LanguageItem.fromJson(dynamic json) {
+    if (json is String) {
+      return LanguageItem(name: json);
+    }
+    if (json is Map) {
+      return LanguageItem(
+        name: json['name'] as String? ?? '',
+        proficiency: json['proficiency'] as String? ?? 'Native / Bilingual',
+      );
+    }
+    return LanguageItem(name: json?.toString() ?? '');
+  }
+}
+
