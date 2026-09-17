@@ -40,21 +40,36 @@ class _CoverLetterScreenState extends State<CoverLetterScreen> {
           ? _profileMgr.currentCv.personalInfo.professionalTitle
           : '',
     );
+    _signatureBytes = SignatureService.instance.cachedSignatureBytes;
     _loadSignature();
     _profileMgr.addListener(_onProfileUpdate);
+    SignatureService.instance.addListener(_onSignatureUpdate);
   }
 
   @override
   void dispose() {
+    SignatureService.instance.removeListener(_onSignatureUpdate);
     _profileMgr.removeListener(_onProfileUpdate);
     _companyController.dispose();
     _roleController.dispose();
     super.dispose();
   }
 
+  void _onSignatureUpdate() {
+    if (mounted) {
+      setState(() {
+        _signatureBytes = SignatureService.instance.cachedSignatureBytes;
+      });
+    }
+  }
+
   void _onProfileUpdate() {
-    if (mounted && _roleController.text.isEmpty) {
-      _roleController.text = _profileMgr.currentCv.personalInfo.professionalTitle;
+    if (mounted) {
+      setState(() {
+        if (_roleController.text.isEmpty) {
+          _roleController.text = _profileMgr.currentCv.personalInfo.professionalTitle;
+        }
+      });
     }
   }
 

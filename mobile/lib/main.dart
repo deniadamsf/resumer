@@ -58,7 +58,6 @@ class ResumerApp extends StatelessWidget {
       valueListenable: AppLocalizations.instance.localeNotifier,
       builder: (context, currentLocale, _) {
         return MaterialApp(
-          key: ValueKey(currentLocale),
           title: 'Resumer',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(

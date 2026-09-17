@@ -21,9 +21,9 @@ class JobTextInputSection extends StatelessWidget {
       HapticFeedback.lightImpact();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Teks lowongan berhasil ditempel dari clipboard'),
-            duration: Duration(seconds: 1),
+          SnackBar(
+            content: Text('job_match.pasted_from_clipboard'.tr),
+            duration: const Duration(seconds: 1),
             backgroundColor: AppColors.midnightNavy,
           ),
         );

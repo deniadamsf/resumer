@@ -185,22 +185,30 @@ PROMPT;
     /**
      * Job Matcher: Compares CV with job description (or OCR screenshot) and calculates compatibility.
      */
-    public function matchJob(string $cvText, ?string $jobText = null, ?string $imageBase64 = null): array
+    public function matchJob(string $cvText, ?string $jobText = null, ?string $imageBase64 = null, string $locale = 'id_ID'): array
     {
+        $isEnglish = str_starts_with(strtolower($locale), 'en');
+        $langInstruction = $isEnglish
+            ? "CRITICAL LANGUAGE REQUIREMENT: Output verdict and tailoring_suggestions strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Output verdict and tailoring_suggestions strictly in formal corporate Indonesian (Bahasa Indonesia baku HRD).";
+
         $systemPrompt = <<<PROMPT
 You are an AI Job Matching Specialist.
 Analyze the candidate's CV against the provided job posting text or screenshot image.
 Calculate compatibility match score (0-100%), list matching keywords, missing keywords, and recommend CV customizations.
 
+Rules:
+1. {$langInstruction}
+2. Ensure tailoring_suggestions provide concrete, actionable advice to align the CV with the job description.
+
 Output strict JSON:
 {
   "match_score": 85,
-  "verdict": "High Match / Moderate Match / Low Match",
-  "matched_keywords": ["Flutter", "REST API", "State Management"],
-  "missing_keywords": ["CI/CD", "Docker", "GraphQL"],
+  "verdict": "string",
+  "matched_keywords": ["string"],
+  "missing_keywords": ["string"],
   "tailoring_suggestions": [
-    "Emphasize your deployment experience in the experience highlights",
-    "Mention familiarity with Agile methodology"
+    "string"
   ]
 }
 PROMPT;

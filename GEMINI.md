@@ -45,8 +45,13 @@
 
 ## 3. Alur Siklus Pengerjaan (Lokal -> Test -> Deploy Online)
 * **Pengembangan Lokal Terlebih Dahulu:** Seluruh kode backend dan mobile app dibangun serta diuji coba di lingkungan lokal hingga stabil dan bebas error.
-* **Pengetesan Otomatis & Manual:** Memastikan endpoint API, schema JSON, dan UI widget berjalan mulus.
-* **Deploy ke Hosting Online:** Backend di-deploy ke hosting `resumer.cellanoma.my.id` melalui akses SSH resmi (`ssh resumer`) dan database MySQL `u731410318_resumer`.
+* **Pengetesan Otomatis & Manual:** Memastikan endpoint API, schema JSON, dan UI widget berjalan mulus (`flutter test`, `flutter analyze`).
+* **Deploy ke Hosting Online (`resumer.cellanoma.my.id`):**
+  * **Subdomain Document Root:** `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/` (memuat `.htaccess`, `index.php`, `robots.txt`, `favicon.ico`).
+  * **Laravel Core Directory:** `/home/u731410318/resumer-core/` (diletakkan terisolasi di luar `public_html` demi keamanan mutlak).
+  * **Database:** MySQL `u731410318_resumer`.
+  * **Akses SSH:** Menggunakan alias `ssh -T -n resumer` atau `ssh -T -n hostinger` (Host `153.92.8.198`, Port `65002`, User `u731410318`).
+  * **ATURAN EKSEKUSI SSH:** Selalu sertakan flag `-T -n` (misal: `ssh -T -n resumer "<command>"`) guna menonaktifkan alokasi TTY & stdin agar eksekusi perintah remote di Hostinger berjalan instan (< 1 detik) tanpa pernah *hang*/terhenti.
 
 ---
 

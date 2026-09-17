@@ -67,7 +67,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
   }
 
   void _onProfileMgrUpdate() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {
+      _cv = _profileMgr.currentCv.clone();
+      _syncControllersFromModel();
+    });
   }
 
   @override
@@ -124,10 +128,6 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
   Future<void> _handleProfileSwitch(int newIndex) async {
     _syncModelFromControllers();
     await _profileMgr.switchProfile(newIndex, currentDraft: _cv);
-    setState(() {
-      _cv = _profileMgr.currentCv.clone();
-      _syncControllersFromModel();
-    });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

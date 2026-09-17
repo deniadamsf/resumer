@@ -421,3 +421,25 @@ Backend Laravel menerapkan pola *Controller-Service-Resource* yang bersih:
   * Seluruh respons JSON wajib dibungkus menggunakan Laravel API Resource (misal: `CvResource.php`, `AtsScoreResource.php`) untuk menjamin konsistensi format output dan keamanan data.
 * **Middleware (`app/Http/Middleware/`):**
   * Memisahkan logika keamanan: verifikasi signature HMAC SHA-256 (`VerifyHmacSignature.php`), autentikasi Sanctum, dan rate limiter.
+
+---
+
+### L. Konfigurasi Server Hosting & Akses Deployment Hostinger:
+
+Berikut rincian arsitektur path hosting resmi untuk backend Resumer pada server Hostinger:
+* **Domain Subdomain:** `resumer.cellanoma.my.id`
+* **Subdomain Document Root (Web Root):**
+  `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/`
+  *(Memuat berkas publik: `.htaccess`, `index.php`, `robots.txt`, `favicon.ico`)*
+* **Laravel Core Directory (Private/Isolated):**
+  `/home/u731410318/resumer-core/`
+  *(Diletakkan di luar `public_html` demi keamanan mutlak, menyimpan `.env`, kode aplikasi, dan file vendor)*
+* **Database Server:** MySQL `u731410318_resumer` (Host: `localhost` / `127.0.0.1`)
+* **Akses SSH:** Alias `hostinger` atau `resumer`
+  * Host: `153.92.8.198`
+  * Port: `65002`
+  * User: `u731410318`
+  * IdentityFile: `~/.ssh/id_rsa` / `~/.ssh/id_ed25519_resumer`
+  * **PENTING (Flag Non-Interactive):** Wajib selalu menyertakan `-T -n` (contoh: `ssh -T -n resumer "<command>"`) guna menonaktifkan alokasi TTY & stdin agar eksekusi perintah remote Hostinger selesai dalam hitungan milidetik tanpa hanging.
+* **Perintah Pembersihan Cache Remote:**
+  `ssh -T -n resumer "cd /home/u731410318/resumer-core && php artisan optimize:clear"`

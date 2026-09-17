@@ -29,10 +29,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _profileMgr.addListener(_onStateChanged);
+    _sigService.addListener(_onStateChanged);
   }
 
   @override
   void dispose() {
+    _sigService.removeListener(_onStateChanged);
     _profileMgr.removeListener(_onStateChanged);
     super.dispose();
   }

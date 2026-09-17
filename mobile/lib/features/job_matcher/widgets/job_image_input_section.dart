@@ -118,7 +118,7 @@ class JobImageInputSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Screenshot siap dianalisis AI OCR',
+                  'job_match.screenshot_ready'.tr,
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     color: AppColors.forestPine,
@@ -168,13 +168,13 @@ class JobImageInputSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildActionButton(
-                label: 'Buka Galeri',
+                label: 'job_match.open_gallery'.tr,
                 icon: Icons.photo_library_outlined,
                 onTap: () => _pickImage(ImageSource.gallery),
               ),
               const SizedBox(width: 12),
               _buildActionButton(
-                label: 'Gunakan Kamera',
+                label: 'job_match.use_camera'.tr,
                 icon: Icons.camera_alt_outlined,
                 onTap: () => _pickImage(ImageSource.camera),
               ),

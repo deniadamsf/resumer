@@ -27,7 +27,7 @@ void main() {
     expect(find.text('Editor'), findsWidgets);
     expect(find.text('Skor ATS'), findsOneWidget);
     expect(find.text('Job Match'), findsOneWidget);
-    expect(find.text('Surat Lamaran'), findsOneWidget);
+    expect(find.text('Lamaran'), findsOneWidget);
     expect(find.text('Profil'), findsOneWidget);
 
     // Verify Quick Action buttons inside Editor do not overflow and show correct text
@@ -42,8 +42,8 @@ void main() {
     await tester.tap(find.text('Job Match'));
     await tester.pumpAndSettle();
 
-    // Tap on 'Surat Lamaran' tab
-    await tester.tap(find.text('Surat Lamaran'));
+    // Tap on 'Lamaran' tab
+    await tester.tap(find.text('Lamaran'));
     await tester.pumpAndSettle();
 
     // Tap on 'Profil' tab

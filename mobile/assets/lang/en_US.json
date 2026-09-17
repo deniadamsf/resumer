@@ -92,7 +92,11 @@
     "tailor_cv_btn": "Tailor CV to this Job",
     "tailor_cv_desc": "AI automatically injects relevant job keywords into your CV skills.",
     "tailor_success": "Job keywords successfully tailored into your CV!",
-    "no_input_error": "Please paste job text or select a job screenshot first."
+    "no_input_error": "Please paste job text or select a job screenshot first.",
+    "pasted_from_clipboard": "Job description pasted from clipboard",
+    "screenshot_ready": "Screenshot ready for AI OCR analysis",
+    "open_gallery": "Open Gallery",
+    "use_camera": "Use Camera"
   },
   "ad": {
     "reward_prompt_generate": "Watch a quick sponsored ad to generate your AI ATS resume.",
@@ -181,7 +185,7 @@
     "editor": "Editor",
     "ats_score": "ATS Score",
     "job_match": "Job Match",
-    "cover_letter": "Cover Letter",
+    "cover_letter": "Letter",
     "profile": "Profile"
   }
 }

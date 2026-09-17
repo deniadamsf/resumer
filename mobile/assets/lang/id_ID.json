@@ -92,7 +92,11 @@
     "tailor_cv_btn": "Sesuaikan CV dengan Loker Ini",
     "tailor_cv_desc": "AI otomatis menambahkan kata kunci relevan ke daftar keahlian CV Anda.",
     "tailor_success": "Kata kunci loker berhasil ditambahkan ke CV Anda!",
-    "no_input_error": "Silakan tempel teks loker atau pilih screenshot terlebih dahulu."
+    "no_input_error": "Silakan tempel teks loker atau pilih screenshot terlebih dahulu.",
+    "pasted_from_clipboard": "Teks lowongan berhasil ditempel dari clipboard",
+    "screenshot_ready": "Screenshot siap dianalisis AI OCR",
+    "open_gallery": "Buka Galeri",
+    "use_camera": "Gunakan Kamera"
   },
   "ad": {
     "reward_prompt_generate": "Tonton 1 iklan singkat untuk meramu CV berstandar tinggi dengan AI.",
@@ -181,7 +185,7 @@
     "editor": "Editor",
     "ats_score": "Skor ATS",
     "job_match": "Job Match",
-    "cover_letter": "Surat Lamaran",
+    "cover_letter": "Lamaran",
     "profile": "Profil"
   }
 }

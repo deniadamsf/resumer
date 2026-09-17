@@ -240,7 +240,8 @@ class CvController extends Controller
             $matchResult = $this->gemini->matchJob(
                 $request->input('cv_text'),
                 $request->input('job_text'),
-                $request->input('job_image')
+                $request->input('job_image'),
+                $request->input('language', 'id_ID')
             );
 
             return response()->json([

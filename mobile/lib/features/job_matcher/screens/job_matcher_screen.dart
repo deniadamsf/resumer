@@ -10,6 +10,7 @@ import '../../../core/services/api_service.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../cv_editor/models/cv_model.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
+import '../../cv_editor/widgets/profile_switcher_bar.dart';
 import '../models/job_match_model.dart';
 import '../widgets/job_image_input_section.dart';
 import '../widgets/job_input_toggle_card.dart';
@@ -37,6 +38,7 @@ class JobMatcherScreen extends StatefulWidget {
 }
 
 class _JobMatcherScreenState extends State<JobMatcherScreen> {
+  final _profileMgr = CvProfileManager.instance;
   late CvDocument _cv;
   JobInputMode _mode = JobInputMode.text;
   final _textController = TextEditingController();
@@ -48,7 +50,8 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
   @override
   void initState() {
     super.initState();
-    _cv = (widget.currentCv ?? CvProfileManager.instance.currentCv).clone();
+    _cv = (widget.currentCv ?? _profileMgr.currentCv).clone();
+    _profileMgr.addListener(_onProfileUpdate);
     _textController.text =
         'Dibutuhkan Senior Data Specialist / BI Engineer dengan kualifikasi:\n'
         '• Mahir dalam pemrograman Python & ekosistem Data Science\n'
@@ -59,8 +62,16 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
 
   @override
   void dispose() {
+    _profileMgr.removeListener(_onProfileUpdate);
     _textController.dispose();
     super.dispose();
+  }
+
+  void _onProfileUpdate() {
+    if (!mounted) return;
+    setState(() {
+      _cv = _profileMgr.currentCv.clone();
+    });
   }
 
   Future<void> _handleStartMatch() async {
@@ -173,6 +184,26 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            ProfileSwitcherBar(
+              currentIndex: _profileMgr.currentIndex,
+              currentMeta: _profileMgr.currentMeta,
+              isSyncing: _profileMgr.isSyncing,
+              onProfileSelected: (index) async {
+                await _profileMgr.switchProfile(index);
+                setState(() {
+                  _cv = _profileMgr.currentCv.clone();
+                  _result = null;
+                });
+              },
+              onRenameProfile: (newTitle, newTargetJob) {
+                _profileMgr.updateProfileMeta(
+                  _profileMgr.currentIndex,
+                  title: newTitle.isNotEmpty ? newTitle : null,
+                  targetJob: newTargetJob.isNotEmpty ? newTargetJob : null,
+                );
+              },
+            ),
+            const SizedBox(height: 14),
             Text(
               'job_match.subtitle'.tr,
               style: GoogleFonts.outfit(

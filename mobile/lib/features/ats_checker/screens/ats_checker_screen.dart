@@ -7,6 +7,7 @@ import '../../../core/services/ad_service.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
+import '../../cv_editor/widgets/profile_switcher_bar.dart';
 import '../widgets/ats_breakdown_section.dart';
 import '../widgets/ats_feedback_section.dart';
 import '../widgets/ats_score_gauge.dart';
@@ -212,6 +213,26 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            ProfileSwitcherBar(
+              currentIndex: _profileMgr.currentIndex,
+              currentMeta: _profileMgr.currentMeta,
+              isSyncing: _profileMgr.isSyncing,
+              onProfileSelected: (index) async {
+                await _profileMgr.switchProfile(index);
+                setState(() {
+                  _score = _profileMgr.currentMeta.atsScore ?? 90;
+                });
+              },
+              onRenameProfile: (newTitle, newTargetJob) {
+                _profileMgr.updateProfileMeta(
+                  _profileMgr.currentIndex,
+                  title: newTitle.isNotEmpty ? newTitle : null,
+                  targetJob: newTargetJob.isNotEmpty ? newTargetJob : null,
+                );
+              },
+            ),
+            const SizedBox(height: 14),
+
             // Hero Score Gauge Card
             Container(
               width: double.infinity,

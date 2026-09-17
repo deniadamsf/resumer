@@ -40,6 +40,17 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    AppLocalizations.instance.localeNotifier.addListener(_onLocaleChanged);
+  }
+
+  @override
+  void dispose() {
+    AppLocalizations.instance.localeNotifier.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) setState(() {});
   }
 
   void _onTabSelected(int index) {
@@ -52,10 +63,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
+    final currentLocale = AppLocalizations.instance.currentLocale;
     return Scaffold(
       extendBody: true,
       backgroundColor: AppColors.oysterCanvas,
       body: IndexedStack(
+        key: ValueKey(currentLocale),
         index: _currentIndex,
         children: _screens,
       ),
@@ -172,12 +185,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 Text(
                   label,
                   style: GoogleFonts.outfit(
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     color: isSelected
                         ? AppColors.midnightNavy
                         : AppColors.textSecondary,
-                    letterSpacing: -0.1,
+                    letterSpacing: -0.2,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
