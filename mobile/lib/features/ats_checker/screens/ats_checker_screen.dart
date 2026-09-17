@@ -98,7 +98,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             _feedback = List<dynamic>.from(result['actionable_feedback']);
           }
         });
-        await _profileMgr.saveCurrentProfile(cv, atsScore: newScore);
+        await _profileMgr.updateProfileMeta(_profileMgr.currentIndex, atsScore: newScore);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -130,7 +130,18 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
   Future<void> _executeAutoFix() async {
     setState(() => _isLoading = true);
     try {
-      final cv = _profileMgr.currentCv;
+      final cv = _profileMgr.currentCv.clone();
+      
+      // Preserve all user sections that AI Auto-Fix does not optimize
+      final preservedLanguages = List<LanguageItem>.from(cv.languages);
+      final preservedHobbies = List<String>.from(cv.hobbies);
+      final preservedCertifications = List<CertificationItem>.from(cv.certifications);
+      final preservedEducations = List<Education>.from(cv.educations);
+      final preservedPersonalInfo = cv.personalInfo;
+      final preservedShowLanguages = cv.showLanguages;
+      final preservedShowHobbies = cv.showHobbies;
+      final preservedShowCertifications = cv.showCertifications;
+
       final response = await ApiService.instance.autoFixAts(cv.toPlainText());
 
       if (response['success'] == true && mounted) {
@@ -138,24 +149,46 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         final improvedData = improved?['improved_cv_data'];
 
         if (improvedData != null) {
-          if (improvedData['summary'] != null) {
+          // 1. Optimize summary
+          if (improvedData['summary'] != null && (improvedData['summary'] as String).isNotEmpty) {
             cv.summary = improvedData['summary'];
           }
+
+          // 2. Optimize work experience bullet points
           if (improvedData['experiences'] != null && (improvedData['experiences'] as List).isNotEmpty) {
             final expList = improvedData['experiences'] as List;
             for (int i = 0; i < expList.length && i < cv.experiences.length; i++) {
               final expItem = expList[i];
-              if (expItem['bullet_points'] != null) {
+              if (expItem is Map && expItem['bullet_points'] != null && expItem['bullet_points'] is List) {
                 cv.experiences[i].highlights = List<String>.from(expItem['bullet_points']);
               }
             }
           }
+
+          // 3. Optimize skills with industry keywords
           if (improvedData['skills'] != null && (improvedData['skills'] as List).isNotEmpty) {
-            cv.skills = (improvedData['skills'] as List)
-                .map((s) => SkillItem.fromJson(s))
-                .toList();
+            final rawSkills = improvedData['skills'] as List;
+            final List<SkillItem> parsedSkills = [];
+            for (final s in rawSkills) {
+              if (s != null) {
+                parsedSkills.add(SkillItem.fromJson(s));
+              }
+            }
+            if (parsedSkills.isNotEmpty) {
+              cv.skills = parsedSkills;
+            }
           }
         }
+
+        // Restore and guarantee that core user sections are 100% intact
+        cv.languages = preservedLanguages;
+        cv.hobbies = preservedHobbies;
+        cv.certifications = preservedCertifications;
+        cv.educations = preservedEducations;
+        cv.personalInfo = preservedPersonalInfo;
+        cv.showLanguages = preservedShowLanguages;
+        cv.showHobbies = preservedShowHobbies;
+        cv.showCertifications = preservedShowCertifications;
 
         final newScore = (improved?['estimated_new_score'] as num?)?.toInt() ?? 96;
         setState(() => _score = newScore);

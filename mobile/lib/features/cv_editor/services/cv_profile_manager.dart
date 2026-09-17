@@ -96,7 +96,18 @@ class CvProfileManager extends ChangeNotifier {
     _syncSingleProfileToCloud(index);
   }
 
-  Future<void> saveCurrentProfile(CvDocument doc, {int? atsScore}) async {
+  /// Updates the draft document for the current profile in memory immediately.
+  /// Does NOT trigger notifyListeners() to avoid disrupting active typing in the editor.
+  void updateDraftSilently(CvDocument doc) {
+    _profiles[_currentIndex] = doc.clone();
+  }
+
+  /// Persists the current draft to local storage (SharedPreferences).
+  Future<void> persistDraftLocally() async {
+    await _saveLocally(_currentIndex);
+  }
+
+  Future<void> saveCurrentProfile(CvDocument doc, {int? atsScore, bool notify = true}) async {
     _profiles[_currentIndex] = doc.clone();
     if (atsScore != null) {
       final meta = getMeta(_currentIndex);
@@ -105,7 +116,9 @@ class CvProfileManager extends ChangeNotifier {
     }
 
     await _saveLocally(_currentIndex);
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
 
     await _syncSingleProfileToCloud(_currentIndex);
   }

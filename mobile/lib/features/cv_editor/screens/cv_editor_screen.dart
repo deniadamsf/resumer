@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/colors.dart';
@@ -48,18 +50,64 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
   final _linkedinController = TextEditingController();
   final _summaryController = TextEditingController();
 
+  int _lastKnownProfileIndex = 1;
+  Timer? _autoSaveTimer;
+  bool _isSyncingControllers = false;
+
   @override
   void initState() {
     super.initState();
+    _lastKnownProfileIndex = _profileMgr.currentIndex;
     _cv = _profileMgr.currentCv.clone();
     _syncControllersFromModel();
+    _attachTextListeners();
     _profileMgr.addListener(_onProfileMgrUpdate);
     _initManager();
+  }
+
+  void _attachTextListeners() {
+    _nameController.addListener(_onFieldChanged);
+    _titleController.addListener(_onFieldChanged);
+    _emailController.addListener(_onFieldChanged);
+    _phoneController.addListener(_onFieldChanged);
+    _locationController.addListener(_onFieldChanged);
+    _linkedinController.addListener(_onFieldChanged);
+    _summaryController.addListener(_onFieldChanged);
+  }
+
+  void _detachTextListeners() {
+    _nameController.removeListener(_onFieldChanged);
+    _titleController.removeListener(_onFieldChanged);
+    _emailController.removeListener(_onFieldChanged);
+    _phoneController.removeListener(_onFieldChanged);
+    _locationController.removeListener(_onFieldChanged);
+    _linkedinController.removeListener(_onFieldChanged);
+    _summaryController.removeListener(_onFieldChanged);
+  }
+
+  void _onFieldChanged() {
+    if (_isSyncingControllers) return;
+    _syncModelFromControllers();
+    // Synchronously update in-memory draft so any tab immediately reads fresh data!
+    _profileMgr.updateDraftSilently(_cv);
+    // Debounce local storage persistence to prevent disk thrashing
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(const Duration(milliseconds: 600), () {
+      _profileMgr.persistDraftLocally();
+    });
+  }
+
+  void _onSectionDataChanged() {
+    _syncModelFromControllers();
+    _profileMgr.updateDraftSilently(_cv);
+    _autoSaveTimer?.cancel();
+    _profileMgr.persistDraftLocally();
   }
 
   Future<void> _initManager() async {
     await _profileMgr.init();
     if (mounted) {
+      _lastKnownProfileIndex = _profileMgr.currentIndex;
       setState(() {
         _cv = _profileMgr.currentCv.clone();
         _syncControllersFromModel();
@@ -70,15 +118,36 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
 
   void _onProfileMgrUpdate() {
     if (!mounted) return;
-    setState(() {
-      _cv = _profileMgr.currentCv.clone();
-      _syncControllersFromModel();
-    });
+    final newIndex = _profileMgr.currentIndex;
+    final mgrCv = _profileMgr.currentCv;
+
+    final profileSwitched = newIndex != _lastKnownProfileIndex;
+    _lastKnownProfileIndex = newIndex;
+
+    if (profileSwitched) {
+      setState(() {
+        _cv = mgrCv.clone();
+        _syncControllersFromModel();
+      });
+      return;
+    }
+
+    // If profile index didn't change, only reload if external source (e.g. AI Auto-Fix or Job Matcher) altered it
+    final currentLocalJson = _cv.toJson();
+    final mgrJson = mgrCv.toJson();
+    if (json.encode(currentLocalJson) != json.encode(mgrJson)) {
+      setState(() {
+        _cv = mgrCv.clone();
+        _syncControllersFromModel();
+      });
+    }
   }
 
   @override
   void dispose() {
+    _autoSaveTimer?.cancel();
     _profileMgr.removeListener(_onProfileMgrUpdate);
+    _detachTextListeners();
     _nameController.dispose();
     _titleController.dispose();
     _emailController.dispose();
@@ -90,6 +159,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
   }
 
   void _syncControllersFromModel() {
+    _isSyncingControllers = true;
     _nameController.text = _cv.personalInfo.fullName;
     _titleController.text = _cv.personalInfo.professionalTitle;
     _emailController.text = _cv.personalInfo.email;
@@ -97,6 +167,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     _locationController.text = _cv.personalInfo.location;
     _linkedinController.text = _cv.personalInfo.linkedin;
     _summaryController.text = _cv.summary;
+    _isSyncingControllers = false;
   }
 
   void _syncModelFromControllers() {
@@ -431,8 +502,14 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
             TemplateSelectorCard(
               selectedTemplateId: _cv.templateId,
               selectedFont: _cv.fontFamily,
-              onTemplateChanged: (val) => setState(() => _cv.templateId = val),
-              onFontChanged: (val) => setState(() => _cv.fontFamily = val),
+              onTemplateChanged: (val) {
+                setState(() => _cv.templateId = val);
+                _onSectionDataChanged();
+              },
+              onFontChanged: (val) {
+                setState(() => _cv.fontFamily = val);
+                _onSectionDataChanged();
+              },
             ),
             const SizedBox(height: 14),
             PersonalInfoSection(
@@ -444,66 +521,141 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
               linkedinController: _linkedinController,
               localPhotoPath: _cv.personalInfo.localPhotoPath,
               showPhotoOption: _cv.templateId == 'asian_ats',
-              onPhotoChanged: (path) => setState(() => _cv.personalInfo.localPhotoPath = path),
+              onPhotoChanged: (path) {
+                setState(() => _cv.personalInfo.localPhotoPath = path);
+                _onSectionDataChanged();
+              },
             ),
             const SizedBox(height: 14),
             ExecutiveSummarySection(
               controller: _summaryController,
               isEnabled: _cv.showSummary,
-              onToggle: (val) => setState(() => _cv.showSummary = val),
+              onToggle: (val) {
+                setState(() => _cv.showSummary = val);
+                _onSectionDataChanged();
+              },
             ),
             const SizedBox(height: 14),
             WorkExperienceSection(
               experiences: _cv.experiences,
               isEnabled: _cv.showExperience,
-              onToggle: (val) => setState(() => _cv.showExperience = val),
-              onAddExperience: (exp) => setState(() => _cv.experiences.add(exp)),
-              onRemoveExperience: (idx) => setState(() => _cv.experiences.removeAt(idx)),
-              onUpdateExperience: (idx, exp) => setState(() => _cv.experiences[idx] = exp),
+              onToggle: (val) {
+                setState(() => _cv.showExperience = val);
+                _onSectionDataChanged();
+              },
+              onAddExperience: (exp) {
+                setState(() => _cv.experiences.add(exp));
+                _onSectionDataChanged();
+              },
+              onRemoveExperience: (idx) {
+                setState(() => _cv.experiences.removeAt(idx));
+                _onSectionDataChanged();
+              },
+              onUpdateExperience: (idx, exp) {
+                setState(() => _cv.experiences[idx] = exp);
+                _onSectionDataChanged();
+              },
             ),
             const SizedBox(height: 14),
             EducationSection(
               educations: _cv.educations,
               isEnabled: _cv.showEducation,
-              onToggle: (val) => setState(() => _cv.showEducation = val),
-              onAddEducation: (edu) => setState(() => _cv.educations.add(edu)),
-              onRemoveEducation: (idx) => setState(() => _cv.educations.removeAt(idx)),
-              onUpdateEducation: (idx, edu) => setState(() => _cv.educations[idx] = edu),
+              onToggle: (val) {
+                setState(() => _cv.showEducation = val);
+                _onSectionDataChanged();
+              },
+              onAddEducation: (edu) {
+                setState(() => _cv.educations.add(edu));
+                _onSectionDataChanged();
+              },
+              onRemoveEducation: (idx) {
+                setState(() => _cv.educations.removeAt(idx));
+                _onSectionDataChanged();
+              },
+              onUpdateEducation: (idx, edu) {
+                setState(() => _cv.educations[idx] = edu);
+                _onSectionDataChanged();
+              },
             ),
             const SizedBox(height: 14),
             SkillsSection(
               skills: _cv.skills,
               isEnabled: _cv.showSkills,
-              onToggle: (val) => setState(() => _cv.showSkills = val),
-              onAddSkill: (s) => setState(() => _cv.skills.add(s)),
-              onRemoveSkill: (idx) => setState(() => _cv.skills.removeAt(idx)),
-              onUpdateSkill: (idx, s) => setState(() => _cv.skills[idx] = s),
+              onToggle: (val) {
+                setState(() => _cv.showSkills = val);
+                _onSectionDataChanged();
+              },
+              onAddSkill: (s) {
+                setState(() => _cv.skills.add(s));
+                _onSectionDataChanged();
+              },
+              onRemoveSkill: (idx) {
+                setState(() => _cv.skills.removeAt(idx));
+                _onSectionDataChanged();
+              },
+              onUpdateSkill: (idx, s) {
+                setState(() => _cv.skills[idx] = s);
+                _onSectionDataChanged();
+              },
             ),
             const SizedBox(height: 14),
             CertificationsSection(
               certifications: _cv.certifications,
               isEnabled: _cv.showCertifications,
-              onToggle: (val) => setState(() => _cv.showCertifications = val),
-              onAddCertification: (c) => setState(() => _cv.certifications.add(c)),
-              onRemoveCertification: (idx) => setState(() => _cv.certifications.removeAt(idx)),
-              onUpdateCertification: (idx, c) => setState(() => _cv.certifications[idx] = c),
+              onToggle: (val) {
+                setState(() => _cv.showCertifications = val);
+                _onSectionDataChanged();
+              },
+              onAddCertification: (c) {
+                setState(() => _cv.certifications.add(c));
+                _onSectionDataChanged();
+              },
+              onRemoveCertification: (idx) {
+                setState(() => _cv.certifications.removeAt(idx));
+                _onSectionDataChanged();
+              },
+              onUpdateCertification: (idx, c) {
+                setState(() => _cv.certifications[idx] = c);
+                _onSectionDataChanged();
+              },
             ),
             const SizedBox(height: 14),
             LanguagesSection(
               languages: _cv.languages,
               isEnabled: _cv.showLanguages,
-              onToggle: (val) => setState(() => _cv.showLanguages = val),
-              onAddLanguage: (lang) => setState(() => _cv.languages.add(lang)),
-              onRemoveLanguage: (idx) => setState(() => _cv.languages.removeAt(idx)),
-              onUpdateLanguage: (idx, lang) => setState(() => _cv.languages[idx] = lang),
+              onToggle: (val) {
+                setState(() => _cv.showLanguages = val);
+                _onSectionDataChanged();
+              },
+              onAddLanguage: (lang) {
+                setState(() => _cv.languages.add(lang));
+                _onSectionDataChanged();
+              },
+              onRemoveLanguage: (idx) {
+                setState(() => _cv.languages.removeAt(idx));
+                _onSectionDataChanged();
+              },
+              onUpdateLanguage: (idx, lang) {
+                setState(() => _cv.languages[idx] = lang);
+                _onSectionDataChanged();
+              },
             ),
             const SizedBox(height: 14),
             HobbiesSection(
               hobbies: _cv.hobbies,
               isEnabled: _cv.showHobbies,
-              onToggle: (val) => setState(() => _cv.showHobbies = val),
-              onAddHobby: (h) => setState(() => _cv.hobbies.add(h)),
-              onRemoveHobby: (idx) => setState(() => _cv.hobbies.removeAt(idx)),
+              onToggle: (val) {
+                setState(() => _cv.showHobbies = val);
+                _onSectionDataChanged();
+              },
+              onAddHobby: (h) {
+                setState(() => _cv.hobbies.add(h));
+                _onSectionDataChanged();
+              },
+              onRemoveHobby: (idx) {
+                setState(() => _cv.hobbies.removeAt(idx));
+                _onSectionDataChanged();
+              },
             ),
           ],
         ),

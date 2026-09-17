@@ -8,6 +8,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../ats_checker/screens/ats_checker_screen.dart';
 import '../../cover_letter/screens/cover_letter_screen.dart';
 import '../../cv_editor/screens/cv_editor_screen.dart';
+import '../../cv_editor/services/cv_profile_manager.dart';
 import '../../job_matcher/screens/job_matcher_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 
@@ -56,6 +57,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   void _onTabSelected(int index) {
     if (_currentIndex == index) return;
     HapticFeedback.lightImpact();
+    // Flush any pending editor drafts to local storage immediately
+    CvProfileManager.instance.persistDraftLocally();
     setState(() {
       _currentIndex = index;
     });
