@@ -10,6 +10,7 @@ import '../../../core/widgets/frosted_app_bar.dart';
 import '../../job_matcher/screens/job_matcher_screen.dart';
 import '../../pdf_engine/pdf_generator.dart';
 import '../../pdf_engine/pdf_preview_screen.dart';
+import '../../pdf_engine/templates/template_registry.dart';
 import '../models/cv_model.dart';
 import '../services/cv_profile_manager.dart';
 import '../widgets/ats_plain_text_dialog.dart';
@@ -426,6 +427,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
       context,
       pdfBuilder: () => PdfGenerator.generatePdf(cv),
       fileName: '${cv.personalInfo.fullName}_Resume.pdf',
+      cv: cv,
+      onCvUpdated: (updated) {
+        setState(() => _cv = updated.clone());
+        _onSectionDataChanged();
+      },
     );
   }
 
@@ -502,12 +508,17 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
             TemplateSelectorCard(
               selectedTemplateId: _cv.templateId,
               selectedFont: _cv.fontFamily,
+              selectedColor: _cv.accentColor,
               onTemplateChanged: (val) {
                 setState(() => _cv.templateId = val);
                 _onSectionDataChanged();
               },
               onFontChanged: (val) {
                 setState(() => _cv.fontFamily = val);
+                _onSectionDataChanged();
+              },
+              onColorChanged: (val) {
+                setState(() => _cv.accentColor = val);
                 _onSectionDataChanged();
               },
             ),
@@ -520,7 +531,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
               locationController: _locationController,
               linkedinController: _linkedinController,
               localPhotoPath: _cv.personalInfo.localPhotoPath,
-              showPhotoOption: _cv.templateId == 'asian_ats',
+              showPhotoOption: TemplateRegistry.supportsPhoto(_cv.templateId),
               onPhotoChanged: (path) {
                 setState(() => _cv.personalInfo.localPhotoPath = path);
                 _onSectionDataChanged();

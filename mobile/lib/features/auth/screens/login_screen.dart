@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/api_service.dart';
+import '../../cv_editor/services/cv_profile_manager.dart';
 import '../../navigation/screens/main_navigation_shell.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -27,6 +28,14 @@ class _LoginScreenState extends State<LoginScreen> {
       final mockResponse =
           await ApiService.instance.googleLogin('mock_token_dev_user_123');
       if (mounted && mockResponse['success'] == true) {
+        if (mockResponse['user'] != null) {
+          await ApiService.instance.saveUserData(
+            name: mockResponse['user']['name'] ?? 'Demo User',
+            email: mockResponse['user']['email'] ?? 'demo@example.com',
+            avatar: mockResponse['user']['avatar_url'],
+          );
+        }
+        if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainNavigationShell()),
         );
@@ -34,6 +43,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       // If server doesn't respond or offline, save local token so user can still test offline features
       await ApiService.instance.saveToken('guest_sanctum_token');
+      await ApiService.instance.saveUserData(
+        name: 'Tamu Eksekutif',
+        email: 'tamu@resumer.cellanoma.my.id',
+      );
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainNavigationShell()),
@@ -48,34 +61,57 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final googleAccount = await _googleSignIn.signIn().timeout(const Duration(seconds: 3));
-      if (googleAccount != null) {
-        final googleAuth = await googleAccount.authentication;
-        final idToken = googleAuth.idToken ?? 'mock_token_${googleAccount.id}';
+      final googleAccount = await _googleSignIn.signIn();
+      if (googleAccount == null) {
+        // User cancelled account picker dialog — exit gracefully without error
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
 
-        final response = await ApiService.instance.googleLogin(idToken);
+      final googleAuth = await googleAccount.authentication;
+      final idToken = googleAuth.idToken ?? 'mock_token_${googleAccount.id}';
 
-        if (response['success'] == true && mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const MainNavigationShell()),
-          );
-          return;
+      final response = await ApiService.instance.googleLogin(idToken);
+
+      if (response['success'] == true && mounted) {
+        // Save user profile info
+        final userObj = response['user'] as Map<String, dynamic>?;
+        final candidateName = userObj?['name'] ?? googleAccount.displayName ?? 'Resumer User';
+        final candidateEmail = userObj?['email'] ?? googleAccount.email;
+        final candidateAvatar = userObj?['avatar_url'] ?? googleAccount.photoUrl;
+
+        await ApiService.instance.saveUserData(
+          name: candidateName,
+          email: candidateEmail,
+          avatar: candidateAvatar,
+        );
+
+        // Sync to CV if active CV still uses default name
+        final cv = CvProfileManager.instance.currentCv;
+        if (cv.personalInfo.fullName.isEmpty || cv.personalInfo.fullName == 'Alexander Wright') {
+          cv.personalInfo.fullName = candidateName;
+          if (cv.personalInfo.email.isEmpty || cv.personalInfo.email == 'alexander.wright@executive.io') {
+            cv.personalInfo.email = candidateEmail;
+          }
+          CvProfileManager.instance.updateDraftSilently(cv);
+          CvProfileManager.instance.persistDraftLocally();
         }
+
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+        );
+        return;
+      } else {
+        throw Exception(response['message'] ?? 'Otentikasi server gagal.');
       }
     } catch (e) {
-      // In local dev/emulator or if Google Play Services isn't configured, provide seamless developer fallback
-      final mockResponse =
-          await ApiService.instance.googleLogin('mock_token_dev_user_123');
       if (mounted) {
-        if (mockResponse['success'] == true) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const MainNavigationShell()),
-          );
-          return;
-        }
-
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${'common.error'.tr}: $e')),
+          SnackBar(
+            content: Text('${'common.error'.tr}: $e'),
+            backgroundColor: AppColors.crimsonBordeaux,
+          ),
         );
       }
     } finally {

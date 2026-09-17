@@ -9,6 +9,7 @@ import '../../../core/widgets/frosted_app_bar.dart';
 import '../../cv_editor/models/cv_model.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
 import '../../cv_editor/widgets/profile_switcher_bar.dart';
+import '../../pdf_engine/templates/template_registry.dart';
 import '../widgets/ats_breakdown_section.dart';
 import '../widgets/ats_feedback_section.dart';
 import '../widgets/ats_score_gauge.dart';
@@ -269,6 +270,10 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             ),
             const SizedBox(height: 14),
 
+            // Active Template Context Info Card
+            _buildActiveTemplateCard(_profileMgr.currentCv),
+            const SizedBox(height: 14),
+
             // Hero Score Gauge Card
             Container(
               width: double.infinity,
@@ -349,6 +354,124 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             AtsFeedbackSection(feedbackList: _feedback),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildActiveTemplateCard(CvDocument cv) {
+    final template = TemplateRegistry.getTemplate(cv.templateId);
+    final isAts = template.isAtsFriendly;
+    final badgeColor = isAts ? AppColors.forestPine : AppColors.antiqueBronze;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderHairline),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isAts ? Icons.verified_rounded : Icons.palette_outlined,
+                size: 18,
+                color: badgeColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Template: ${template.nameKey.tr}',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.midnightNavy,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isAts ? 'ATS Ready (1-Kolom)' : 'Kreatif (Non-ATS)',
+                  style: GoogleFonts.outfit(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: badgeColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!isAts) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7).withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.antiqueBronze.withValues(alpha: 0.25)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '💡 Analisis skor di atas menguji kekuatan isi teks Anda. Format Kreatif 2-kolom sangat memikat untuk HRD manusia (email langsung/portofolio), namun jika melamar ke portal ATS otomatis, disarankan beralih ke template ATS 1-kolom.',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      color: AppColors.textPrimary,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 32,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        cv.templateId = 'asian_ats';
+                        await _profileMgr.saveCurrentProfile(cv);
+                        setState(() {});
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Beralih ke template Asian ATS Classic'),
+                              duration: Duration(seconds: 2),
+                              backgroundColor: AppColors.forestPine,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.swap_horiz_rounded, size: 14, color: AppColors.midnightNavy),
+                      label: Text(
+                        'Beralih ke Template Asian ATS',
+                        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.midnightNavy, width: 0.8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

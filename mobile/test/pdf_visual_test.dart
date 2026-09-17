@@ -62,4 +62,71 @@ void main() {
     expect(cvBytes.isNotEmpty, true);
     expect(letterBytes.isNotEmpty, true);
   });
+
+  test('Generate PDF for all 6 registered templates across all official colors', () async {
+    final cv = CvDocument(
+      personalInfo: PersonalInfo(
+        fullName: 'Alexander Wright',
+        professionalTitle: 'Lead Mobile Architect',
+        email: 'alexander.wright@executive.io',
+        phone: '+62 812-9876-5432',
+        location: 'Jakarta, Indonesia',
+        linkedin: 'linkedin.com/in/alexanderwright',
+      ),
+      summary: "Executive Summary: 8+ years architecting scalable Flutter apps.",
+      experiences: [
+        WorkExperience(
+          company: 'Zenith Global',
+          position: 'Lead Mobile Engineer',
+          startDate: '2022',
+          endDate: 'Present',
+          highlights: ['Reduced API latency by 45% using client-side caching.'],
+        ),
+      ],
+      educations: [
+        Education(
+          institution: 'Institute of Technology',
+          degree: 'B.S.',
+          fieldOfStudy: 'Computer Science',
+          graduationYear: '2020',
+          gpa: '3.85',
+        ),
+      ],
+      skills: [
+        SkillItem(name: 'Flutter & Dart', description: 'Enterprise state management'),
+        SkillItem(name: 'Clean Architecture', description: 'Layered domain design'),
+      ],
+      certifications: [
+        CertificationItem(name: 'Google Cloud Certified', issuer: 'Google', year: '2023'),
+      ],
+      languages: [
+        LanguageItem(name: 'Indonesian', proficiency: 'Native / Bilingual'),
+        LanguageItem(name: 'English', proficiency: 'Professional Working'),
+      ],
+      showLanguages: true,
+      hobbies: ['Chess', 'Open Source', 'Photography'],
+      showHobbies: true,
+    );
+
+    final templateIds = [
+      'asian_ats',
+      'western_strict',
+      'modern_ats',
+      'modern_creative',
+      'compact_portfolio',
+      'executive_split',
+    ];
+
+    final colors = ['#0B132B', '#065F46', '#1C2541', '#92400E'];
+
+    for (int i = 0; i < templateIds.length; i++) {
+      final tId = templateIds[i];
+      cv.templateId = tId;
+      cv.accentColor = colors[i % colors.length];
+
+      final bytes = await PdfGenerator.generatePdf(cv);
+      expect(bytes.isNotEmpty, true, reason: 'Template $tId should produce valid non-empty PDF bytes');
+      expect(bytes.length, greaterThan(1000), reason: 'Template $tId should have complete document body');
+    }
+  });
 }

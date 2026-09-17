@@ -33,16 +33,25 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Find or create user by google_id or email
-        $user = User::updateOrCreate(
-            ['google_id' => $googleUser['sub']],
-            [
+        // Find existing user or create a new user
+        $user = User::where('google_id', $googleUser['sub'])->first();
+
+        if (!$user) {
+            $user = User::create([
+                'google_id' => $googleUser['sub'],
                 'email' => $googleUser['email'],
                 'name' => $googleUser['name'] ?? 'Resumer User',
                 'avatar_url' => $googleUser['picture'] ?? null,
                 'device_uuid' => $deviceUuid,
-            ]
-        );
+            ]);
+        } else {
+            // Preserve user's custom name if already edited/set!
+            $user->update([
+                'email' => $googleUser['email'],
+                'avatar_url' => $googleUser['picture'] ?? $user->avatar_url,
+                'device_uuid' => $deviceUuid,
+            ]);
+        }
 
         // Revoke old tokens and create a fresh Sanctum token
         $user->tokens()->delete();
@@ -107,6 +116,51 @@ class AuthController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Get authenticated user profile.
+     */
+    public function getProfile(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar_url' => $user->avatar_url,
+                'device_uuid' => $user->device_uuid,
+            ],
+        ]);
+    }
+
+    /**
+     * Update user profile name independently from Google account name.
+     */
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        $user = $request->user();
+        $user->name = trim($request->input('name'));
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil pengguna berhasil diperbarui.',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar_url' => $user->avatar_url,
+                'device_uuid' => $user->device_uuid,
+            ],
+        ]);
     }
 
     /**

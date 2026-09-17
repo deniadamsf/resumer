@@ -10,18 +10,24 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants/colors.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/widgets/frosted_app_bar.dart';
+import '../cv_editor/models/cv_model.dart';
+import 'pdf_generator.dart';
+import 'templates/template_registry.dart';
 
-/// Full-screen PDF Preview with Save & Share — No Print Dialog
-/// Replaces Printing.layoutPdf() to eliminate unreadable OS toolbar icons in exported PDFs.
+/// Full-screen PDF Preview with Save, Share & Live Quick Template Switching.
 /// Adheres 100% to UI UX Pro Max and Quiet Luxury standards.
 class PdfPreviewScreen extends StatefulWidget {
   final Future<Uint8List> Function() pdfBuilder;
   final String fileName;
+  final CvDocument? cv;
+  final ValueChanged<CvDocument>? onCvUpdated;
 
   const PdfPreviewScreen({
     super.key,
     required this.pdfBuilder,
     required this.fileName,
+    this.cv,
+    this.onCvUpdated,
   });
 
   /// Open PDF Preview as a full-screen route
@@ -29,6 +35,8 @@ class PdfPreviewScreen extends StatefulWidget {
     BuildContext context, {
     required Future<Uint8List> Function() pdfBuilder,
     required String fileName,
+    CvDocument? cv,
+    ValueChanged<CvDocument>? onCvUpdated,
   }) {
     return Navigator.push(
       context,
@@ -36,6 +44,8 @@ class PdfPreviewScreen extends StatefulWidget {
         builder: (_) => PdfPreviewScreen(
           pdfBuilder: pdfBuilder,
           fileName: fileName,
+          cv: cv,
+          onCvUpdated: onCvUpdated,
         ),
       ),
     );
@@ -50,16 +60,22 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   String? _error;
+  CvDocument? _activeCv;
 
   @override
   void initState() {
     super.initState();
+    if (widget.cv != null) {
+      _activeCv = widget.cv!.clone();
+    }
     _buildPdf();
   }
 
   Future<void> _buildPdf() async {
     try {
-      final bytes = await widget.pdfBuilder();
+      final bytes = _activeCv != null
+          ? await PdfGenerator.generatePdf(_activeCv!)
+          : await widget.pdfBuilder();
       if (mounted) {
         setState(() {
           _pdfBytes = bytes;
@@ -76,6 +92,37 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
     }
   }
 
+  void _switchTemplate(String templateId) {
+    if (_activeCv == null || _activeCv!.templateId == templateId) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _activeCv!.templateId = templateId;
+      _isLoading = true;
+    });
+    widget.onCvUpdated?.call(_activeCv!);
+    _buildPdf();
+  }
+
+  void _switchColor(String colorHex) {
+    if (_activeCv == null || _activeCv!.accentColor.toUpperCase() == colorHex.toUpperCase()) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _activeCv!.accentColor = colorHex;
+      _isLoading = true;
+    });
+    widget.onCvUpdated?.call(_activeCv!);
+    _buildPdf();
+  }
+
+  Color _parseHex(String hex) {
+    try {
+      final clean = hex.replaceAll('#', '');
+      return Color(int.parse('FF$clean', radix: 16));
+    } catch (_) {
+      return AppColors.midnightNavy;
+    }
+  }
+
   Future<File> _writeTempFile() async {
     final dir = await getTemporaryDirectory();
     final sanitized = widget.fileName.replaceAll(RegExp(r'[^\w\s\-\.]'), '_');
@@ -89,7 +136,6 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
     setState(() => _isSaving = true);
 
     try {
-      // Save to Downloads directory on Android, Documents on iOS
       Directory? saveDir;
       if (Platform.isAndroid) {
         saveDir = Directory('/storage/emulated/0/Download');
@@ -221,9 +267,11 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
   Widget _buildPreview() {
     return PdfPreview(
       build: (_) async => _pdfBytes!,
+      useActions: false,
+      canChangeOrientation: false,
+      canChangePageFormat: false,
       allowPrinting: false,
       allowSharing: false,
-      canChangePageFormat: false,
       canDebug: false,
       pdfFileName: widget.fileName,
       loadingWidget: const CircularProgressIndicator(
@@ -251,52 +299,142 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
         ],
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Save PDF Button
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _isSaving ? null : _handleSave,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.download_rounded, size: 18, color: Colors.white),
-                label: Text(
-                  _isSaving ? 'common.loading'.tr : 'pdf_preview.save_btn'.tr,
-                  style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w700),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.midnightNavy,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(0, 52),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
+            // Quick Live Template & Color Switcher (Only if CV document is passed)
+            if (_activeCv != null) ...[
+              SizedBox(
+                height: 34,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: TemplateRegistry.all.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (ctx, idx) {
+                    final t = TemplateRegistry.all[idx];
+                    final isSelected = _activeCv!.templateId == t.id;
+                    return GestureDetector(
+                      onTap: () => _switchTemplate(t.id),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.midnightNavy : AppColors.subtleSlateTint,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected ? AppColors.midnightNavy : AppColors.borderHairline,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            if (isSelected) ...[
+                              const Icon(Icons.check, size: 12, color: Colors.white),
+                              const SizedBox(width: 4),
+                            ],
+                            Text(
+                              t.nameKey.tr,
+                              style: GoogleFonts.outfit(
+                                fontSize: 11,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected ? Colors.white : AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            // Share PDF Button
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _handleShare,
-                icon: const Icon(Icons.share_rounded, size: 18, color: AppColors.midnightNavy),
-                label: Text(
-                  'pdf_preview.share'.tr,
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.midnightNavy,
+              const SizedBox(height: 10),
+              // Color Palette quick picker
+              Row(
+                children: [
+                  Text(
+                    'form.color_selection'.tr,
+                    style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                  ),
+                  const Spacer(),
+                  Wrap(
+                    spacing: 8,
+                    children: TemplateRegistry.officialColors.map((colorOpt) {
+                      final isColorSelected = _activeCv!.accentColor.toUpperCase() == colorOpt.hex.toUpperCase();
+                      final swatchColor = _parseHex(colorOpt.hex);
+                      return GestureDetector(
+                        onTap: () => _switchColor(colorOpt.hex),
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: swatchColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isColorSelected ? AppColors.midnightNavy : Colors.white,
+                              width: isColorSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: isColorSelected
+                              ? const Center(child: Icon(Icons.check, size: 11, color: Colors.white))
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: AppColors.borderHairline),
+              const SizedBox(height: 10),
+            ],
+
+            // Save & Share Buttons
+            Row(
+              children: [
+                // Save PDF Button
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isSaving ? null : _handleSave,
+                    icon: _isSaving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.download_rounded, size: 18, color: Colors.white),
+                    label: Text(
+                      _isSaving ? 'common.loading'.tr : 'pdf_preview.save_btn'.tr,
+                      style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.midnightNavy,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
                   ),
                 ),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(0, 52),
-                  side: const BorderSide(color: AppColors.borderHairline),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                const SizedBox(width: 10),
+                // Share PDF Button
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _handleShare,
+                    icon: const Icon(Icons.share_rounded, size: 18, color: AppColors.midnightNavy),
+                    label: Text(
+                      'pdf_preview.share'.tr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.midnightNavy,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 50),
+                      side: const BorderSide(color: AppColors.borderHairline),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),

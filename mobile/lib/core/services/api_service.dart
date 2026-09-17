@@ -14,11 +14,17 @@ class ApiService {
 
   String? _authToken;
   String? _deviceUuid;
+  String? _userName;
+  String? _userEmail;
+  String? _userAvatar;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _authToken = prefs.getString('auth_token');
     _deviceUuid = prefs.getString('device_uuid');
+    _userName = prefs.getString('user_name');
+    _userEmail = prefs.getString('user_email');
+    _userAvatar = prefs.getString('user_avatar');
 
     if (_deviceUuid == null) {
       _deviceUuid = const Uuid().v4();
@@ -28,6 +34,9 @@ class ApiService {
 
   bool get isAuthenticated => _authToken != null;
   String get deviceUuid => _deviceUuid ?? 'unknown-device';
+  String get userName => _userName ?? 'Alexander Wright';
+  String get userEmail => _userEmail ?? 'alexander.wright@executive.io';
+  String? get userAvatar => _userAvatar;
 
   Future<void> saveToken(String token) async {
     _authToken = token;
@@ -35,10 +44,77 @@ class ApiService {
     await prefs.setString('auth_token', token);
   }
 
+  Future<void> saveUserData({
+    required String name,
+    required String email,
+    String? avatar,
+  }) async {
+    _userName = name;
+    _userEmail = email;
+    _userAvatar = avatar;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_name', name);
+    await prefs.setString('user_email', email);
+    if (avatar != null) {
+      await prefs.setString('user_avatar', avatar);
+    }
+  }
+
+  Future<Map<String, dynamic>> updateUserName(String newName) async {
+    _userName = newName;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_name', newName);
+
+    if (isAuthenticated) {
+      final url = Uri.parse('$baseUrl/user/profile');
+      final body = json.encode({'name': newName});
+      try {
+        final response = await http.put(url, headers: _buildHeaders(body), body: body);
+        if (response.statusCode == 200) {
+          return json.decode(response.body) as Map<String, dynamic>;
+        }
+      } catch (_) {}
+    }
+
+    return {
+      'success': true,
+      'message': 'Profil pengguna berhasil diperbarui.',
+      'user': {'name': newName},
+    };
+  }
+
+  Future<Map<String, dynamic>> getUserProfile() async {
+    if (!isAuthenticated) return {'success': false};
+    final url = Uri.parse('$baseUrl/user/profile');
+    try {
+      final response = await http.get(url, headers: _buildHeaders(''));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        if (data['user'] != null) {
+          final u = data['user'] as Map<String, dynamic>;
+          await saveUserData(
+            name: u['name'] ?? userName,
+            email: u['email'] ?? userEmail,
+            avatar: u['avatar_url'] ?? userAvatar,
+          );
+        }
+        return data;
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
+
   Future<void> clearAuth() async {
     _authToken = null;
+    _userName = null;
+    _userEmail = null;
+    _userAvatar = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
+    await prefs.remove('user_avatar');
   }
 
   Map<String, String> _buildHeaders(String body) {
@@ -81,6 +157,14 @@ class ApiService {
 
     if (response.statusCode == 200 && data['token'] != null) {
       await saveToken(data['token']);
+      if (data['user'] != null) {
+        final u = data['user'] as Map<String, dynamic>;
+        await saveUserData(
+          name: u['name'] ?? userName,
+          email: u['email'] ?? userEmail,
+          avatar: u['avatar_url'],
+        );
+      }
     }
 
     return data;

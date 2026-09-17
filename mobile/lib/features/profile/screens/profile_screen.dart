@@ -180,6 +180,157 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _handleEditUserProfile() async {
+    final currentName = _apiService.userName;
+    final nameController = TextEditingController(text: currentName);
+    bool syncToActiveCv = true;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.borderHairline,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  'profile.edit_user_name_title'.tr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.midnightNavy,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'profile.edit_user_name_desc'.tr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12.5,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    labelText: 'profile.user_name_label'.tr,
+                    hintText: 'Nama lengkap profesional Anda',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.badge_outlined, size: 20, color: AppColors.midnightNavy),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () {
+                    setModalState(() => syncToActiveCv = !syncToActiveCv);
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: syncToActiveCv,
+                          activeColor: AppColors.midnightNavy,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          onChanged: (val) {
+                            setModalState(() => syncToActiveCv = val ?? true);
+                          },
+                        ),
+                        Expanded(
+                          child: Text(
+                            'profile.sync_to_cv_label'.tr,
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.midnightNavy,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () async {
+                      final newName = nameController.text.trim();
+                      if (newName.isNotEmpty) {
+                        HapticFeedback.mediumImpact();
+                        await _apiService.updateUserName(newName);
+
+                        if (syncToActiveCv) {
+                          final cv = _profileMgr.currentCv;
+                          cv.personalInfo.fullName = newName;
+                          _profileMgr.updateDraftSilently(cv);
+                          await _profileMgr.persistDraftLocally();
+                        }
+
+                        if (mounted) setState(() {});
+                        if (ctx.mounted) Navigator.pop(ctx);
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('profile.user_name_updated'.tr),
+                              backgroundColor: AppColors.forestPine,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: Text(
+                      'common.save'.tr,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _handleSignOut() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -227,13 +378,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final currentLocale = AppLocalizations.instance.currentLocale;
     final activeCv = _profileMgr.currentCv;
-    final fullName = activeCv.personalInfo.fullName.isNotEmpty
-        ? activeCv.personalInfo.fullName
-        : 'Alexander Wright';
-    final email = activeCv.personalInfo.email.isNotEmpty
-        ? activeCv.personalInfo.email
-        : 'alexander.wright@executive.io';
-    final initials = _getInitials(fullName);
+    final userFullName = _apiService.userName.isNotEmpty
+        ? _apiService.userName
+        : (activeCv.personalInfo.fullName.isNotEmpty
+            ? activeCv.personalInfo.fullName
+            : 'Alexander Wright');
+    final userEmail = _apiService.userEmail.isNotEmpty
+        ? _apiService.userEmail
+        : (activeCv.personalInfo.email.isNotEmpty
+            ? activeCv.personalInfo.email
+            : 'alexander.wright@executive.io');
+    final initials = _getInitials(userFullName);
 
     return Scaffold(
       backgroundColor: AppColors.oysterCanvas,
@@ -248,7 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Executive Account Card
-            _buildAccountCard(fullName, email, initials),
+            _buildAccountCard(userFullName, userEmail, initials),
             const SizedBox(height: 18),
 
             // 2. Language Selector Card (Indonesian / English)
@@ -393,6 +548,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _handleEditUserProfile,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.subtleSlateTint,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.borderHairline),
+                ),
+                child: const Icon(
+                  Icons.more_horiz_rounded,
+                  size: 20,
+                  color: AppColors.midnightNavy,
+                ),
+              ),
             ),
           ),
         ],
