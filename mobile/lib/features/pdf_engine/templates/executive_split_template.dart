@@ -38,6 +38,7 @@ class ExecutiveSplitTemplate extends CvTemplate {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 34),
+        footer: buildFooter,
         build: (pw.Context context) {
           return [
             // Executive Header with Left Accent Pillar

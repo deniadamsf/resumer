@@ -37,6 +37,7 @@ class WesternStrictTemplate extends CvTemplate {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 36),
+        footer: buildFooter,
         build: (pw.Context context) {
           return [
             // Center-aligned clean candidate header

@@ -38,6 +38,7 @@ class ModernAtsTemplate extends CvTemplate {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(36),
+        footer: buildFooter,
         build: (pw.Context context) {
           return [
             // Top accent bar

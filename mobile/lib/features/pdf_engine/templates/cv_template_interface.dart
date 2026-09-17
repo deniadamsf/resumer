@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
 
 /// Category of CV Template: Machine ATS-Friendly vs Visual Creative Non-ATS
@@ -44,4 +45,24 @@ abstract class CvTemplate {
       return const PdfColor(11 / 255, 19 / 255, 43 / 255); // #0B132B
     }
   }
+
+  /// Generates an executive footer when the CV naturally spans across multiple pages.
+  /// If it is a 1-page CV, no footer is displayed to preserve a clean single-page presentation.
+  pw.Widget buildFooter(pw.Context context) {
+    if (context.pagesCount <= 1) {
+      return pw.SizedBox();
+    }
+    return pw.Container(
+      alignment: pw.Alignment.centerRight,
+      margin: const pw.EdgeInsets.only(top: 8),
+      child: pw.Text(
+        'Halaman ${context.pageNumber} / ${context.pagesCount}',
+        style: const pw.TextStyle(
+          fontSize: 8,
+          color: PdfColors.grey600,
+        ),
+      ),
+    );
+  }
 }
+

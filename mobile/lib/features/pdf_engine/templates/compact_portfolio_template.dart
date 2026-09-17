@@ -38,6 +38,7 @@ class CompactPortfolioTemplate extends CvTemplate {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
+        footer: buildFooter,
         build: (pw.Context context) {
           return [
             // Hero Header Card
