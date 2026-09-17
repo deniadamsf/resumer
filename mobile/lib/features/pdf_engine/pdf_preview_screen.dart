@@ -12,6 +12,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/widgets/frosted_app_bar.dart';
 import '../cv_editor/models/cv_model.dart';
 import 'pdf_generator.dart';
+import 'templates/cv_template_interface.dart';
 import 'templates/template_registry.dart';
 
 /// Full-screen PDF Preview with Save, Share & Live Quick Template Switching.
@@ -112,6 +113,264 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
     });
     widget.onCvUpdated?.call(_activeCv!);
     _buildPdf();
+  }
+
+  void _showTemplatePickerSheet() {
+    CvTemplateCategory activeCategory =
+        TemplateRegistry.getTemplate(_activeCv!.templateId).category;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheetState) {
+            final categoryTemplates = TemplateRegistry.byCategory(activeCategory);
+            final atsCount = TemplateRegistry.byCategory(CvTemplateCategory.atsFriendly).length;
+            final creativeCount = TemplateRegistry.byCategory(CvTemplateCategory.creativeNonAts).length;
+
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.75,
+              ),
+              decoration: const BoxDecoration(
+                color: AppColors.cardSurface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag Handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.borderHairline,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+
+                  // Header with title and close button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'form.template_switch_modal_title'.tr,
+                          style: GoogleFonts.outfit(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.midnightNavy,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(modalCtx),
+                          icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.textSecondary),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Category Tabs (ATS vs Kreatif)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: AppColors.subtleSlateTint,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildSheetCategoryTab(
+                              label: 'form.template_category_ats'.tr,
+                              count: '$atsCount',
+                              isSelected: activeCategory == CvTemplateCategory.atsFriendly,
+                              onTap: () {
+                                setSheetState(() => activeCategory = CvTemplateCategory.atsFriendly);
+                              },
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildSheetCategoryTab(
+                              label: 'form.template_category_creative'.tr,
+                              count: '$creativeCount',
+                              isSelected: activeCategory == CvTemplateCategory.creativeNonAts,
+                              onTap: () {
+                                setSheetState(() => activeCategory = CvTemplateCategory.creativeNonAts);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // Templates List
+                  Flexible(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                      shrinkWrap: true,
+                      itemCount: categoryTemplates.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (ctx, idx) {
+                        final t = categoryTemplates[idx];
+                        final isSelected = _activeCv!.templateId == t.id;
+                        final atsBadgeColor = t.isAtsFriendly ? AppColors.forestPine : AppColors.antiqueBronze;
+
+                        return InkWell(
+                          onTap: () {
+                            Navigator.pop(modalCtx);
+                            _switchTemplate(t.id);
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppColors.subtleSlateTint : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected ? AppColors.midnightNavy : AppColors.borderHairline,
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              t.nameKey.tr,
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 13.5,
+                                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                                color: isSelected ? AppColors.midnightNavy : AppColors.textPrimary,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: atsBadgeColor.withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              t.atsScoreRange,
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: atsBadgeColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        t.descKey.tr,
+                                        style: GoogleFonts.outfit(fontSize: 11, color: AppColors.textSecondary),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Icon(
+                                  isSelected ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
+                                  size: 20,
+                                  color: isSelected ? AppColors.midnightNavy : AppColors.textSecondary.withValues(alpha: 0.4),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSheetCategoryTab({
+    required String label,
+    required String count,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.cardSurface : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  )
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppColors.midnightNavy : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.midnightNavy.withValues(alpha: 0.08) : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                count,
+                style: GoogleFonts.outfit(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected ? AppColors.midnightNavy : AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Color _parseHex(String hex) {
@@ -304,48 +563,79 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
           children: [
             // Quick Live Template & Color Switcher (Only if CV document is passed)
             if (_activeCv != null) ...[
-              SizedBox(
-                height: 34,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: TemplateRegistry.all.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (ctx, idx) {
-                    final t = TemplateRegistry.all[idx];
-                    final isSelected = _activeCv!.templateId == t.id;
-                    return GestureDetector(
-                      onTap: () => _switchTemplate(t.id),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.midnightNavy : AppColors.subtleSlateTint,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSelected ? AppColors.midnightNavy : AppColors.borderHairline,
+              Builder(builder: (context) {
+                final currentTemplate = TemplateRegistry.getTemplate(_activeCv!.templateId);
+                return InkWell(
+                  onTap: _showTemplatePickerSheet,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.subtleSlateTint,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.borderHairline),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.palette_outlined, size: 18, color: AppColors.midnightNavy),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                currentTemplate.nameKey.tr,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.midnightNavy,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                currentTemplate.isAtsFriendly
+                                    ? 'Kategori ATS (Skor 90-100)'
+                                    : 'Kategori Kreatif Non-ATS',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: currentTemplate.isAtsFriendly
+                                      ? AppColors.forestPine
+                                      : AppColors.antiqueBronze,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            if (isSelected) ...[
-                              const Icon(Icons.check, size: 12, color: Colors.white),
-                              const SizedBox(width: 4),
-                            ],
-                            Text(
-                              t.nameKey.tr,
-                              style: GoogleFonts.outfit(
-                                fontSize: 11,
-                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? Colors.white : AppColors.textPrimary,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.midnightNavy,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Ganti Desain',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                          ],
+                              const Icon(Icons.arrow_drop_down_rounded, size: 16, color: Colors.white),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 10),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
               // Color Palette quick picker
               Row(
                 children: [

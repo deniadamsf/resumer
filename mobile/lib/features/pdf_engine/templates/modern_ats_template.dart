@@ -32,7 +32,7 @@ class ModernAtsTemplate extends CvTemplate {
   Future<Uint8List> generate(CvDocument cv, {Uint8List? photoBytes}) async {
     final pdf = pw.Document();
     final accentColor = resolveAccentColor(cv.accentColor);
-    final subtleTint = PdfColor(accentColor.red, accentColor.green, accentColor.blue, 0.08);
+    final subtleTint = tintColor(accentColor, 0.08);
 
     pdf.addPage(
       pw.MultiPage(

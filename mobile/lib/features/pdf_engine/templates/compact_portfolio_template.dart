@@ -258,7 +258,7 @@ class CompactPortfolioTemplate extends CvTemplate {
       margin: const pw.EdgeInsets.only(bottom: 4),
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: pw.BoxDecoration(
-        color: PdfColor(accentColor.red, accentColor.green, accentColor.blue, 0.1),
+        color: tintColor(accentColor, 0.10),
         borderRadius: pw.BorderRadius.circular(4),
       ),
       child: pw.Text(

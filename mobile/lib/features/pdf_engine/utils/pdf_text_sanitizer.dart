@@ -105,5 +105,43 @@ class PdfTextSanitizer {
       color.blue * f,
     );
   }
+
+  /// Build a star/dot rating row for language proficiency visualization.
+  /// Uses vector circles instead of Unicode star characters for font safety.
+  /// [filled] = number of filled dots (0-5), [total] = max dots.
+  static pw.Widget buildStarRating(
+    int filled,
+    PdfColor accentColor, {
+    int total = 5,
+    double size = 4.0,
+    double spacing = 2.0,
+  }) {
+    return pw.Row(
+      mainAxisSize: pw.MainAxisSize.min,
+      children: List.generate(total, (i) {
+        return pw.Container(
+          width: size,
+          height: size,
+          margin: pw.EdgeInsets.only(right: i < total - 1 ? spacing : 0),
+          decoration: pw.BoxDecoration(
+            shape: pw.BoxShape.circle,
+            color: i < filled ? accentColor : PdfColors.grey300,
+          ),
+        );
+      }),
+    );
+  }
+
+  /// Convert language proficiency text to a numeric star level (1-5).
+  /// Handles common AI-generated proficiency labels.
+  static int proficiencyToStars(String proficiency) {
+    final lower = proficiency.toLowerCase().trim();
+    if (lower.contains('native') || lower.contains('bilingual') || lower.contains('c2')) return 5;
+    if (lower.contains('full professional') || lower.contains('fluent') || lower.contains('c1')) return 4;
+    if (lower.contains('professional') || lower.contains('advanced') || lower.contains('b2')) return 3;
+    if (lower.contains('limited') || lower.contains('intermediate') || lower.contains('b1')) return 2;
+    if (lower.contains('elementary') || lower.contains('basic') || lower.contains('a1') || lower.contains('a2')) return 1;
+    return 2; // Default fallback
+  }
 }
 

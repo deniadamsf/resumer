@@ -31,6 +31,7 @@ class TemplateSelectorCard extends StatefulWidget {
 
 class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
   late CvTemplateCategory _activeCategory;
+  bool _isCreativeExpanded = false;
 
   @override
   void initState() {
@@ -63,9 +64,27 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
 
   @override
   Widget build(BuildContext context) {
-    final templates = TemplateRegistry.byCategory(_activeCategory);
+    final allCategoryTemplates = TemplateRegistry.byCategory(_activeCategory);
     final activeTemplate = TemplateRegistry.getTemplate(widget.selectedTemplateId);
     final isNonAts = !activeTemplate.isAtsFriendly;
+
+    final atsCount = TemplateRegistry.byCategory(CvTemplateCategory.atsFriendly).length.toString();
+    final creativeCount = TemplateRegistry.byCategory(CvTemplateCategory.creativeNonAts).length.toString();
+
+    // Limit creative list to top 3 unless expanded, but ensure active selection is always visible
+    List<CvTemplate> displayedTemplates = allCategoryTemplates;
+    if (_activeCategory == CvTemplateCategory.creativeNonAts && !_isCreativeExpanded) {
+      final selectedIdx = allCategoryTemplates.indexWhere((t) => t.id == widget.selectedTemplateId);
+      if (selectedIdx >= 3) {
+        displayedTemplates = [
+          allCategoryTemplates[0],
+          allCategoryTemplates[1],
+          allCategoryTemplates[selectedIdx],
+        ];
+      } else {
+        displayedTemplates = allCategoryTemplates.take(3).toList();
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -146,7 +165,7 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
                 Expanded(
                   child: _buildCategoryTab(
                     label: 'form.template_category_ats'.tr,
-                    count: '3',
+                    count: atsCount,
                     isSelected: _activeCategory == CvTemplateCategory.atsFriendly,
                     onTap: () {
                       setState(() => _activeCategory = CvTemplateCategory.atsFriendly);
@@ -156,7 +175,7 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
                 Expanded(
                   child: _buildCategoryTab(
                     label: 'form.template_category_creative'.tr,
-                    count: '3',
+                    count: creativeCount,
                     isSelected: _activeCategory == CvTemplateCategory.creativeNonAts,
                     onTap: () {
                       setState(() => _activeCategory = CvTemplateCategory.creativeNonAts);
@@ -170,7 +189,7 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
 
           // Template Cards Carousel/List
           Column(
-            children: templates.map((template) {
+            children: displayedTemplates.map((template) {
               final isSelected = widget.selectedTemplateId == template.id;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -182,6 +201,50 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
               );
             }).toList(),
           ),
+
+          // Expand / Collapse button for creative templates
+          if (_activeCategory == CvTemplateCategory.creativeNonAts && allCategoryTemplates.length > 3) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 6),
+              child: Center(
+                child: InkWell(
+                  onTap: () {
+                    setState(() => _isCreativeExpanded = !_isCreativeExpanded);
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.subtleSlateTint,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.borderHairline),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _isCreativeExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                          size: 18,
+                          color: AppColors.midnightNavy,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _isCreativeExpanded
+                              ? 'form.template_collapse'.tr
+                              : '${'form.template_show_all'.tr} ($creativeCount)',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.midnightNavy,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
 
           // Non-ATS Educational Warning Banner if non-ATS template is chosen
           if (isNonAts) ...[
@@ -594,6 +657,62 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
                 Expanded(child: Container(decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(2)))),
                 const SizedBox(width: 2),
                 Expanded(child: Container(decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(2)))),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else if (template.id == 'gradient_header') {
+      // Gradient header schematic
+      return Column(
+        children: [
+          Container(
+            height: 12,
+            decoration: const BoxDecoration(
+              color: AppColors.midnightNavy,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(3)),
+            ),
+          ),
+          const SizedBox(height: 3),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(height: 2, color: Colors.grey.shade300),
+                Container(height: 2, color: Colors.grey.shade300),
+                Container(height: 2, color: Colors.grey.shade300),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else if (template.id == 'color_block') {
+      // Color block schematic: stacked modular tinted boxes
+      return Column(
+        children: [
+          Container(height: 9, decoration: BoxDecoration(color: AppColors.accentSteel, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 2),
+          Container(height: 9, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Container(decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(2))),
+          ),
+        ],
+      );
+    } else if (template.id == 'ribbon_banner') {
+      // Ribbon banner schematic: top bold banner + sub-ribbon
+      return Column(
+        children: [
+          Container(height: 9, color: AppColors.midnightNavy),
+          const SizedBox(height: 3),
+          Container(height: 3, width: 20, color: AppColors.midnightNavy),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(height: 2, color: Colors.grey.shade300),
+                Container(height: 2, color: Colors.grey.shade300),
               ],
             ),
           ),

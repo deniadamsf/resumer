@@ -1,13 +1,16 @@
 import 'accent_sidebar_light_template.dart';
 import 'asian_ats_template.dart';
 import 'bento_grid_template.dart';
+import 'color_block_template.dart';
 import 'compact_portfolio_template.dart';
 import 'cv_template_interface.dart';
 import 'editorial_luxury_template.dart';
 import 'executive_split_template.dart';
+import 'gradient_header_template.dart';
 import 'modern_ats_template.dart';
 import 'modern_creative_template.dart';
 import 'nordic_minimal_template.dart';
+import 'ribbon_banner_template.dart';
 import 'tech_timeline_template.dart';
 import 'western_strict_template.dart';
 
@@ -37,6 +40,9 @@ class TemplateRegistry {
     EditorialLuxuryTemplate(),
     AccentSidebarLightTemplate(),
     BentoGridTemplate(),
+    GradientHeaderTemplate(),
+    ColorBlockTemplate(),
+    RibbonBannerTemplate(),
   ];
 
   /// 4 Official Executive Accent Colors according to blueprint Section I.5 & J.2
