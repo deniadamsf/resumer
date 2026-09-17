@@ -27,32 +27,26 @@ class AtsCheckerScreen extends StatefulWidget {
 class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
   final _profileMgr = CvProfileManager.instance;
   bool _isLoading = false;
-  int _score = 92;
-  String _verdict = 'Top 5% ATS Ready';
-  Map<String, dynamic> _breakdown = {
-    'keyword_match': 24,
-    'impact_verbs': 25,
-    'readability': 23,
-    'completeness': 20,
-  };
-  List<dynamic> _feedback = [
-    {
-      'section': 'Summary',
-      'issue': 'Tingkatkan penonjolan kata kunci industri',
-      'suggestion': 'Gunakan kata kerja aksi terukur dan formula Google XYZ.',
-    },
-    {
-      'section': 'Experience',
-      'issue': 'Sertakan metrik kuantitatif terukur',
-      'suggestion': 'Tambahkan persentase efisiensi, volume data, atau penghematan biaya.',
-    }
-  ];
+  int? _score;
+  String? _verdict;
+  Map<String, dynamic>? _breakdown;
+  List<dynamic> _feedback = [];
 
   @override
   void initState() {
     super.initState();
-    _score = _profileMgr.currentMeta.atsScore ?? 92;
+    _loadCurrentProfileAts();
     _profileMgr.addListener(_onProfileUpdate);
+  }
+
+  void _loadCurrentProfileAts() {
+    final meta = _profileMgr.currentMeta;
+    setState(() {
+      _score = meta.atsScore;
+      _verdict = meta.atsVerdict;
+      _breakdown = meta.atsBreakdown;
+      _feedback = meta.atsFeedback ?? [];
+    });
   }
 
   @override
@@ -63,9 +57,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
 
   void _onProfileUpdate() {
     if (mounted) {
-      setState(() {
-        _score = _profileMgr.currentMeta.atsScore ?? _score;
-      });
+      _loadCurrentProfileAts();
     }
   }
 
@@ -88,18 +80,31 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
 
       if (response['success'] == true && mounted) {
         final result = response['ats_result'];
-        final newScore = (result['total_score'] as num?)?.toInt() ?? 92;
+        final newScore = (result['total_score'] as num?)?.toInt() ?? 0;
+        final newVerdict = result['verdict'] as String? ??
+            (newScore >= 85
+                ? 'Top 5% ATS Ready'
+                : (newScore >= 60 ? 'Skor Menengah' : 'Perlu Optimasi'));
+        final newBreakdown = result['breakdown'] != null
+            ? Map<String, dynamic>.from(result['breakdown'])
+            : null;
+        final newFeedback = result['actionable_feedback'] != null
+            ? List<dynamic>.from(result['actionable_feedback'])
+            : [];
+
         setState(() {
           _score = newScore;
-          _verdict = result['verdict'] ?? 'Top 5% ATS Ready';
-          if (result['breakdown'] != null) {
-            _breakdown = Map<String, dynamic>.from(result['breakdown']);
-          }
-          if (result['actionable_feedback'] != null) {
-            _feedback = List<dynamic>.from(result['actionable_feedback']);
-          }
+          _verdict = newVerdict;
+          _breakdown = newBreakdown;
+          _feedback = newFeedback;
         });
-        await _profileMgr.updateProfileMeta(_profileMgr.currentIndex, atsScore: newScore);
+        await _profileMgr.updateProfileMeta(
+          _profileMgr.currentIndex,
+          atsScore: newScore,
+          atsVerdict: newVerdict,
+          atsBreakdown: newBreakdown,
+          atsFeedback: newFeedback,
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -192,8 +197,28 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         cv.showCertifications = preservedShowCertifications;
 
         final newScore = (improved?['estimated_new_score'] as num?)?.toInt() ?? 96;
-        setState(() => _score = newScore);
-        await _profileMgr.saveCurrentProfile(cv, atsScore: newScore);
+        const newVerdict = 'Top 5% ATS Ready';
+        final newBreakdown = {
+          'keyword_match': 25,
+          'impact_verbs': 24,
+          'readability': 24,
+          'completeness': 23,
+        };
+        final newFeedback = <dynamic>[];
+
+        setState(() {
+          _score = newScore;
+          _verdict = newVerdict;
+          _breakdown = newBreakdown;
+          _feedback = newFeedback;
+        });
+        await _profileMgr.saveCurrentProfile(
+          cv,
+          atsScore: newScore,
+          atsVerdict: newVerdict,
+          atsBreakdown: newBreakdown,
+          atsFeedback: newFeedback,
+        );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -216,13 +241,22 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
   }
 
   void _handleShareScore() {
+    if (_score == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('ats.share_untested_warning'.tr),
+          backgroundColor: AppColors.mutedSteelSlate,
+        ),
+      );
+      return;
+    }
     final cv = _profileMgr.currentCv;
     showDialog(
       context: context,
       builder: (_) => AtsShareCard(
-        score: _score,
-        verdict: _verdict,
-        candidateName: cv.personalInfo.fullName.isNotEmpty ? cv.personalInfo.fullName : 'Alexander Wright',
+        score: _score!,
+        verdict: _verdict ?? 'Top 5% ATS Ready',
+        candidateName: cv.personalInfo.fullName.isNotEmpty ? cv.personalInfo.fullName : 'Pengguna Resumer',
         targetRole: cv.personalInfo.professionalTitle.isNotEmpty ? cv.personalInfo.professionalTitle : 'Professional',
         breakdown: _breakdown,
       ),
@@ -239,8 +273,16 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         actions: [
           IconButton(
             onPressed: _handleShareScore,
-            icon: const Icon(Icons.share_rounded, color: AppColors.midnightNavy, size: 20),
-            tooltip: 'Bagikan Kartu Skor',
+            icon: Icon(
+              Icons.share_rounded,
+              color: _score == null
+                  ? AppColors.textSecondary.withValues(alpha: 0.4)
+                  : AppColors.midnightNavy,
+              size: 20,
+            ),
+            tooltip: _score == null
+                ? 'ats.share_untested_warning'.tr
+                : 'Bagikan Kartu Skor',
           ),
         ],
       ),
@@ -256,9 +298,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
               isSyncing: _profileMgr.isSyncing,
               onProfileSelected: (index) async {
                 await _profileMgr.switchProfile(index);
-                setState(() {
-                  _score = _profileMgr.currentMeta.atsScore ?? 90;
-                });
+                _loadCurrentProfileAts();
               },
               onRenameProfile: (newTitle, newTargetJob) {
                 _profileMgr.updateProfileMeta(
@@ -296,26 +336,81 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      // Re-check button
+                      // Check / Re-check button
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _isLoading ? null : _handleRunCheck,
-                          icon: _isLoading
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.midnightNavy))
-                              : const Icon(Icons.refresh_rounded, size: 18, color: AppColors.midnightNavy),
-                          label: Text(
-                            'ats.run_check'.tr,
-                            style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(0, 48),
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            side: const BorderSide(color: AppColors.borderHairline),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
+                        child: _score == null
+                            ? ElevatedButton.icon(
+                                onPressed: _isLoading ? null : _handleRunCheck,
+                                icon: _isLoading
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.speed_rounded,
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                label: Text(
+                                  'ats.run_check'.tr,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.midnightNavy,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(0, 48),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 0,
+                                ),
+                              )
+                            : OutlinedButton.icon(
+                                onPressed: _isLoading ? null : _handleRunCheck,
+                                icon: _isLoading
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.midnightNavy,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.refresh_rounded,
+                                        size: 18,
+                                        color: AppColors.midnightNavy,
+                                      ),
+                                label: Text(
+                                  'ats.recheck'.tr,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.midnightNavy,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(0, 48),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  side: const BorderSide(color: AppColors.borderHairline),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
                       ),
                       const SizedBox(width: 10),
                       // 1-Click Auto-Fix button
@@ -351,7 +446,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             const SizedBox(height: 16),
 
             // Recommendations / Actionable Feedback Section
-            AtsFeedbackSection(feedbackList: _feedback),
+            AtsFeedbackSection(feedbackList: _feedback, isAnalyzed: _score != null),
           ],
         ),
       ),

@@ -43,7 +43,7 @@ class CoverLetterModel {
           : 'Saya menyambut baik kesempatan untuk berdiskusi secara langsung mengenai bagaimana kapabilitas analitis dan komitmen kerja saya dapat memperkuat visi inovasi di $companyName. Terima kasih banyak atas waktu dan pertimbangan yang diberikan.',
       signoff: (json['signoff'] as String?)?.isNotEmpty == true
           ? json['signoff']
-          : 'Hormat saya,\nAlexander Wright',
+          : 'Hormat saya,\nPengguna Resumer',
     );
   }
 

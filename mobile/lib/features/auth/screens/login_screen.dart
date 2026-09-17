@@ -25,27 +25,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleDeveloperBypass() async {
     setState(() => _isLoading = true);
     try {
-      final mockResponse =
-          await ApiService.instance.googleLogin('mock_token_dev_user_123');
-      if (mounted && mockResponse['success'] == true) {
-        if (mockResponse['user'] != null) {
-          await ApiService.instance.saveUserData(
-            name: mockResponse['user']['name'] ?? 'Demo User',
-            email: mockResponse['user']['email'] ?? 'demo@example.com',
-            avatar: mockResponse['user']['avatar_url'],
-          );
-        }
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainNavigationShell()),
-        );
-        return;
-      }
-      // If server doesn't respond or offline, save local token so user can still test offline features
-      await ApiService.instance.saveToken('guest_sanctum_token');
+      await ApiService.instance.saveToken('guest_mode_token');
       await ApiService.instance.saveUserData(
-        name: 'Tamu Eksekutif',
-        email: 'tamu@resumer.cellanoma.my.id',
+        name: 'Tamu Resumer',
+        email: 'guest@resumer.app',
       );
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -76,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response['success'] == true && mounted) {
         // Save user profile info
         final userObj = response['user'] as Map<String, dynamic>?;
-        final candidateName = userObj?['name'] ?? googleAccount.displayName ?? 'Resumer User';
+        final candidateName = userObj?['name'] ?? googleAccount.displayName ?? 'Pengguna Resumer';
         final candidateEmail = userObj?['email'] ?? googleAccount.email;
         final candidateAvatar = userObj?['avatar_url'] ?? googleAccount.photoUrl;
 
@@ -86,11 +69,16 @@ class _LoginScreenState extends State<LoginScreen> {
           avatar: candidateAvatar,
         );
 
-        // Sync to CV if active CV still uses default name
+        // Sync to CV if active CV still uses empty name or legacy default name
         final cv = CvProfileManager.instance.currentCv;
-        if (cv.personalInfo.fullName.isEmpty || cv.personalInfo.fullName == 'Alexander Wright') {
+        if (cv.personalInfo.fullName.isEmpty ||
+            cv.personalInfo.fullName == 'Alexander Wright' ||
+            cv.personalInfo.fullName == 'Tamu Resumer') {
           cv.personalInfo.fullName = candidateName;
-          if (cv.personalInfo.email.isEmpty || cv.personalInfo.email == 'alexander.wright@executive.io') {
+          if (cv.personalInfo.email.isEmpty ||
+              cv.personalInfo.email == 'alexander.wright@executive.io' ||
+              cv.personalInfo.email.contains('@resumer.') ||
+              cv.personalInfo.email == 'guest@resumer.app') {
             cv.personalInfo.email = candidateEmail;
           }
           CvProfileManager.instance.updateDraftSilently(cv);
@@ -228,12 +216,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               const Icon(Icons.g_mobiledata_rounded,
                                   size: 32, color: AppColors.midnightNavy),
                               const SizedBox(width: 8),
-                              Text(
-                                'auth.sign_in_google'.tr,
-                                style: GoogleFonts.outfit(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
+                              Flexible(
+                                child: Text(
+                                  'auth.sign_in_google'.tr,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

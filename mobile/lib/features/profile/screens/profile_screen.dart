@@ -366,6 +366,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (confirmed == true) {
       await _apiService.clearAuth();
+      await _profileMgr.clearAllLocalProfiles();
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -382,12 +383,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? _apiService.userName
         : (activeCv.personalInfo.fullName.isNotEmpty
             ? activeCv.personalInfo.fullName
-            : 'Alexander Wright');
+            : 'Pengguna Resumer');
     final userEmail = _apiService.userEmail.isNotEmpty
         ? _apiService.userEmail
         : (activeCv.personalInfo.email.isNotEmpty
             ? activeCv.personalInfo.email
-            : 'alexander.wright@executive.io');
+            : 'guest@resumer.app');
     final initials = _getInitials(userFullName);
 
     return Scaffold(
@@ -511,20 +512,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                       decoration: BoxDecoration(
-                        color: AppColors.forestPine.withValues(alpha: 0.1),
+                        color: _apiService.isGuestMode
+                            ? AppColors.mutedSteelSlate.withValues(alpha: 0.1)
+                            : AppColors.forestPine.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.verified_rounded, size: 12, color: AppColors.forestPine),
+                          Icon(
+                            _apiService.isGuestMode
+                                ? Icons.person_outline_rounded
+                                : Icons.verified_rounded,
+                            size: 12,
+                            color: _apiService.isGuestMode
+                                ? AppColors.mutedSteelSlate
+                                : AppColors.forestPine,
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            'Google OAuth',
+                            _apiService.isGuestMode ? 'Mode Tamu (Lokal)' : 'Google OAuth',
                             style: GoogleFonts.outfit(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.forestPine,
+                              color: _apiService.isGuestMode
+                                  ? AppColors.mutedSteelSlate
+                                  : AppColors.forestPine,
                             ),
                           ),
                         ],

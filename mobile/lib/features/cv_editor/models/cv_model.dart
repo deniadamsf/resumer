@@ -330,12 +330,18 @@ class CvProfileMeta {
   String title;
   String targetJob;
   int? atsScore;
+  String? atsVerdict;
+  Map<String, dynamic>? atsBreakdown;
+  List<dynamic>? atsFeedback;
 
   CvProfileMeta({
     required this.profileIndex,
     required this.title,
     this.targetJob = '',
     this.atsScore,
+    this.atsVerdict,
+    this.atsBreakdown,
+    this.atsFeedback,
   });
 
   Map<String, dynamic> toJson() => {
@@ -343,6 +349,9 @@ class CvProfileMeta {
         'title': title,
         'target_job': targetJob,
         'ats_score': atsScore,
+        'ats_verdict': atsVerdict,
+        'ats_breakdown': atsBreakdown,
+        'ats_feedback': atsFeedback,
       };
 
   factory CvProfileMeta.fromJson(Map<String, dynamic> json) => CvProfileMeta(
@@ -350,6 +359,13 @@ class CvProfileMeta {
         title: json['title'] as String? ?? 'CV ${json['profile_index'] ?? 1}',
         targetJob: json['target_job'] as String? ?? '',
         atsScore: json['ats_score'] as int?,
+        atsVerdict: json['ats_verdict'] as String?,
+        atsBreakdown: json['ats_breakdown'] is Map
+            ? Map<String, dynamic>.from(json['ats_breakdown'] as Map)
+            : null,
+        atsFeedback: json['ats_feedback'] is List
+            ? List<dynamic>.from(json['ats_feedback'] as List)
+            : null,
       );
 }
 

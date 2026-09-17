@@ -1,4 +1,4 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resumer/features/cv_editor/models/cv_model.dart';
 import 'package:resumer/features/cv_editor/services/cv_profile_manager.dart';
@@ -72,7 +72,7 @@ void main() {
     final preservedEducations = List<Education>.from(cvToFix.educations);
     final preservedPersonalInfo = cvToFix.personalInfo;
 
-    // Simulated Gemini Auto-Fix payload (only modifies summary, bullet points, skills)
+    // Simulated Resumer AI Auto-Fix payload (only modifies summary, bullet points, skills)
     final improvedData = {
       'summary': 'High-impact engineer with track record of increasing system efficiency by 40%.',
       'experiences': [

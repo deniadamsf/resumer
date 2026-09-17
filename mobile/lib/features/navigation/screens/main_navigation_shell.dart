@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/admob_banner_widget.dart';
 import '../../ats_checker/screens/ats_checker_screen.dart';
 import '../../cover_letter/screens/cover_letter_screen.dart';
 import '../../cv_editor/screens/cv_editor_screen.dart';
@@ -75,7 +76,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: _buildModernTabBar(),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const AdMobBannerWidget(),
+          _buildModernTabBar(),
+        ],
+      ),
     );
   }
 

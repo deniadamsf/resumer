@@ -30,12 +30,23 @@ class ApiService {
       _deviceUuid = const Uuid().v4();
       await prefs.setString('device_uuid', _deviceUuid!);
     }
+
+    // Auto-clean legacy dummy mock data
+    if (_userName == 'Alexander Wright' || _userName == 'Tamu Eksekutif') {
+      _userName = 'Tamu Resumer';
+      await prefs.setString('user_name', _userName!);
+    }
+    if (_userEmail == 'alexander.wright@executive.io' || _userEmail == 'tamu@resumer.cellanoma.my.id') {
+      _userEmail = 'guest@resumer.app';
+      await prefs.setString('user_email', _userEmail!);
+    }
   }
 
   bool get isAuthenticated => _authToken != null;
+  bool get isGuestMode => _authToken == 'guest_mode_token' || _authToken == 'guest_sanctum_token';
   String get deviceUuid => _deviceUuid ?? 'unknown-device';
-  String get userName => _userName ?? 'Alexander Wright';
-  String get userEmail => _userEmail ?? 'alexander.wright@executive.io';
+  String get userName => _userName ?? 'Pengguna Resumer';
+  String get userEmail => _userEmail ?? 'guest@resumer.app';
   String? get userAvatar => _userAvatar;
 
   Future<void> saveToken(String token) async {
@@ -421,14 +432,14 @@ class ApiService {
               'paragraph_1': 'I am writing to express my strong enthusiasm for the $role position at $company. With a robust background in enterprise data architecture, automated pipeline engineering, and executive-grade business intelligence, I am confident in my ability to deliver measurable value toward your strategic objectives.',
               'paragraph_2': 'Throughout my career, I have spearheaded data infrastructure modernizations, cloud migrations, and high-frequency ETL pipelines that enhanced operational efficiency by up to 35%. My approach combines rigorous quantitative accountability with collaborative leadership to solve complex data challenges at scale.',
               'paragraph_3': 'I look forward to discussing how my experience and passion for data-driven innovation can contribute to the continued growth of $company. Thank you for your time and consideration.',
-              'signoff': 'Sincerely,\nAlexander Wright'
+              'signoff': 'Sincerely,\n$userName'
             }
           : {
               'salutation': 'Kepada Tim Rekrutmen yang Terhormat di $company,',
               'paragraph_1': 'Saya menulis surat ini untuk menyampaikan ketertarikan mendalam saya terhadap posisi $role di $company. Dengan latar belakang yang kuat dalam arsitektur analitika data enterprise, perancangan data pipeline, serta visualisasi eksekutif, saya yakin dapat memberikan kontribusi terukur terhadap target strategis perusahaan.',
               'paragraph_2': 'Sepanjang karir profesional saya, saya telah memimpin otomasi pipeline data, optimasi arsitektur cloud, dan pelaporan intelijen bisnis yang meningkatkan efisiensi operasional hingga 35%. Pendekatan terstruktur dengan formula capaian berdampak tinggi selalu menjadi fondasi kerja saya dalam menyelesaikan tantangan bisnis skala besar.',
               'paragraph_3': 'Saya sangat antusias untuk berdiskusi lebih lanjut mengenai bagaimana pengalaman dan dedikasi saya dapat memperkuat kapabilitas tim di $company. Terima kasih banyak atas waktu dan pertimbangan yang diberikan.',
-              'signoff': 'Hormat saya,\nAlexander Wright'
+              'signoff': 'Hormat saya,\n$userName'
             }
     };
   }

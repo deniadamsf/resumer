@@ -1,18 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'core/constants/colors.dart';
 import 'core/localization/app_localizations.dart';
+import 'core/services/ad_service.dart';
 import 'core/services/api_service.dart';
+import 'core/services/iap_service.dart';
 import 'core/services/signature_service.dart';
 import 'core/widgets/responsive_wrapper.dart';
-import 'features/auth/screens/login_screen.dart';
-import 'features/navigation/screens/main_navigation_shell.dart';
+import 'features/splash/screens/splash_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -40,14 +43,23 @@ void main() async {
     debugPrint('5. Initializing SignatureService...');
     await SignatureService.instance.init();
     debugPrint('6. SignatureService initialized. HasSignature: ${SignatureService.instance.hasSignature}');
+
+    debugPrint('7. Initializing AdService (AdMob SDK & Preload)...');
+    await AdService.instance.init();
+    debugPrint('8. AdService initialized.');
+
+    debugPrint('9. Initializing IapService (Google Play Billing)...');
+    await IapService.instance.init();
+    debugPrint('10. IapService initialized.');
   } catch (e, stack) {
     debugPrint('ERROR during main initialization: $e\n$stack');
   }
 
-  debugPrint('7. Calling runApp...');
+  debugPrint('11. Calling runApp...');
   runApp(const ResumerApp());
-  debugPrint('8. runApp called successfully.');
+  debugPrint('12. runApp called successfully.');
 }
+
 
 class ResumerApp extends StatelessWidget {
   const ResumerApp({super.key});
@@ -85,9 +97,7 @@ class ResumerApp extends StatelessWidget {
             // Enforce anti-text blowout textScaler clamping per GEMINI.md Bagian 4
             return ResponsiveWrapper(child: child!);
           },
-          home: ApiService.instance.isAuthenticated
-              ? const MainNavigationShell()
-              : const LoginScreen(),
+          home: const SplashScreen(),
         );
       },
     );

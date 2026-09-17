@@ -5,12 +5,14 @@ import '../../../core/localization/app_localizations.dart';
 
 /// Modular ATS Breakdown Section displaying the 4 core ATS criteria
 class AtsBreakdownSection extends StatelessWidget {
-  final Map<String, dynamic> breakdown;
+  final Map<String, dynamic>? breakdown;
 
-  const AtsBreakdownSection({super.key, required this.breakdown});
+  const AtsBreakdownSection({super.key, this.breakdown});
 
   @override
   Widget build(BuildContext context) {
+    final isAnalyzed = breakdown != null && breakdown!.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -30,20 +32,67 @@ class AtsBreakdownSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          _buildMetricBar('ats.keyword_match'.tr, (breakdown['keyword_match'] ?? 20) as int, 25),
-          _buildMetricBar('ats.impact_verbs'.tr, (breakdown['impact_verbs'] ?? 20) as int, 25),
-          _buildMetricBar('ats.readability'.tr, (breakdown['readability'] ?? 20) as int, 25),
-          _buildMetricBar('ats.completeness'.tr, (breakdown['completeness'] ?? 20) as int, 25, isLast: true),
+          _buildMetricBar(
+            'ats.keyword_match'.tr,
+            isAnalyzed ? (breakdown!['keyword_match'] as num?)?.toInt() : null,
+            25,
+          ),
+          _buildMetricBar(
+            'ats.impact_verbs'.tr,
+            isAnalyzed ? (breakdown!['impact_verbs'] as num?)?.toInt() : null,
+            25,
+          ),
+          _buildMetricBar(
+            'ats.readability'.tr,
+            isAnalyzed ? (breakdown!['readability'] as num?)?.toInt() : null,
+            25,
+          ),
+          _buildMetricBar(
+            'ats.completeness'.tr,
+            isAnalyzed ? (breakdown!['completeness'] as num?)?.toInt() : null,
+            25,
+            isLast: true,
+          ),
+          if (!isAnalyzed) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.subtleSlateTint,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.borderHairline),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'ats.breakdown_empty_hint'.tr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildMetricBar(String label, int value, int maxVal, {bool isLast = false}) {
-    final percentage = (value / maxVal).clamp(0.0, 1.0);
-    final color = percentage >= 0.85
-        ? AppColors.forestPine
-        : (percentage >= 0.60 ? AppColors.antiqueBronze : AppColors.crimsonBordeaux);
+  Widget _buildMetricBar(String label, int? value, int maxVal, {bool isLast = false}) {
+    final hasValue = value != null;
+    final percentage = hasValue ? (value / maxVal).clamp(0.0, 1.0) : 0.0;
+    final color = !hasValue
+        ? AppColors.subtleSlateTint
+        : (percentage >= 0.85
+            ? AppColors.forestPine
+            : (percentage >= 0.60 ? AppColors.antiqueBronze : AppColors.crimsonBordeaux));
 
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
@@ -67,11 +116,11 @@ class AtsBreakdownSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '$value / $maxVal',
+                hasValue ? '$value / $maxVal' : '— / $maxVal',
                 style: GoogleFonts.outfit(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: hasValue ? AppColors.textPrimary : AppColors.textSecondary,
                 ),
               ),
             ],

@@ -6,8 +6,13 @@ import '../../../core/localization/app_localizations.dart';
 /// Modular ATS Feedback Section for concrete HR recommendations
 class AtsFeedbackSection extends StatelessWidget {
   final List<dynamic> feedbackList;
+  final bool isAnalyzed;
 
-  const AtsFeedbackSection({super.key, required this.feedbackList});
+  const AtsFeedbackSection({
+    super.key,
+    required this.feedbackList,
+    this.isAnalyzed = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +45,54 @@ class AtsFeedbackSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          if (feedbackList.isEmpty)
+          if (!isAnalyzed)
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.subtleSlateTint,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderHairline),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Icon(
+                      Icons.analytics_outlined,
+                      size: 20,
+                      color: AppColors.mutedSteelSlate,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ats.feedback_empty_title'.tr,
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.midnightNavy,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'ats.feedback_empty_desc'.tr,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (feedbackList.isEmpty)
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -54,7 +106,7 @@ class AtsFeedbackSection extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'CV Anda telah memenuhi standar seleksi ATS korporat teratas.',
+                      'ats.feedback_perfect_title'.tr,
                       style: GoogleFonts.outfit(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,

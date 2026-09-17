@@ -36,7 +36,15 @@ class CvProfileManager extends ChangeNotifier {
       if (jsonStr != null && jsonStr.isNotEmpty) {
         try {
           final map = json.decode(jsonStr) as Map<String, dynamic>;
-          _profiles[i] = CvDocument.fromJson(map);
+          final doc = CvDocument.fromJson(map);
+          // Auto-migrate legacy mock data (Alexander Wright)
+          if (doc.personalInfo.fullName == 'Alexander Wright' ||
+              doc.personalInfo.email == 'alexander.wright@executive.io') {
+            _profiles[i] = _defaultTemplate(i);
+            await _saveLocally(i);
+          } else {
+            _profiles[i] = doc;
+          }
         } catch (_) {
           _profiles[i] = _defaultTemplate(i);
         }
@@ -55,7 +63,7 @@ class CvProfileManager extends ChangeNotifier {
       } else {
         _metas[i] = CvProfileMeta(
           profileIndex: i,
-          title: i == 1 ? 'CV 1 - Executive Master' : 'CV $i',
+          title: 'CV $i',
           targetJob: _profiles[i]?.personalInfo.professionalTitle ?? '',
         );
       }
@@ -82,11 +90,22 @@ class CvProfileManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateProfileMeta(int index, {String? title, String? targetJob, int? atsScore}) async {
+  Future<void> updateProfileMeta(
+    int index, {
+    String? title,
+    String? targetJob,
+    int? atsScore,
+    String? atsVerdict,
+    Map<String, dynamic>? atsBreakdown,
+    List<dynamic>? atsFeedback,
+  }) async {
     final meta = getMeta(index);
     if (title != null) meta.title = title;
     if (targetJob != null) meta.targetJob = targetJob;
     if (atsScore != null) meta.atsScore = atsScore;
+    if (atsVerdict != null) meta.atsVerdict = atsVerdict;
+    if (atsBreakdown != null) meta.atsBreakdown = atsBreakdown;
+    if (atsFeedback != null) meta.atsFeedback = atsFeedback;
     _metas[index] = meta;
 
     final prefs = await SharedPreferences.getInstance();
@@ -107,11 +126,21 @@ class CvProfileManager extends ChangeNotifier {
     await _saveLocally(_currentIndex);
   }
 
-  Future<void> saveCurrentProfile(CvDocument doc, {int? atsScore, bool notify = true}) async {
+  Future<void> saveCurrentProfile(
+    CvDocument doc, {
+    int? atsScore,
+    String? atsVerdict,
+    Map<String, dynamic>? atsBreakdown,
+    List<dynamic>? atsFeedback,
+    bool notify = true,
+  }) async {
     _profiles[_currentIndex] = doc.clone();
-    if (atsScore != null) {
+    if (atsScore != null || atsVerdict != null || atsBreakdown != null || atsFeedback != null) {
       final meta = getMeta(_currentIndex);
-      meta.atsScore = atsScore;
+      if (atsScore != null) meta.atsScore = atsScore;
+      if (atsVerdict != null) meta.atsVerdict = atsVerdict;
+      if (atsBreakdown != null) meta.atsBreakdown = atsBreakdown;
+      if (atsFeedback != null) meta.atsFeedback = atsFeedback;
       _metas[_currentIndex] = meta;
     }
 
@@ -148,11 +177,15 @@ class CvProfileManager extends ChangeNotifier {
             final doc = CvDocument.fromJson(item['cv_data'] as Map<String, dynamic>);
             _profiles[idx] = doc;
 
+            final existingMeta = _metas[idx];
             _metas[idx] = CvProfileMeta(
               profileIndex: idx,
               title: item['title'] as String? ?? 'CV $idx',
               targetJob: item['target_job'] as String? ?? '',
               atsScore: item['ats_score'] as int?,
+              atsVerdict: existingMeta?.atsVerdict,
+              atsBreakdown: existingMeta?.atsBreakdown,
+              atsFeedback: existingMeta?.atsFeedback,
             );
 
             await _saveLocally(idx);
@@ -192,65 +225,37 @@ class CvProfileManager extends ChangeNotifier {
     }
   }
 
-  static CvDocument _defaultTemplate(int index) {
-    if (index == 1) {
-      return CvDocument(
-        personalInfo: PersonalInfo(
-          fullName: 'Alexander Wright',
-          professionalTitle: 'Lead Mobile Architect',
-          email: 'alexander.wright@executive.io',
-          phone: '+62 812-9876-5432',
-          location: 'Jakarta, Indonesia',
-          linkedin: 'linkedin.com/in/alexander-wright',
-        ),
-        summary:
-            'Accomplished Lead Mobile Architect with 7+ years of expertise architecting high-throughput fintech and SaaS solutions. Proven track record of scaling apps to 2M+ MAU with 99.98% crash-free sessions.',
-        experiences: [
-          WorkExperience(
-            company: 'Zenith Global Technologies',
-            position: 'Lead Mobile Engineer',
-            startDate: '2022',
-            endDate: 'Present',
-            highlights: [
-              'Architected client-side offline-first caching layer, cutting API latency by 45% for 1.2M active users.',
-              'Spearheaded Flutter migration across 3 cross-functional teams, accelerating sprint delivery cycle by 35%.',
-            ],
-          ),
-        ],
-        educations: [
-          Education(
-            institution: 'Institute of Technology',
-            degree: 'Bachelor of Science',
-            fieldOfStudy: 'Computer Science',
-            graduationYear: '2020',
-            gpa: '3.85',
-          ),
-        ],
-        skills: ['Flutter', 'Dart', 'Clean Architecture', 'REST APIs', 'CI/CD', 'Docker', 'SQLite']
-            .map((s) => SkillItem(name: s))
-            .toList(),
-      );
+  /// Wipes all local CV documents and resets to clean blank templates
+  Future<void> clearAllLocalProfiles() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (int i = 1; i <= 3; i++) {
+      _profiles[i] = _defaultTemplate(i);
+      _metas[i] = CvProfileMeta(profileIndex: i, title: 'CV $i', targetJob: '');
+      await prefs.remove('cv_profile_$i');
+      await prefs.remove('cv_meta_$i');
     }
+    _currentIndex = 1;
+    await prefs.setInt('cv_active_profile_index', 1);
+    notifyListeners();
+  }
 
+  static CvDocument _defaultTemplate(int index) {
     return CvDocument(
+      templateId: index == 2 ? 'western_strict' : 'asian_ats',
       personalInfo: PersonalInfo(
-        fullName: 'Alexander Wright',
-        professionalTitle: index == 2 ? 'Senior Product Manager' : 'Data & BI Specialist',
-        email: 'alexander.wright@executive.io',
-        phone: '+62 812-9876-5432',
-        location: 'Jakarta, Indonesia',
-        linkedin: 'linkedin.com/in/alexander-wright',
+        fullName: '',
+        professionalTitle: '',
+        email: '',
+        phone: '',
+        location: '',
+        linkedin: '',
       ),
-      summary: index == 2
-          ? 'Data-driven Product Manager with 5+ years driving high-conversion digital platforms, cross-functional engineering leadership, and user-centric growth.'
-          : 'Analytical Data Specialist proficient in predictive modeling, enterprise data pipelines, and executive dashboards.',
+      summary: '',
       experiences: [],
       educations: [],
-      skills: (index == 2
-              ? ['Product Roadmapping', 'Agile/Scrum', 'User Research', 'A/B Testing', 'Growth Metrics']
-              : ['SQL', 'Python', 'PowerBI', 'Tableau', 'ETL Pipelines', 'BigQuery'])
-          .map((s) => SkillItem(name: s))
-          .toList(),
+      skills: [],
+      certifications: [],
+      languages: [],
     );
   }
 }
