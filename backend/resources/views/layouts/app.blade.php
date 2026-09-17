@@ -12,7 +12,12 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="@yield('title', 'Resumer - AI ATS CV Maker & Score Checker')">
-    <meta property="og:description" content="Tingkatkan peluang lolos seleksi HRD dengan CV berstandar ATS. 100% Client-Side Privacy Guarantee.">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=2">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v=2">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}?v=2">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v=2">
 
     <!-- Fonts: Outfit (Bespoke Executive Standard) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
