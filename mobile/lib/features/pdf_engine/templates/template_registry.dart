@@ -1,9 +1,14 @@
+import 'accent_sidebar_light_template.dart';
 import 'asian_ats_template.dart';
+import 'bento_grid_template.dart';
 import 'compact_portfolio_template.dart';
 import 'cv_template_interface.dart';
+import 'editorial_luxury_template.dart';
 import 'executive_split_template.dart';
 import 'modern_ats_template.dart';
 import 'modern_creative_template.dart';
+import 'nordic_minimal_template.dart';
+import 'tech_timeline_template.dart';
 import 'western_strict_template.dart';
 
 /// Metadata definition for Executive Color Palette
@@ -18,15 +23,20 @@ class AccentColorOption {
 /// Adheres 100% to GEMINI.md modular separation and zero-god-file policy.
 class TemplateRegistry {
   static final List<CvTemplate> _templates = [
-    // ATS-Friendly Category
+    // ATS-Friendly Category (Machine-friendly, 1-Column)
     AsianAtsTemplate(),
     WesternStrictTemplate(),
     ModernAtsTemplate(),
 
-    // Creative Non-ATS Category
+    // Creative Non-ATS Category (Human HR, Portfolios, Modern Layouts)
     ModernCreativeTemplate(),
     CompactPortfolioTemplate(),
     ExecutiveSplitTemplate(),
+    NordicMinimalTemplate(),
+    TechTimelineTemplate(),
+    EditorialLuxuryTemplate(),
+    AccentSidebarLightTemplate(),
+    BentoGridTemplate(),
   ];
 
   /// 4 Official Executive Accent Colors according to blueprint Section I.5 & J.2

@@ -63,7 +63,7 @@ void main() {
     expect(letterBytes.isNotEmpty, true);
   });
 
-  test('Generate PDF for all 6 registered templates across all official colors', () async {
+  test('Generate PDF for all 11 registered templates across all official colors', () async {
     final cv = CvDocument(
       personalInfo: PersonalInfo(
         fullName: 'Alexander Wright',
@@ -115,6 +115,11 @@ void main() {
       'modern_creative',
       'compact_portfolio',
       'executive_split',
+      'nordic_minimal',
+      'tech_timeline',
+      'editorial_luxury',
+      'accent_sidebar_light',
+      'bento_grid',
     ];
 
     final colors = ['#0B132B', '#065F46', '#1C2541', '#92400E'];
@@ -249,6 +254,11 @@ void main() {
       'modern_creative',
       'compact_portfolio',
       'executive_split',
+      'nordic_minimal',
+      'tech_timeline',
+      'editorial_luxury',
+      'accent_sidebar_light',
+      'bento_grid',
     ];
 
     for (final tId in templateIds) {

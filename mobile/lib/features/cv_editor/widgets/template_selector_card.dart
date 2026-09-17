@@ -444,10 +444,10 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
 
   Widget _buildSchematicPreview(CvTemplate template) {
     if (template.id == 'modern_creative') {
-      // 2 column mini schematic
+      // 2 column mini schematic with colored sidebar
       return Row(
         children: [
-          Container(width: 9, color: AppColors.mutedSteelSlate.withValues(alpha: 0.3)),
+          Container(width: 9, color: AppColors.midnightNavy),
           const SizedBox(width: 3),
           Expanded(
             child: Column(
@@ -493,6 +493,107 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
                 Container(height: 4, color: AppColors.midnightNavy),
                 Container(height: 2, color: Colors.grey.shade300),
                 Container(height: 2, color: Colors.grey.shade300),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else if (template.id == 'nordic_minimal') {
+      // Nordic minimal schematic: clean lines, wide spacing
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Container(height: 4, width: 24, color: AppColors.textPrimary),
+          Container(height: 1.5, color: Colors.grey.shade300),
+          Container(height: 2, width: 18, color: Colors.grey.shade400),
+          Container(height: 2, color: Colors.grey.shade300),
+          Container(height: 2, color: Colors.grey.shade300),
+        ],
+      );
+    } else if (template.id == 'tech_timeline') {
+      // Tech timeline schematic: vertical dots and line
+      return Row(
+        children: [
+          Container(width: 6, color: Colors.grey.shade200),
+          const SizedBox(width: 3),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Container(width: 4, height: 4, decoration: const BoxDecoration(color: AppColors.forestPine, shape: BoxShape.circle)),
+              Container(width: 1, height: 8, color: AppColors.forestPine),
+              Container(width: 4, height: 4, decoration: const BoxDecoration(color: AppColors.forestPine, shape: BoxShape.circle)),
+            ],
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(height: 2, color: Colors.grey.shade300),
+                Container(height: 2, color: Colors.grey.shade300),
+                Container(height: 2, color: Colors.grey.shade300),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else if (template.id == 'editorial_luxury') {
+      // Editorial luxury schematic: top frame + 2 columns
+      return Column(
+        children: [
+          Container(
+            height: 10,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              border: Border.all(color: AppColors.mutedSteelSlate, width: 0.8),
+            ),
+          ),
+          const SizedBox(height: 3),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: Container(color: Colors.grey.shade200)),
+                const SizedBox(width: 2),
+                Expanded(child: Container(color: Colors.grey.shade200)),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else if (template.id == 'accent_sidebar_light') {
+      // Light rail schematic: light grey column with vertical stripe
+      return Row(
+        children: [
+          Container(width: 8, color: Colors.grey.shade200),
+          Container(width: 2, color: AppColors.midnightNavy),
+          const SizedBox(width: 3),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(height: 3, color: AppColors.midnightNavy),
+                Container(height: 2, color: Colors.grey.shade300),
+                Container(height: 2, color: Colors.grey.shade300),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else if (template.id == 'bento_grid') {
+      // Bento grid schematic: 3 mini rounded boxes
+      return Column(
+        children: [
+          Container(height: 8, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 2),
+          Container(height: 8, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: Container(decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(width: 2),
+                Expanded(child: Container(decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(2)))),
               ],
             ),
           ),

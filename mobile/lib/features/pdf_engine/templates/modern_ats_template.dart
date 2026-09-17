@@ -155,7 +155,7 @@ class ModernAtsTemplate extends CvTemplate {
                                 text: pw.TextSpan(
                                   children: [
                                     pw.TextSpan(
-                                      text: '$title — ',
+                                      text: '$title - ',
                                       style: pw.TextStyle(
                                         fontSize: 9.5,
                                         fontWeight: pw.FontWeight.bold,

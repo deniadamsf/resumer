@@ -46,6 +46,27 @@ abstract class CvTemplate {
     }
   }
 
+  /// Safely tints a color with white for subtle backgrounds (0.0 = white, 1.0 = full color).
+  PdfColor tintColor(PdfColor color, double factor) {
+    final f = factor.clamp(0.0, 1.0);
+    return PdfColor(
+      1.0 - (1.0 - color.red) * f,
+      1.0 - (1.0 - color.green) * f,
+      1.0 - (1.0 - color.blue) * f,
+    );
+  }
+
+  /// Safely shades a color towards black for dark text.
+  PdfColor shadeColor(PdfColor color, double factor) {
+    final f = (1.0 - factor).clamp(0.0, 1.0);
+    return PdfColor(
+      color.red * f,
+      color.green * f,
+      color.blue * f,
+    );
+  }
+
+
   /// Generates an executive footer when the CV naturally spans across multiple pages.
   /// If it is a 1-page CV, no footer is displayed to preserve a clean single-page presentation.
   pw.Widget buildFooter(pw.Context context) {

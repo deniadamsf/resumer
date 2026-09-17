@@ -195,7 +195,7 @@ class ExecutiveSplitTemplate extends CvTemplate {
                       PdfTextSanitizer.buildBulletDot(accentColor),
                       pw.Expanded(
                         child: pw.Text(
-                          hasDesc ? '$title — ${PdfTextSanitizer.clean(c.description)}' : title,
+                          hasDesc ? '$title - ${PdfTextSanitizer.clean(c.description)}' : title,
                           style: const pw.TextStyle(fontSize: 9),
                         ),
                       ),

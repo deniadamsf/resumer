@@ -83,4 +83,27 @@ class PdfTextSanitizer {
       ],
     );
   }
+
+  /// Mathematically blends a color with white for PDF background tints.
+  /// (factor 0.0 = pure white, 1.0 = full accent color).
+  /// Fixes PDF engine bug where alpha channel in PdfColor is ignored by RGB operators.
+  static PdfColor tint(PdfColor color, double factor) {
+    final f = factor.clamp(0.0, 1.0);
+    return PdfColor(
+      1.0 - (1.0 - color.red) * f,
+      1.0 - (1.0 - color.green) * f,
+      1.0 - (1.0 - color.blue) * f,
+    );
+  }
+
+  /// Mathematically darkens a color towards black for high-contrast deep text.
+  static PdfColor shade(PdfColor color, double factor) {
+    final f = (1.0 - factor).clamp(0.0, 1.0);
+    return PdfColor(
+      color.red * f,
+      color.green * f,
+      color.blue * f,
+    );
+  }
 }
+
