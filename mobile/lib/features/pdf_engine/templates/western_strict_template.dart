@@ -13,10 +13,10 @@ class WesternStrictTemplate extends CvTemplate {
   String get id => 'western_strict';
 
   @override
-  String get nameKey => 'form.template_western';
+  String get nameKey => 'form.template_western_strict';
 
   @override
-  String get descKey => 'form.template_western_desc';
+  String get descKey => 'form.template_western_strict_desc';
 
   @override
   bool get isAtsFriendly => true;

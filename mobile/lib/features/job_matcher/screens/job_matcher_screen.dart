@@ -180,7 +180,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       ),
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 140),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -203,23 +203,24 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
                 );
               },
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Text(
               'job_match.subtitle'.tr,
               style: GoogleFonts.outfit(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w400,
                 color: AppColors.textSecondary,
+                height: 1.35,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
             // Tab Switcher Pill
             JobInputToggleCard(
               currentMode: _mode,
               onModeChanged: (mode) => setState(() => _mode = mode),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
             // Active Input Section
             if (_mode == JobInputMode.text)
@@ -229,7 +230,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
                 selectedImage: _selectedImage,
                 onImageSelected: (img) => setState(() => _selectedImage = img),
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
             // Primary Match CTA Button
             ElevatedButton.icon(

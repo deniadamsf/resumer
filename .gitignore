@@ -43,6 +43,7 @@ google-services.json
 *.pdf
 !mobile/assets/**
 *.apk
+*.aab
 laporan_*.md
 persiapan_*.md
 

@@ -12,7 +12,9 @@
     "error": "Terjadi kendala",
     "close": "Tutup",
     "preview": "Pratinjau CV",
-    "export_pdf": "Unduh PDF"
+    "export_pdf": "Unduh PDF",
+    "export_pdf_btn": "Ekspor PDF",
+    "polish_ai": "Poles AI"
   },
   "auth": {
     "login_title": "Tingkatkan Karir dengan AI",
@@ -36,8 +38,12 @@
     "template_switch_modal_title": "Pilih Template CV",
     "template_asian_ats": "Asian ATS (Foto Formal)",
     "template_asian_ats_desc": "Standar HRD Asia, Mendukung Foto Profil & Rapi",
+    "template_asian": "Asian ATS (Foto Formal)",
+    "template_asian_desc": "Standar HRD Asia, Mendukung Foto Profil & Rapi",
     "template_western_strict": "Western Strict ATS (Tanpa Foto)",
     "template_western_strict_desc": "100% Anti-Bias US/EU, Lolos Semua Mesin ATS",
+    "template_western": "Western Strict ATS (Tanpa Foto)",
+    "template_western_desc": "100% Anti-Bias US/EU, Lolos Semua Mesin ATS",
     "template_modern_ats": "Modern Executive ATS",
     "template_modern_ats_desc": "Aksen Header Kontemporer & Badge Padat",
     "template_modern_creative": "Modern Creative (2 Kolom)",
@@ -319,6 +325,12 @@
     "s2_verdict_initial": "Perlu Optimasi (Risiko Diabaikan)",
     "s2_btn_reset": "Sentuh untuk Mengulang Uji",
     "s3_signature_verified": "Tanda Tangan Digital Tersemat",
-    "s3_applicant": "Kandidat Profesional • Terverifikasi"
+    "s3_applicant": "Kandidat Profesional • Terverifikasi",
+    "hero_eyebrow": "MEMPERKENALKAN",
+    "hero_headline": "CV Anda Layak\nStandar Korporat\nDunia.",
+    "hero_subheadline": "Resumer mengubah narasi kerja pasif menjadi CV berstandar ATS korporat global — gratis seumur hidup, tanpa limit.",
+    "hero_pill_1": "100% Gratis Seumur Hidup",
+    "hero_pill_2": "Skor ATS Otomatis 90–98+",
+    "hero_pill_3": "Mesin AI Kelas Enterprise"
   }
 }

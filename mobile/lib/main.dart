@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -35,9 +34,6 @@ void main() async {
 
     debugPrint('3. Initializing ApiService...');
     await ApiService.instance.init();
-    if (kDebugMode && !ApiService.instance.isAuthenticated) {
-      await ApiService.instance.saveToken('dev_mock_sanctum_token');
-    }
     debugPrint('4. ApiService initialized. Authenticated: ${ApiService.instance.isAuthenticated}');
 
     debugPrint('5. Initializing SignatureService...');

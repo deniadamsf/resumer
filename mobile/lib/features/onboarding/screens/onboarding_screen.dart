@@ -23,7 +23,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  static const int _totalSlides = 3;
+  static const int _totalSlides = 4;
 
   Future<void> _completeOnboarding() async {
     HapticFeedback.mediumImpact();
@@ -154,6 +154,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _currentPage = index),
                   children: [
+                    const _EditorialHeroSlide(),
                     _buildSlide(
                       badge: 'onboarding.badge_1'.tr,
                       title: 'onboarding.title_1'.tr,
@@ -335,6 +336,252 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+// =============================================================================
+// SLIDE 0: Editorial Hero Statement (Pure Typography, Non-Interactive)
+// =============================================================================
+class _EditorialHeroSlide extends StatelessWidget {
+  const _EditorialHeroSlide();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 6),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight - 12,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 16),
+
+                // Abstract diamond icon composition
+                _buildAbstractMark(),
+                const SizedBox(height: 32),
+
+                // Eyebrow divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0x00E2E8F0),
+                              AppColors.borderHairline,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Text(
+                        'onboarding.hero_eyebrow'.tr,
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accentSteel,
+                          letterSpacing: 3.0,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.borderHairline,
+                              Color(0x00E2E8F0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Hero headline — large, bold, editorial
+                Text(
+                  'onboarding.hero_headline'.tr,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Subheadline — elegant, softer
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    'onboarding.hero_subheadline'.tr,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // Value proposition pills
+                _buildValuePill(
+                  icon: Icons.verified_outlined,
+                  text: 'onboarding.hero_pill_1'.tr,
+                ),
+                const SizedBox(height: 10),
+                _buildValuePill(
+                  icon: Icons.insights_rounded,
+                  text: 'onboarding.hero_pill_2'.tr,
+                ),
+                const SizedBox(height: 10),
+                _buildValuePill(
+                  icon: Icons.memory_rounded,
+                  text: 'onboarding.hero_pill_3'.tr,
+                ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Abstract diamond mark — minimalist icon composition
+  /// that evokes precision AI craftsmanship.
+  Widget _buildAbstractMark() {
+    return SizedBox(
+      width: 80,
+      height: 80,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer ring
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.borderHairline,
+                width: 1.5,
+              ),
+            ),
+          ),
+          // Inner filled circle
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.midnightNavy,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.midnightNavy.withValues(alpha: 0.18),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.description_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+          // Top-right accent dot
+          Positioned(
+            top: 4,
+            right: 6,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.forestPineLight,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Value proposition pill — elegant, muted, executive style.
+  Widget _buildValuePill({
+    required IconData icon,
+    required String text,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderHairline, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.subtleSlateTint,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 17,
+              color: AppColors.midnightNavy,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.outfit(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ),
+          const Icon(
+            Icons.check_circle_rounded,
+            size: 18,
+            color: AppColors.forestPineLight,
+          ),
+        ],
+      ),
     );
   }
 }

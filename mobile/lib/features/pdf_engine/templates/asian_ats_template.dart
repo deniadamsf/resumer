@@ -13,10 +13,10 @@ class AsianAtsTemplate extends CvTemplate {
   String get id => 'asian_ats';
 
   @override
-  String get nameKey => 'form.template_asian';
+  String get nameKey => 'form.template_asian_ats';
 
   @override
-  String get descKey => 'form.template_asian_desc';
+  String get descKey => 'form.template_asian_ats_desc';
 
   @override
   bool get isAtsFriendly => true;

@@ -12,7 +12,9 @@
     "error": "An error occurred",
     "close": "Close",
     "preview": "Live Preview",
-    "export_pdf": "Download PDF"
+    "export_pdf": "Download PDF",
+    "export_pdf_btn": "Export PDF",
+    "polish_ai": "Polish with AI"
   },
   "auth": {
     "login_title": "Elevate Your Career with AI",
@@ -36,8 +38,12 @@
     "template_switch_modal_title": "Choose CV Template",
     "template_asian_ats": "Asian ATS (Formal Photo)",
     "template_asian_ats_desc": "Asian HR Standard, Supports Profile Photo",
+    "template_asian": "Asian ATS (Formal Photo)",
+    "template_asian_desc": "Asian HR Standard, Supports Profile Photo",
     "template_western_strict": "Western Strict ATS (No Photo)",
     "template_western_strict_desc": "100% Anti-Bias US/EU, Passes All ATS Parsers",
+    "template_western": "Western Strict ATS (No Photo)",
+    "template_western_desc": "100% Anti-Bias US/EU, Passes All ATS Parsers",
     "template_modern_ats": "Modern Executive ATS",
     "template_modern_ats_desc": "Contemporary Header Accent & Compact Badges",
     "template_modern_creative": "Modern Creative (2 Columns)",
@@ -319,6 +325,12 @@
     "s2_verdict_initial": "Needs Optimization (Filter Risk)",
     "s2_btn_reset": "Tap to Reset Simulation",
     "s3_signature_verified": "Digital Signature Verified",
-    "s3_applicant": "Professional Candidate • Verified"
+    "s3_applicant": "Professional Candidate • Verified",
+    "hero_eyebrow": "INTRODUCING",
+    "hero_headline": "Your Resume\nDeserves Corporate\nStandards.",
+    "hero_subheadline": "Resumer transforms passive job descriptions into ATS-compliant corporate resumes — free forever, no limits.",
+    "hero_pill_1": "100% Free Forever",
+    "hero_pill_2": "ATS Score 90–98+ Guaranteed",
+    "hero_pill_3": "Enterprise-Grade AI Engine"
   }
 }

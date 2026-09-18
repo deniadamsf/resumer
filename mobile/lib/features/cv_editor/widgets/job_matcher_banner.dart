@@ -58,15 +58,16 @@ class JobMatcherBanner extends StatelessWidget {
                       color: AppColors.midnightNavy,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     'job_match.subtitle'.tr,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.outfit(
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
                       color: AppColors.textSecondary,
+                      height: 1.3,
                     ),
                   ),
                 ],

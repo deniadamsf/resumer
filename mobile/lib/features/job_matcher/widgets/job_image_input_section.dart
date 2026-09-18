@@ -165,18 +165,21 @@ class JobImageInputSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildActionButton(
-                label: 'job_match.open_gallery'.tr,
-                icon: Icons.photo_library_outlined,
-                onTap: () => _pickImage(ImageSource.gallery),
+              Expanded(
+                child: _buildActionButton(
+                  label: 'job_match.open_gallery'.tr,
+                  icon: Icons.photo_library_outlined,
+                  onTap: () => _pickImage(ImageSource.gallery),
+                ),
               ),
               const SizedBox(width: 12),
-              _buildActionButton(
-                label: 'job_match.use_camera'.tr,
-                icon: Icons.camera_alt_outlined,
-                onTap: () => _pickImage(ImageSource.camera),
+              Expanded(
+                child: _buildActionButton(
+                  label: 'job_match.use_camera'.tr,
+                  icon: Icons.camera_alt_outlined,
+                  onTap: () => _pickImage(ImageSource.camera),
+                ),
               ),
             ],
           ),
@@ -194,23 +197,27 @@ class JobImageInputSection extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.cardSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.borderHairline),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 16, color: AppColors.midnightNavy),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.midnightNavy,
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.midnightNavy,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

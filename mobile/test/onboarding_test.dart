@@ -26,6 +26,11 @@ void main() {
     expect(find.text('RESUMER AI'), findsOneWidget);
     expect(find.text('Lewati'), findsOneWidget);
 
+    // Slide 0 (Editorial Hero Statement)
+    expect(find.text('MEMPERKENALKAN'), findsOneWidget);
+    await tester.tap(find.text('Lanjutkan'));
+    await tester.pumpAndSettle();
+
     // 2. Slide 1 Verification & Interaction
     expect(find.text('CV Standar Korporat Dunia Berbasis AI'), findsOneWidget);
     expect(find.text('Polesan Formula XYZ'), findsOneWidget);

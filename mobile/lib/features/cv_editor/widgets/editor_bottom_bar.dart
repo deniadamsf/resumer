@@ -51,7 +51,7 @@ class EditorBottomBar extends StatelessWidget {
                       )
                     : const Icon(Icons.auto_awesome_rounded, size: 18, color: Colors.white),
                 label: Text(
-                  isLoading ? 'common.loading'.tr : 'Poles AI',
+                  isLoading ? 'common.loading'.tr : 'common.polish_ai'.tr,
                   style: GoogleFonts.outfit(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
@@ -77,7 +77,7 @@ class EditorBottomBar extends StatelessWidget {
                 onPressed: isLoading ? null : onExportPdf,
                 icon: const Icon(Icons.picture_as_pdf_rounded, size: 18, color: Colors.white),
                 label: Text(
-                  'Ekspor PDF',
+                  'common.export_pdf_btn'.tr,
                   style: GoogleFonts.outfit(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,

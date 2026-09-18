@@ -56,7 +56,7 @@ class FrostedAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               child: Row(
                 children: [
-                  if (showBackButton)
+                  if (showBackButton) ...[
                     leading ??
                         InkWell(
                           onTap: () => Navigator.of(context).maybePop(),
@@ -75,10 +75,9 @@ class FrostedAppBar extends StatelessWidget implements PreferredSizeWidget {
                               color: AppColors.textPrimary,
                             ),
                           ),
-                        )
-                  else
-                    const SizedBox(width: 8),
-                  const SizedBox(width: 12),
+                        ),
+                    const SizedBox(width: 12),
+                  ],
                   Expanded(
                     child: Text(
                       title,
