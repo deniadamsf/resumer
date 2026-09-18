@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
 import '../models/cv_model.dart';
 
-/// Education Section with Month & Year selection & optional GPA handling (SMA/SMK support)
+/// Section Widget for managing and displaying Education history.
+/// Adheres strictly to UI UX Pro Max & GEMINI.md Section 7.
 class EducationSection extends StatelessWidget {
   final List<Education> educations;
   final bool isEnabled;
@@ -23,31 +25,23 @@ class EducationSection extends StatelessWidget {
     this.onUpdateEducation,
   });
 
-  static const List<String> _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des',
-  ];
-
   void _showEducationDialog(BuildContext context, [int? editIndex]) {
     final isEditing = editIndex != null;
     final initial = isEditing ? educations[editIndex] : null;
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
 
     final schoolController = TextEditingController(text: initial?.institution ?? '');
     final degreeController = TextEditingController(text: initial?.degree ?? '');
     final fieldController = TextEditingController(text: initial?.fieldOfStudy ?? '');
     final gpaController = TextEditingController(text: initial?.gpa ?? '');
 
-    // Parse graduation month & year
-    String gradMonth = 'Agt';
+    // Parse graduation month & year using intelligent DateFormatHelper
+    int gradMonth = 8;
     String gradYear = DateTime.now().year.toString();
     if (initial != null && initial.graduationYear.isNotEmpty) {
-      final parts = initial.graduationYear.split(' ');
-      if (parts.length >= 2 && _months.contains(parts[0])) {
-        gradMonth = parts[0];
-        gradYear = parts[1];
-      } else {
-        gradYear = initial.graduationYear;
-      }
+      final parsed = DateFormatHelper.parse(initial.graduationYear);
+      if (parsed.month != null) gradMonth = parsed.month!;
+      if (parsed.year != null && parsed.year!.isNotEmpty) gradYear = parsed.year!;
     }
     final yearController = TextEditingController(text: gradYear);
 
@@ -58,7 +52,7 @@ class EducationSection extends StatelessWidget {
           backgroundColor: AppColors.cardSurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
-            isEditing ? 'Ubah Riwayat Pendidikan' : 'form.add_education'.tr,
+            isEditing ? 'form.edit_education'.tr : 'form.add_education'.tr,
             style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
           ),
           content: SingleChildScrollView(
@@ -72,7 +66,7 @@ class EducationSection extends StatelessWidget {
                   style: GoogleFonts.outfit(fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'form.institution'.tr,
-                    hintText: 'cth: Universitas Indonesia, SMAN 1',
+                    hintText: 'form.institution_hint'.tr,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -81,8 +75,8 @@ class EducationSection extends StatelessWidget {
                   controller: degreeController,
                   style: GoogleFonts.outfit(fontSize: 13),
                   decoration: InputDecoration(
-                    labelText: 'Jenjang (cth: S1 / SMA / D3)',
-                    hintText: 'S1 / Sarjana / SMA',
+                    labelText: 'form.degree_label'.tr,
+                    hintText: 'form.degree_hint'.tr,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -91,14 +85,14 @@ class EducationSection extends StatelessWidget {
                   controller: fieldController,
                   style: GoogleFonts.outfit(fontSize: 13),
                   decoration: InputDecoration(
-                    labelText: 'Jurusan / Bidang Studi',
-                    hintText: 'cth: Teknik Informatika / IPA / IPS',
+                    labelText: 'form.field_of_study'.tr,
+                    hintText: 'form.field_of_study_hint'.tr,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'Bulan & Tahun Kelulusan',
+                  'form.grad_month_year'.tr,
                   style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 6),
@@ -114,11 +108,21 @@ class EducationSection extends StatelessWidget {
                           border: Border.all(color: AppColors.borderHairline),
                         ),
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
+                          child: DropdownButton<int>(
                             value: gradMonth,
                             isExpanded: true,
                             style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textPrimary),
-                            items: _months.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                            items: List.generate(12, (i) {
+                              final mIdx = i + 1;
+                              return DropdownMenuItem<int>(
+                                value: mIdx,
+                                child: Text(
+                                  DateFormatHelper.getMonthName(mIdx, isEnglish: isEn, full: true),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.outfit(fontSize: 12.5, color: AppColors.textPrimary),
+                                ),
+                              );
+                            }),
                             onChanged: (val) {
                               if (val != null) setModalState(() => gradMonth = val);
                             },
@@ -131,10 +135,10 @@ class EducationSection extends StatelessWidget {
                       flex: 4,
                       child: TextField(
                         controller: yearController,
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.text,
                         style: GoogleFonts.outfit(fontSize: 13),
                         decoration: InputDecoration(
-                          labelText: 'Tahun',
+                          labelText: 'form.grad_year_label'.tr,
                           hintText: '2023',
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -150,7 +154,7 @@ class EducationSection extends StatelessWidget {
                   style: GoogleFonts.outfit(fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'form.gpa_optional_hint'.tr,
-                    hintText: 'cth: 3.85 (Kosongkan jika SMA/SMK)',
+                    hintText: 'form.gpa_hint'.tr,
                     helperText: 'form.gpa_sma_note'.tr,
                     helperMaxLines: 2,
                     helperStyle: GoogleFonts.outfit(fontSize: 11, color: AppColors.textSecondary),
@@ -169,8 +173,19 @@ class EducationSection extends StatelessWidget {
               onPressed: () {
                 final institution = schoolController.text.trim();
                 final degree = degreeController.text.trim();
-                final year = yearController.text.trim();
-                final formattedDate = year.isNotEmpty ? '$gradMonth $year' : gradMonth;
+                final yearInput = yearController.text.trim();
+
+                // Smart check: if user typed month name into year field (e.g. "agustus 2023"), extract both
+                final parsedYear = DateFormatHelper.parse(yearInput);
+                final finalMonth = parsedYear.month ?? gradMonth;
+                final finalYear = parsedYear.year ?? (RegExp(r'\b\d{4}\b').firstMatch(yearInput)?.group(0) ?? yearInput);
+
+                final formattedDate = DateFormatHelper.formatMonthYear(
+                  finalMonth,
+                  finalYear,
+                  isEnglish: isEn,
+                  full: true,
+                );
 
                 if (institution.isNotEmpty && degree.isNotEmpty) {
                   final edu = Education(
@@ -193,7 +208,7 @@ class EducationSection extends StatelessWidget {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: Text(isEditing ? 'Simpan' : 'Tambah', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              child: Text(isEditing ? 'common.save'.tr : 'form.add_btn'.tr, style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -310,7 +325,11 @@ class EducationSection extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  edu.graduationYear,
+                  DateFormatHelper.formatDateRange(
+                    edu.graduationYear,
+                    null,
+                    isEnglish: AppLocalizations.instance.currentLocale.startsWith('en'),
+                  ),
                   style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accentSteel),
                 ),
                 if (hasGpa) ...[

@@ -90,7 +90,7 @@ class ApiService {
 
     return {
       'success': true,
-      'message': 'Profil pengguna berhasil diperbarui.',
+      'message': 'profile.user_name_updated'.tr,
       'user': {'name': newName},
     };
   }
@@ -290,8 +290,18 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> checkAtsScore(String cvText, {String? targetRole, int? profileId}) async {
-    final url = Uri.parse('$baseUrl/cv/ats-check');
     final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+
+    if (cvText.trim().length < 50) {
+      return {
+        'success': false,
+        'message': isEn
+            ? 'CV data is incomplete or empty. Please fill in your details in the Editor tab first.'
+            : 'Data CV masih kosong atau belum lengkap. Silakan lengkapi profil Anda di tab Editor terlebih dahulu.',
+      };
+    }
+
+    final url = Uri.parse('$baseUrl/cv/ats-check');
     final body = json.encode({
       'cv_text': cvText,
       'target_role': targetRole,
@@ -302,38 +312,48 @@ class ApiService {
       final response = await http.post(url, headers: _buildHeaders(body), body: body);
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final err = json.decode(response.body) as Map<String, dynamic>;
+          return {
+            'success': false,
+            'message': err['message'] ??
+                (isEn
+                    ? 'Failed to process ATS check (${response.statusCode})'
+                    : 'Gagal memproses pengujian ATS (${response.statusCode})'),
+          };
+        } catch (_) {
+          return {
+            'success': false,
+            'message': isEn
+                ? 'Server returned status ${response.statusCode}'
+                : 'Server mengembalikan status ${response.statusCode}',
+          };
+        }
       }
-    } catch (_) {}
-
-    return {
-      'success': true,
-      'ats_result': {
-        'total_score': 95,
-        'verdict': isEn ? 'Top 5% ATS Ready' : 'Top 5% Standar ATS Siap Kerja',
-        'breakdown': {
-          'keyword_match': 24,
-          'impact_verbs': 25,
-          'readability': 24,
-          'completeness': 22,
-        },
-        'actionable_feedback': [
-          {
-            'section': 'Summary',
-            'issue': isEn
-                ? 'Strengthen technical keyword prominence'
-                : 'Tingkatkan penonjolan kata kunci teknis',
-            'suggestion': isEn
-                ? 'Use measurable action verbs and the Google XYZ formula.'
-                : 'Gunakan kata kerja aksi terukur dan formula Google XYZ.'
-          }
-        ]
-      }
-    };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': isEn
+            ? 'Unable to connect to server. Please check your internet connection.'
+            : 'Gagal terhubung ke server. Periksa koneksi internet Anda.',
+      };
+    }
   }
 
   Future<Map<String, dynamic>> autoFixAts(String cvText, {List<dynamic> suggestions = const []}) async {
-    final url = Uri.parse('$baseUrl/cv/ats-autofix');
     final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+
+    if (cvText.trim().length < 50) {
+      return {
+        'success': false,
+        'message': isEn
+            ? 'CV data is incomplete or empty. Please fill in your details in the Editor tab first.'
+            : 'Data CV masih kosong atau belum lengkap. Silakan lengkapi profil Anda di tab Editor terlebih dahulu.',
+      };
+    }
+
+    final url = Uri.parse('$baseUrl/cv/ats-autofix');
     final body = json.encode({
       'cv_text': cvText,
       'suggestions': suggestions,
@@ -343,33 +363,33 @@ class ApiService {
       final response = await http.post(url, headers: _buildHeaders(body), body: body);
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final err = json.decode(response.body) as Map<String, dynamic>;
+          return {
+            'success': false,
+            'message': err['message'] ??
+                (isEn
+                    ? 'Failed to auto-fix CV (${response.statusCode})'
+                    : 'Gagal memoles CV (${response.statusCode})'),
+          };
+        } catch (_) {
+          return {
+            'success': false,
+            'message': isEn
+                ? 'Server returned status ${response.statusCode}'
+                : 'Server mengembalikan status ${response.statusCode}',
+          };
+        }
       }
-    } catch (_) {}
-
-    return {
-      'success': true,
-      'improved_cv': {
-        'improved_cv_data': {
-          'summary': isEn
-              ? 'Analytical Data & BI Specialist proficient in predictive modeling, enterprise data pipelines, and executive dashboards.'
-              : 'Spesialis Data & Business Intelligence dengan keahlian dalam pemodelan prediktif, arsitektur pipeline enterprise, dan dashboard eksekutif.',
-          'skills': isEn
-              ? ['Python', 'SQL', 'Data Pipelines', 'CI/CD Pipelines', 'Docker', 'PowerBI', 'Tableau']
-              : ['Python', 'SQL', 'Arsitektur Pipeline', 'CI/CD Pipelines', 'Docker', 'PowerBI', 'Tableau']
-        },
-        'estimated_new_score': 96,
-        'changes_made': isEn
-            ? [
-                'Rewrote summary and highlights using Google XYZ formula',
-                'Injected enterprise ATS keywords'
-              ]
-            : [
-                'Menulis ulang ringkasan dan pencapaian kerja dengan formula Google XYZ',
-                'Menyematkan kata kunci ATS standar korporat'
-              ]
-      },
-      'quota': {'remaining': 4, 'limit': 5}
-    };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': isEn
+            ? 'Unable to connect to server. Please check your internet connection.'
+            : 'Gagal terhubung ke server. Periksa koneksi internet Anda.',
+      };
+    }
   }
 
   Future<Map<String, dynamic>> matchJob(String cvText, {String? jobText, String? jobImageBase64}) async {

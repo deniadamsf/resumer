@@ -313,11 +313,15 @@ class ModernAtsTemplate extends CvTemplate {
         children: [
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                PdfTextSanitizer.clean(exp.position),
-                style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+              pw.Expanded(
+                child: pw.Text(
+                  PdfTextSanitizer.clean(exp.position),
+                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                ),
               ),
+              pw.SizedBox(width: 8),
               pw.Container(
                 padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: pw.BoxDecoration(
@@ -327,6 +331,7 @@ class ModernAtsTemplate extends CvTemplate {
                 child: pw.Text(
                   '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
                   style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: accentColor),
+                  textAlign: pw.TextAlign.right,
                 ),
               ),
             ],
@@ -367,31 +372,37 @@ class ModernAtsTemplate extends CvTemplate {
       padding: const pw.EdgeInsets.only(bottom: 5),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                '${PdfTextSanitizer.clean(edu.degree)} in ${PdfTextSanitizer.clean(edu.fieldOfStudy)}',
-                style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold),
-              ),
-              pw.Text(
-                PdfTextSanitizer.clean(edu.institution),
-                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800),
-              ),
-            ],
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  '${PdfTextSanitizer.clean(edu.degree)} in ${PdfTextSanitizer.clean(edu.fieldOfStudy)}',
+                  style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.Text(
+                  PdfTextSanitizer.clean(edu.institution),
+                  style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800),
+                ),
+              ],
+            ),
           ),
+          pw.SizedBox(width: 8),
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
                 PdfTextSanitizer.clean(edu.graduationYear),
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                textAlign: pw.TextAlign.right,
               ),
               if (edu.gpa.trim().isNotEmpty)
                 pw.Text(
                   'GPA: ${PdfTextSanitizer.clean(edu.gpa)}',
                   style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
+                  textAlign: pw.TextAlign.right,
                 ),
             ],
           ),

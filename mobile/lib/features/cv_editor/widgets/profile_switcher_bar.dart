@@ -46,7 +46,7 @@ class ProfileSwitcherBar extends StatelessWidget {
               autofocus: true,
               style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textPrimary),
               decoration: InputDecoration(
-                labelText: 'Judul Profil',
+                labelText: 'profile.field_profile_title'.tr,
                 hintText: 'profile.rename_hint'.tr,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -56,7 +56,7 @@ class ProfileSwitcherBar extends StatelessWidget {
               controller: targetJobController,
               style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textPrimary),
               decoration: InputDecoration(
-                labelText: 'Posisi Target',
+                labelText: 'profile.field_target_position'.tr,
                 hintText: 'profile.target_role_hint'.tr,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -170,7 +170,7 @@ class ProfileSwitcherBar extends StatelessWidget {
               ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_horiz_rounded, size: 20, color: AppColors.mutedSteelSlate),
-                tooltip: 'Opsi Profil',
+                tooltip: 'profile.profile_options_tooltip'.tr,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: const BorderSide(color: AppColors.borderHairline),
@@ -186,7 +186,7 @@ class ProfileSwitcherBar extends StatelessWidget {
                   PopupMenuItem(
                     value: 'edit',
                     child: Text(
-                      'Ubah Nama Profil',
+                      'profile.rename_profile_menu'.tr,
                       style: GoogleFonts.outfit(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

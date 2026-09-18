@@ -199,16 +199,15 @@ Penerapan backend Laravel di lingkungan **Shared Hosting** dirancang secara keta
 * **Larangan Keras API Key & File `.env` di APK (Zero-Secret-in-Client Policy):**
   * **DILARANG KERAS** menyimpan Gemini API Key secara hardcoded di kode Flutter (`.dart`), BuildConfig, maupun membundle file `.env` di folder asset APK.
   * File APK/AAB sangat mudah di-*reverse engineer* / di-*decompile* (menggunakan JADX, APKTool, atau perintah `strings`). Menyimpan file `.env` di dalam APK sama saja dengan membagikan Gemini API Key secara gratis ke publik.
-  * Gemini API Key **100% EKSKLUSIF** hanya tersimpan di file `.env` server Laravel (yang diletakkan di luar `public_html`).
+  * Gemini API Key **100% EKSKLUSIF** hanya tersimpan di file `.env` server Laravel di `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/.env` (diproteksi permission ketat chmod 600 dan diblokir oleh web server `.htaccess`).
   * Aplikasi Flutter hanya mengetahui Base URL API Laravel publik (`https://resumer.cellanoma.my.id/api/v1`) dan hanya berkomunikasi via token sesi Laravel Sanctum.
 * **Rate Limiting Berlapis:** Middleware Laravel membatasi `throttle:5,1` per menit dan batas maksimal 5 request per hari per Akun Google terdaftar.
 * **Payload & Length Guard:** Batasan panjang karakter (maks 3.000 karakter per riwayat kerja) dan sanitasi input guna mencegah *prompt injection*.
 * **HMAC Request Signature:** Setiap request dari aplikasi Flutter wajib menyertakan header signature terenkripsi (HMAC SHA-256) agar API Laravel kebal dari tembakan bot luar atau tools seperti Postman.
 
-#### 6. Keamanan Deploy cPanel:
-* Folder core Laravel (termasuk file `.env`) diletakkan **di luar `public_html`** (contoh: `/home/username/resumer-core/`).
-* Hanya isi folder `public/` yang diarahkan ke domain/subdomain (`api.domain.com`).
-* Background tasks menggunakan **cPanel Cron Job** (`php artisan schedule:run` per menit) untuk reset kuota harian pukul 00:00 dan pembersihan berkas temporary.
+#### 6. Keamanan Deploy cPanel/Hostinger:
+* Seluruh instalasi backend Laravel aktif berada di `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/`. File `.env` diproteksi chmod 600 dan dicegah akses langsungnya oleh `.htaccess`.
+* Background tasks menggunakan **Hostinger/cPanel Cron Job** (`php artisan schedule:run` per menit) untuk reset kuota harian pukul 00:00 dan pembersihan berkas temporary.
 
 ---
 
@@ -428,12 +427,9 @@ Backend Laravel menerapkan pola *Controller-Service-Resource* yang bersih:
 
 Berikut rincian arsitektur path hosting resmi untuk backend Resumer pada server Hostinger:
 * **Domain Subdomain:** `resumer.cellanoma.my.id`
-* **Subdomain Document Root (Web Root):**
+* **Subdomain Document Root & Laravel Root Directory:**
   `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/`
-  *(Memuat berkas publik: `.htaccess`, `index.php`, `robots.txt`, `favicon.ico`)*
-* **Laravel Core Directory (Private/Isolated):**
-  `/home/u731410318/resumer-core/`
-  *(Diletakkan di luar `public_html` demi keamanan mutlak, menyimpan `.env`, kode aplikasi, dan file vendor)*
+  *(Memuat seluruh aplikasi backend Laravel: `app/`, `config/`, `routes/`, `database/`, `.env`, `vendor/`, `artisan`, `index.php`, `.htaccess`, dsb.)*
 * **Database Server:** MySQL `u731410318_resumer` (Host: `localhost` / `127.0.0.1`)
 * **Akses SSH:** Alias `hostinger` atau `resumer`
   * Host: `153.92.8.198`
@@ -442,4 +438,4 @@ Berikut rincian arsitektur path hosting resmi untuk backend Resumer pada server 
   * IdentityFile: `~/.ssh/id_rsa` / `~/.ssh/id_ed25519_resumer`
   * **PENTING (Flag Non-Interactive):** Wajib selalu menyertakan `-T -n` (contoh: `ssh -T -n resumer "<command>"`) guna menonaktifkan alokasi TTY & stdin agar eksekusi perintah remote Hostinger selesai dalam hitungan milidetik tanpa hanging.
 * **Perintah Pembersihan Cache Remote:**
-  `ssh -T -n resumer "cd /home/u731410318/resumer-core && php artisan optimize:clear"`
+  `ssh -T -n resumer "cd /home/u731410318/domains/cellanoma.my.id/public_html/resumer && php artisan optimize:clear"`

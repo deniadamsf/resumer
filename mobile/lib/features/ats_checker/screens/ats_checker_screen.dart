@@ -30,6 +30,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
   int? _score;
   String? _verdict;
   Map<String, dynamic>? _breakdown;
+  Map<String, dynamic>? _keywordAnalysis;
   List<dynamic> _feedback = [];
 
   @override
@@ -61,7 +62,24 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
     }
   }
 
+  void _showIncompleteProfilePrompt() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('ats.incomplete_profile_desc'.tr),
+        backgroundColor: AppColors.antiqueBronze,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _handleRunCheck() async {
+    final cv = _profileMgr.currentCv;
+    if (!cv.isEligibleForAi) {
+      _showIncompleteProfilePrompt();
+      return;
+    }
+
     await AdService.instance.showRewardedAd(
       context: context,
       prompt: 'ad.reward_prompt_check'.tr,
@@ -88,6 +106,9 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         final newBreakdown = result['breakdown'] != null
             ? Map<String, dynamic>.from(result['breakdown'])
             : null;
+        final newKeywords = result['keyword_analysis'] != null
+            ? Map<String, dynamic>.from(result['keyword_analysis'])
+            : null;
         final newFeedback = result['actionable_feedback'] != null
             ? List<dynamic>.from(result['actionable_feedback'])
             : [];
@@ -96,6 +117,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
           _score = newScore;
           _verdict = newVerdict;
           _breakdown = newBreakdown;
+          _keywordAnalysis = newKeywords;
           _feedback = newFeedback;
         });
         await _profileMgr.updateProfileMeta(
@@ -108,11 +130,20 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Skor ATS berhasil dianalisis: $_score/100'),
+              content: Text('ats.analyzed_success_snack'.trArgs([_score.toString()])),
               backgroundColor: AppColors.forestPine,
             ),
           );
         }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'ats.analysis_failed'.tr),
+            backgroundColor: AppColors.crimsonBordeaux,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -126,6 +157,12 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
   }
 
   Future<void> _handleAutoFix() async {
+    final cv = _profileMgr.currentCv;
+    if (!cv.isEligibleForAi) {
+      _showIncompleteProfilePrompt();
+      return;
+    }
+
     await AdService.instance.showRewardedAd(
       context: context,
       prompt: 'ad.reward_prompt_autofix'.tr,
@@ -171,7 +208,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             }
           }
 
-          // 3. Optimize skills with industry keywords
+          // 3. Optimize skills with industry keywords & descriptive context
           if (improvedData['skills'] != null && (improvedData['skills'] as List).isNotEmpty) {
             final rawSkills = improvedData['skills'] as List;
             final List<SkillItem> parsedSkills = [];
@@ -184,12 +221,40 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
               cv.skills = parsedSkills;
             }
           }
+
+          // 4. Optimize certifications & licenses (ONLY if user already has certifications)
+          // ATURAN MUTLAK USER: "tapi kalo kosong ya jangan diisi"
+          if (preservedCertifications.isNotEmpty &&
+              improvedData['certifications'] != null &&
+              (improvedData['certifications'] as List).isNotEmpty) {
+            final rawCerts = improvedData['certifications'] as List;
+            for (int i = 0; i < rawCerts.length && i < cv.certifications.length; i++) {
+              final certMap = rawCerts[i];
+              if (certMap is Map) {
+                if (certMap['name'] != null && (certMap['name'] as String).trim().isNotEmpty) {
+                  cv.certifications[i].name = certMap['name'].toString().trim();
+                }
+                if (certMap['issuer'] != null && (certMap['issuer'] as String).trim().isNotEmpty) {
+                  cv.certifications[i].issuer = certMap['issuer'].toString().trim();
+                }
+                if (certMap['year'] != null && (certMap['year'] as String).trim().isNotEmpty) {
+                  cv.certifications[i].year = certMap['year'].toString().trim();
+                }
+                if (certMap['description'] != null && (certMap['description'] as String).trim().isNotEmpty) {
+                  cv.certifications[i].description = certMap['description'].toString().trim();
+                }
+              }
+            }
+          }
         }
 
         // Restore and guarantee that core user sections are 100% intact
         cv.languages = preservedLanguages;
         cv.hobbies = preservedHobbies;
-        cv.certifications = preservedCertifications;
+        // JIKA USER TIDAK MEMILIKI SERTIFIKASI, JAMIN TETAP KOSONG 100%
+        if (preservedCertifications.isEmpty) {
+          cv.certifications = [];
+        }
         cv.educations = preservedEducations;
         cv.personalInfo = preservedPersonalInfo;
         cv.showLanguages = preservedShowLanguages;
@@ -223,11 +288,20 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('CV berhasil dioptimalkan! Skor ATS melonjak ke $newScore+'),
+              content: Text('ats.autofix_success_snack'.trArgs([newScore.toString()])),
               backgroundColor: AppColors.forestPine,
             ),
           );
         }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'ats.analysis_failed'.tr),
+            backgroundColor: AppColors.crimsonBordeaux,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -254,10 +328,10 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
     showDialog(
       context: context,
       builder: (_) => AtsShareCard(
+        candidateName: cv.personalInfo.fullName,
+        targetRole: cv.personalInfo.professionalTitle,
         score: _score!,
-        verdict: _verdict ?? 'Top 5% ATS Ready',
-        candidateName: cv.personalInfo.fullName.isNotEmpty ? cv.personalInfo.fullName : 'Pengguna Resumer',
-        targetRole: cv.personalInfo.professionalTitle.isNotEmpty ? cv.personalInfo.professionalTitle : 'Professional',
+        verdict: _verdict ?? (_score! >= 85 ? 'ats.verdict_top_tier'.tr : 'ats.verdict_needs_opt'.tr),
         breakdown: _breakdown,
       ),
     );
@@ -282,7 +356,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             ),
             tooltip: _score == null
                 ? 'ats.share_untested_warning'.tr
-                : 'Bagikan Kartu Skor',
+                : 'ats.share_tooltip'.tr,
           ),
         ],
       ),
@@ -313,6 +387,10 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             // Active Template Context Info Card
             _buildActiveTemplateCard(_profileMgr.currentCv),
             const SizedBox(height: 14),
+
+            // Incomplete Profile Warning Card (if CV is not yet ready for AI/ATS)
+            if (!_profileMgr.currentCv.isEligibleForAi)
+              _buildIncompleteProfileCard(),
 
             // Hero Score Gauge Card
             Container(
@@ -442,7 +520,10 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             const SizedBox(height: 16),
 
             // Breakdown Section
-            AtsBreakdownSection(breakdown: _breakdown),
+            AtsBreakdownSection(
+              breakdown: _breakdown,
+              keywordAnalysis: _keywordAnalysis,
+            ),
             const SizedBox(height: 16),
 
             // Recommendations / Actionable Feedback Section
@@ -502,7 +583,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  isAts ? 'ATS Ready (1-Kolom)' : 'Kreatif (Non-ATS)',
+                  isAts ? 'ats.badge_ats_ready'.tr : 'ats.badge_creative_non_ats'.tr,
                   style: GoogleFonts.outfit(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -525,7 +606,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '💡 Analisis skor di atas menguji kekuatan isi teks Anda. Format Kreatif 2-kolom sangat memikat untuk HRD manusia (email langsung/portofolio), namun jika melamar ke portal ATS otomatis, disarankan beralih ke template ATS 1-kolom.',
+                    'ats.creative_template_hint'.tr,
                     style: GoogleFonts.outfit(
                       fontSize: 11,
                       color: AppColors.textPrimary,
@@ -542,9 +623,9 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                         setState(() {});
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Beralih ke template Asian ATS Classic'),
-                              duration: Duration(seconds: 2),
+                            SnackBar(
+                              content: Text('ats.switched_to_asian_ats_snack'.tr),
+                              duration: const Duration(seconds: 2),
                               backgroundColor: AppColors.forestPine,
                             ),
                           );
@@ -552,7 +633,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                       },
                       icon: const Icon(Icons.swap_horiz_rounded, size: 14, color: AppColors.midnightNavy),
                       label: Text(
-                        'Beralih ke Template Asian ATS',
+                        'ats.switch_to_asian_ats_btn'.tr,
                         style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
                       ),
                       style: OutlinedButton.styleFrom(
@@ -566,6 +647,62 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIncompleteProfileCard() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.subtleSlateTint,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.antiqueBronze.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.antiqueBronze.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.info_outline_rounded,
+              color: AppColors.antiqueBronze,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ats.incomplete_profile_title'.tr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'ats.incomplete_banner_hint'.tr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

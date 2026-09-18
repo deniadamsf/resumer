@@ -4,6 +4,8 @@ import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../models/cv_model.dart';
 
+import '../../../core/utils/date_format_helper.dart';
+
 /// Work Experience Section with month & year selection & Google XYZ bullet highlights
 class WorkExperienceSection extends StatelessWidget {
   final List<WorkExperience> experiences;
@@ -23,44 +25,32 @@ class WorkExperienceSection extends StatelessWidget {
     required this.onUpdateExperience,
   });
 
-  static const List<String> _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des',
-  ];
-
   void _showExperienceDialog(BuildContext context, [int? editIndex]) {
     final isEditing = editIndex != null;
     final initial = isEditing ? experiences[editIndex] : null;
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
 
     final companyController = TextEditingController(text: initial?.company ?? '');
     final positionController = TextEditingController(text: initial?.position ?? '');
 
-    // Parse start month & year
-    String startMonth = 'Jan';
+    // Parse start month & year using intelligent DateFormatHelper
+    int startMonth = 1;
     String startYear = DateTime.now().year.toString();
     if (initial != null && initial.startDate.isNotEmpty) {
-      final parts = initial.startDate.split(' ');
-      if (parts.length >= 2 && _months.contains(parts[0])) {
-        startMonth = parts[0];
-        startYear = parts[1];
-      } else {
-        startYear = initial.startDate;
-      }
+      final parsed = DateFormatHelper.parse(initial.startDate);
+      if (parsed.month != null) startMonth = parsed.month!;
+      if (parsed.year != null && parsed.year!.isNotEmpty) startYear = parsed.year!;
     }
     final startYearController = TextEditingController(text: startYear);
 
-    // Parse end month & year or 'Sekarang'
-    bool isCurrent = initial == null || initial.endDate.toLowerCase().contains('sekarang') || initial.endDate.toLowerCase().contains('present');
-    String endMonth = 'Des';
+    // Parse end month & year or 'Sekarang' / 'Present'
+    final initialEndParts = DateFormatHelper.parse(initial?.endDate);
+    bool isCurrent = initial == null || initialEndParts.isPresent;
+    int endMonth = 12;
     String endYear = DateTime.now().year.toString();
     if (initial != null && !isCurrent && initial.endDate.isNotEmpty) {
-      final parts = initial.endDate.split(' ');
-      if (parts.length >= 2 && _months.contains(parts[0])) {
-        endMonth = parts[0];
-        endYear = parts[1];
-      } else {
-        endYear = initial.endDate;
-      }
+      if (initialEndParts.month != null) endMonth = initialEndParts.month!;
+      if (initialEndParts.year != null && initialEndParts.year!.isNotEmpty) endYear = initialEndParts.year!;
     }
     final endYearController = TextEditingController(text: endYear);
 
@@ -71,7 +61,7 @@ class WorkExperienceSection extends StatelessWidget {
           backgroundColor: AppColors.cardSurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
-            isEditing ? 'Ubah Pengalaman Kerja' : 'form.add_experience'.tr,
+            isEditing ? 'form.edit_experience'.tr : 'form.add_experience'.tr,
             style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
           ),
           content: SingleChildScrollView(
@@ -85,7 +75,7 @@ class WorkExperienceSection extends StatelessWidget {
                   style: GoogleFonts.outfit(fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'form.company'.tr,
-                    hintText: 'cth: PT GoTo Gojek Tokopedia, Telkom',
+                    hintText: 'form.company_hint'.tr,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -95,7 +85,7 @@ class WorkExperienceSection extends StatelessWidget {
                   style: GoogleFonts.outfit(fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'form.position'.tr,
-                    hintText: 'cth: Senior Mobile Developer, Product Manager',
+                    hintText: 'form.position_hint'.tr,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -117,11 +107,21 @@ class WorkExperienceSection extends StatelessWidget {
                           border: Border.all(color: AppColors.borderHairline),
                         ),
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
+                          child: DropdownButton<int>(
                             value: startMonth,
                             isExpanded: true,
                             style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textPrimary),
-                            items: _months.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                            items: List.generate(12, (i) {
+                              final mIdx = i + 1;
+                              return DropdownMenuItem<int>(
+                                value: mIdx,
+                                child: Text(
+                                  DateFormatHelper.getMonthName(mIdx, isEnglish: isEn, full: true),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.outfit(fontSize: 12.5, color: AppColors.textPrimary),
+                                ),
+                              );
+                            }),
                             onChanged: (val) {
                               if (val != null) setModalState(() => startMonth = val);
                             },
@@ -134,7 +134,7 @@ class WorkExperienceSection extends StatelessWidget {
                       flex: 4,
                       child: TextField(
                         controller: startYearController,
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.text,
                         style: GoogleFonts.outfit(fontSize: 13),
                         decoration: InputDecoration(
                           labelText: 'form.start_year'.tr,
@@ -184,11 +184,21 @@ class WorkExperienceSection extends StatelessWidget {
                             border: Border.all(color: AppColors.borderHairline),
                           ),
                           child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
+                            child: DropdownButton<int>(
                               value: endMonth,
                               isExpanded: true,
                               style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textPrimary),
-                              items: _months.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                              items: List.generate(12, (i) {
+                                final mIdx = i + 1;
+                                return DropdownMenuItem<int>(
+                                  value: mIdx,
+                                  child: Text(
+                                    DateFormatHelper.getMonthName(mIdx, isEnglish: isEn, full: true),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.outfit(fontSize: 12.5, color: AppColors.textPrimary),
+                                  ),
+                                );
+                              }),
                               onChanged: (val) {
                                 if (val != null) setModalState(() => endMonth = val);
                               },
@@ -201,7 +211,7 @@ class WorkExperienceSection extends StatelessWidget {
                         flex: 4,
                         child: TextField(
                           controller: endYearController,
-                          keyboardType: TextInputType.number,
+                          keyboardType: TextInputType.text,
                           style: GoogleFonts.outfit(fontSize: 13),
                           decoration: InputDecoration(
                             labelText: 'form.end_year'.tr,
@@ -226,12 +236,36 @@ class WorkExperienceSection extends StatelessWidget {
               onPressed: () {
                 final company = companyController.text.trim();
                 final position = positionController.text.trim();
-                final sYear = startYearController.text.trim();
-                final eYear = endYearController.text.trim();
+                final sYearInput = startYearController.text.trim();
+                final eYearInput = endYearController.text.trim();
 
                 if (company.isNotEmpty && position.isNotEmpty) {
-                  final startFormatted = sYear.isNotEmpty ? '$startMonth $sYear' : startMonth;
-                  final endFormatted = isCurrent ? 'Sekarang' : (eYear.isNotEmpty ? '$endMonth $eYear' : endMonth);
+                  // Smart check: if user typed month name into year field (e.g. "januari 2024"), extract both
+                  final parsedStart = DateFormatHelper.parse(sYearInput);
+                  final finalStartMonth = parsedStart.month ?? startMonth;
+                  final finalStartYear = parsedStart.year ?? (RegExp(r'\b\d{4}\b').firstMatch(sYearInput)?.group(0) ?? sYearInput);
+
+                  final startFormatted = DateFormatHelper.formatMonthYear(
+                    finalStartMonth,
+                    finalStartYear,
+                    isEnglish: isEn,
+                    full: true,
+                  );
+
+                  String endFormatted;
+                  if (isCurrent) {
+                    endFormatted = isEn ? 'Present' : 'Sekarang';
+                  } else {
+                    final parsedEnd = DateFormatHelper.parse(eYearInput);
+                    final finalEndMonth = parsedEnd.month ?? endMonth;
+                    final finalEndYear = parsedEnd.year ?? (RegExp(r'\b\d{4}\b').firstMatch(eYearInput)?.group(0) ?? eYearInput);
+                    endFormatted = DateFormatHelper.formatMonthYear(
+                      finalEndMonth,
+                      finalEndYear,
+                      isEnglish: isEn,
+                      full: true,
+                    );
+                  }
 
                   if (isEditing) {
                     onUpdateExperience(
@@ -263,7 +297,7 @@ class WorkExperienceSection extends StatelessWidget {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: Text(isEditing ? 'Simpan' : 'Tambah', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              child: Text(isEditing ? 'common.save'.tr : 'form.add_btn'.tr, style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -279,7 +313,7 @@ class WorkExperienceSection extends StatelessWidget {
         backgroundColor: AppColors.cardSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Tambah Capaian (Google XYZ)',
+          'form.add_xyz_achievement'.tr,
           style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w700),
         ),
         content: TextField(
@@ -288,7 +322,7 @@ class WorkExperienceSection extends StatelessWidget {
           autofocus: true,
           style: GoogleFonts.outfit(fontSize: 13),
           decoration: InputDecoration(
-            hintText: 'Mencapai [X] yang diukur dengan [Y] melalui aksi [Z]...',
+            hintText: 'form.xyz_hint'.tr,
             hintStyle: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -322,7 +356,7 @@ class WorkExperienceSection extends StatelessWidget {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: Text('Tambah', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+            child: Text('common.add'.tr, style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -429,7 +463,11 @@ class WorkExperienceSection extends StatelessWidget {
               ],
             ),
             Text(
-              '${exp.startDate} - ${exp.endDate}',
+              DateFormatHelper.formatDateRange(
+                exp.startDate,
+                exp.endDate,
+                isEnglish: AppLocalizations.instance.currentLocale.startsWith('en'),
+              ),
               style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accentSteel),
             ),
             const SizedBox(height: 6),
@@ -455,7 +493,7 @@ class WorkExperienceSection extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: () => _showAddHighlightDialog(context, index),
                 icon: const Icon(Icons.add, size: 14),
-                label: Text('Tambah Poin Capaian', style: GoogleFonts.outfit(fontSize: 11)),
+                label: Text('form.add_bullet_point'.tr, style: GoogleFonts.outfit(fontSize: 11)),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.accentSteel,
                   visualDensity: VisualDensity.compact,

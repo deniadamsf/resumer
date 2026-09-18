@@ -71,7 +71,7 @@ class _LanguagesSectionState extends State<LanguagesSection> {
           backgroundColor: AppColors.cardSurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
-            'Ubah Kemahiran Bahasa',
+            'form.edit_language'.tr,
             style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
           ),
           content: Column(
@@ -88,7 +88,7 @@ class _LanguagesSectionState extends State<LanguagesSection> {
                 autofocus: true,
                 style: GoogleFonts.outfit(fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'cth: Bahasa Indonesia, English, Mandarin',
+                  hintText: 'form.language_name_hint'.tr,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
@@ -144,7 +144,7 @@ class _LanguagesSectionState extends State<LanguagesSection> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: Text('Simpan', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              child: Text('common.save'.tr, style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -195,7 +195,7 @@ class _LanguagesSectionState extends State<LanguagesSection> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'Opsional',
+                        'form.optional_badge'.tr,
                         style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                       ),
                     ),
@@ -220,7 +220,7 @@ class _LanguagesSectionState extends State<LanguagesSection> {
                     controller: _nameController,
                     style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'cth: Bahasa Indonesia, English',
+                      hintText: 'form.language_name_hint'.tr,
                       hintStyle: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       filled: true,
@@ -289,7 +289,7 @@ class _LanguagesSectionState extends State<LanguagesSection> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
-                  'Belum ada bahasa ditambahkan. Ketik nama bahasa dan pilih kemahiran.',
+                  'form.empty_languages'.tr,
                   style: GoogleFonts.outfit(fontSize: 11.5, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
                 ),
               )

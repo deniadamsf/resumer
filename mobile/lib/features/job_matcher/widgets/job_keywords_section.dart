@@ -43,9 +43,30 @@ class JobKeywordsSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           if (matchedKeywords.isEmpty)
-            Text(
-              'Belum ada kata kunci yang cocok ditemukan.',
-              style: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.subtleSlateTint,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.borderHairline),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 15, color: AppColors.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'job_match.no_matched_keywords'.tr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             )
           else
             Wrap(
@@ -54,6 +75,7 @@ class JobKeywordsSection extends StatelessWidget {
               children: matchedKeywords
                   .map(
                     (kw) => _buildChip(
+                      context: context,
                       label: kw,
                       bgColor: const Color(0xFFECFDF5),
                       borderColor: const Color(0xFFA7F3D0),
@@ -78,9 +100,31 @@ class JobKeywordsSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           if (missingKeywords.isEmpty)
-            Text(
-              'Luar biasa! Semua kata kunci penting ada di CV Anda.',
-              style: GoogleFonts.outfit(fontSize: 12, color: AppColors.forestPine),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.verified_rounded, size: 15, color: AppColors.forestPine),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'job_match.all_keywords_present'.tr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.forestPine,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             )
           else
             Wrap(
@@ -89,6 +133,7 @@ class JobKeywordsSection extends StatelessWidget {
               children: missingKeywords
                   .map(
                     (kw) => _buildChip(
+                      context: context,
                       label: kw,
                       bgColor: const Color(0xFFFFFBEB),
                       borderColor: const Color(0xFFFDE68A),
@@ -109,33 +154,42 @@ class JobKeywordsSection extends StatelessWidget {
     required Color color,
     required IconData icon,
   }) {
+    final countLabel = 'job_match.keywords_count'.trArgs([count.toString()]);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.midnightNavy,
+        Expanded(
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.midnightNavy,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            '$count kata kunci',
+            countLabel,
             style: GoogleFonts.outfit(
-              fontSize: 10,
+              fontSize: 10.5,
               fontWeight: FontWeight.w700,
               color: color,
             ),
@@ -146,17 +200,21 @@ class JobKeywordsSection extends StatelessWidget {
   }
 
   Widget _buildChip({
+    required BuildContext context,
     required String label,
     required Color bgColor,
     required Color borderColor,
     required Color textColor,
     required IconData icon,
   }) {
+    final maxChipWidth = MediaQuery.sizeOf(context).width - 68;
+
     return Container(
+      constraints: BoxConstraints(maxWidth: maxChipWidth),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor),
       ),
       child: Row(
@@ -164,12 +222,15 @@ class JobKeywordsSection extends StatelessWidget {
         children: [
           Icon(icon, size: 13, color: textColor),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: textColor,
+          Flexible(
+            child: Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+                height: 1.25,
+              ),
             ),
           ),
         ],

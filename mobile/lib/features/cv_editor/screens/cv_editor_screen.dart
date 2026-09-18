@@ -275,7 +275,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
         if (data['summary'] != null && data['summary'] is String && (data['summary'] as String).isNotEmpty) {
           _cv.summary = data['summary'];
           _summaryController.text = data['summary'];
-          changesApplied.add('Summary');
+          changesApplied.add('form.summary'.tr);
         }
 
         // Apply improved experiences (bullet_points / highlights)
@@ -297,7 +297,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
             }
           }
           if (expList.isNotEmpty) {
-            changesApplied.add('Work Experience');
+            changesApplied.add('form.experience'.tr);
           }
         }
 
@@ -328,7 +328,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
 
           if (extractedSkills.isNotEmpty) {
             _cv.skills = extractedSkills;
-            changesApplied.add('Skills');
+            changesApplied.add('form.skills'.tr);
           }
         }
 
@@ -347,7 +347,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
             }
           }
           if (eduList.isNotEmpty) {
-            changesApplied.add('Education');
+            changesApplied.add('form.education'.tr);
           }
         }
 
@@ -356,7 +356,7 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
           final certsRaw = data['certifications'];
           if (certsRaw is List) {
             _cv.certifications = certsRaw.map((c) => CertificationItem.fromJson(c)).toList();
-            changesApplied.add('Certifications');
+            changesApplied.add('form.certifications'.tr);
           }
         }
 
@@ -364,14 +364,14 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
         if (data['languages'] != null && data['languages'] is List) {
           final langsRaw = data['languages'] as List;
           _cv.languages = langsRaw.map((l) => LanguageItem.fromJson(l)).toList();
-          changesApplied.add('Languages');
+          changesApplied.add('form.languages'.tr);
         }
 
         // Apply improved hobbies if present
         if (data['hobbies'] != null && data['hobbies'] is List) {
           final hobbiesRaw = data['hobbies'] as List;
           _cv.hobbies = hobbiesRaw.map((h) => h.toString()).toList();
-          changesApplied.add('Hobbies');
+          changesApplied.add('form.hobbies'.tr);
         }
 
         // Update quota
@@ -387,9 +387,9 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
         if (mounted) {
           final changesSummary = changesApplied.isNotEmpty
               ? changesApplied.join(', ')
-              : 'Summary';
+              : 'form.summary'.tr;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('CV berhasil dipoles AI! Bagian yang diperbaiki: $changesSummary'),
+            content: Text('form.cv_polished_success'.trArgs([changesSummary])),
             backgroundColor: AppColors.forestPine,
             duration: const Duration(seconds: 3),
           ));
@@ -467,22 +467,22 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
               AtsPlainTextDialog.show(context, _cv.toPlainText());
             },
             icon: const Icon(Icons.terminal_rounded, color: AppColors.midnightNavy),
-            tooltip: 'Mode Robot ATS',
+            tooltip: 'ats_simulation.title'.tr,
           ),
           IconButton(
             onPressed: () {
               _syncModelFromControllers();
               _profileMgr.saveCurrentProfile(_cv);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Profil berhasil disimpan'),
-                  duration: Duration(seconds: 1),
+                SnackBar(
+                  content: Text('form.profile_saved_snack'.tr),
+                  duration: const Duration(seconds: 1),
                   backgroundColor: AppColors.forestPine,
                 ),
               );
             },
             icon: const Icon(Icons.save_outlined, color: AppColors.midnightNavy),
-            tooltip: 'Simpan',
+            tooltip: 'common.save'.tr,
           ),
         ],
       ),

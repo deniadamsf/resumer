@@ -105,6 +105,18 @@ class _CoverLetterScreenState extends State<CoverLetterScreen> {
   }
 
   Future<void> _handleGenerate() async {
+    final cv = _profileMgr.currentCv;
+    if (!cv.isEligibleForAi) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('ats.incomplete_profile_desc'.tr),
+          backgroundColor: AppColors.antiqueBronze,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final company = _companyController.text.trim();
     final role = _roleController.text.trim();
     if (company.isEmpty || role.isEmpty) {

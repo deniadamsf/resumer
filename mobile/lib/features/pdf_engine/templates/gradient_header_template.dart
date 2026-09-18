@@ -328,14 +328,19 @@ class GradientHeaderTemplate extends CvTemplate {
         children: [
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                PdfTextSanitizer.clean(exp.position),
-                style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+              pw.Expanded(
+                child: pw.Text(
+                  PdfTextSanitizer.clean(exp.position),
+                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                ),
               ),
+              pw.SizedBox(width: 8),
               pw.Text(
                 '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
+                textAlign: pw.TextAlign.right,
               ),
             ],
           ),
@@ -372,31 +377,37 @@ class GradientHeaderTemplate extends CvTemplate {
       padding: const pw.EdgeInsets.only(bottom: 6),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                '${PdfTextSanitizer.clean(edu.degree)} in ${PdfTextSanitizer.clean(edu.fieldOfStudy)}',
-                style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
-              ),
-              pw.Text(
-                PdfTextSanitizer.clean(edu.institution),
-                style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
-              ),
-            ],
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  '${PdfTextSanitizer.clean(edu.degree)} in ${PdfTextSanitizer.clean(edu.fieldOfStudy)}',
+                  style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                ),
+                pw.Text(
+                  PdfTextSanitizer.clean(edu.institution),
+                  style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
+                ),
+              ],
+            ),
           ),
+          pw.SizedBox(width: 8),
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
                 PdfTextSanitizer.clean(edu.graduationYear),
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
+                textAlign: pw.TextAlign.right,
               ),
               if (edu.gpa.trim().isNotEmpty)
                 pw.Text(
                   'GPA: ${PdfTextSanitizer.clean(edu.gpa)}',
                   style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+                  textAlign: pw.TextAlign.right,
                 ),
             ],
           ),

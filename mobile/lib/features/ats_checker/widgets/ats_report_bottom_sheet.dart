@@ -64,7 +64,7 @@ class AtsReportBottomSheet extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Bagikan Skor ATS',
+                      tooltip: 'ats.share_tooltip'.tr,
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -73,7 +73,7 @@ class AtsReportBottomSheet extends StatelessWidget {
                             candidateName: candidateName,
                             targetRole: targetRole,
                             score: score,
-                            verdict: verdict ?? (score >= 85 ? 'Top 5% ATS Ready' : 'Perlu Optimasi'),
+                            verdict: verdict ?? (score >= 85 ? 'ats.verdict_top_tier'.tr : (score >= 60 ? 'ats.verdict_mid_tier'.tr : 'ats.verdict_needs_opt'.tr)),
                             breakdown: breakdown,
                           ),
                         );

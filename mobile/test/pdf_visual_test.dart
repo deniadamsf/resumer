@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:resumer/features/cv_editor/models/cv_model.dart';
 import 'package:resumer/features/cover_letter/models/cover_letter_model.dart';
 import 'package:resumer/features/pdf_engine/pdf_generator.dart';
+import 'package:resumer/core/utils/date_format_helper.dart';
 
 void main() {
   test('Generate clean test PDFs without missing glyphs', () async {
@@ -273,6 +274,117 @@ void main() {
       expect(bytes.isNotEmpty, true, reason: 'Template $tId should handle long CV content');
       final file = File('test_long_$tId.pdf');
       await file.writeAsBytes(bytes);
+    }
+  });
+
+  test('DateFormatHelper correctly parses Indonesian and English month formats', () {
+    // Indonesian full & short
+    final p1 = DateFormatHelper.parse('Januari 2024');
+    expect(p1.month, 1);
+    expect(p1.year, '2024');
+
+    final p2 = DateFormatHelper.parse('januari 2024');
+    expect(p2.month, 1);
+    expect(p2.year, '2024');
+
+    final p3 = DateFormatHelper.parse('Agt 2023');
+    expect(p3.month, 8);
+    expect(p3.year, '2023');
+
+    // English full & short
+    final p4 = DateFormatHelper.parse('January 2024');
+    expect(p4.month, 1);
+    expect(p4.year, '2024');
+
+    final p5 = DateFormatHelper.parse('Aug 2023');
+    expect(p5.month, 8);
+    expect(p5.year, '2023');
+
+    // Numeric formats
+    final p6 = DateFormatHelper.parse('01/2024');
+    expect(p6.month, 1);
+    expect(p6.year, '2024');
+
+    // Present / Sekarang
+    final p7 = DateFormatHelper.parse('Sekarang');
+    expect(p7.isPresent, true);
+
+    final p8 = DateFormatHelper.parse('Present');
+    expect(p8.isPresent, true);
+
+    // Format outputs
+    expect(DateFormatHelper.formatMonthYear(1, '2024', isEnglish: false, full: true), 'Januari 2024');
+    expect(DateFormatHelper.formatMonthYear(1, '2024', isEnglish: true, full: true), 'January 2024');
+    expect(DateFormatHelper.formatDateRange('januari 2024', 'sekarang', isEnglish: false), 'Januari 2024 - Sekarang');
+    expect(DateFormatHelper.formatDateRange('january 2024', 'present', isEnglish: true), 'January 2024 - Present');
+  });
+
+  test('Generate CV with full month names and long position titles across all templates without clipping', () async {
+    final cvWithMonths = CvDocument(
+      personalInfo: PersonalInfo(
+        fullName: 'Budi Pratama',
+        professionalTitle: 'Lead Mobile Architect & Staff Full Stack Engineer',
+        email: 'budi.pratama@enterprise.id',
+        phone: '+62 812-3456-7890',
+        location: 'Jakarta Selatan, DKI Jakarta',
+      ),
+      summary: 'Senior Software Engineering Leader with 10+ years driving high-performance mobile architectures.',
+      experiences: [
+        WorkExperience(
+          company: 'PT Global Solusi Teknologi Tbk',
+          position: 'Senior Principal Mobile Engineer & Team Lead',
+          startDate: 'Januari 2024',
+          endDate: 'Sekarang',
+          highlights: [
+            'Spearheaded Flutter architectural overhaul increasing performance by 40%.',
+            'Managed high-throughput distributed microservices for 2M active clients.',
+          ],
+        ),
+        WorkExperience(
+          company: 'Unicorn Digital Nusantara',
+          position: 'Full Stack Engineering Specialist',
+          startDate: 'Maret 2021',
+          endDate: 'Desember 2023',
+          highlights: [
+            'Built responsive design system and core payment gateway integrations.',
+          ],
+        ),
+      ],
+      educations: [
+        Education(
+          institution: 'Universitas Gadjah Mada Yogyakarta',
+          degree: 'Sarjana Ilmu Komputer (S.Kom)',
+          fieldOfStudy: 'Teknik Informatika & Ilmu Komputer',
+          graduationYear: 'Agustus 2020',
+          gpa: '3.89',
+        ),
+      ],
+      skills: ['Flutter', 'Dart', 'Clean Architecture', 'REST APIs', 'CI/CD']
+          .map((s) => SkillItem(name: s))
+          .toList(),
+    );
+
+    final templateIds = [
+      'asian_ats',
+      'western_strict',
+      'modern_ats',
+      'modern_creative',
+      'compact_portfolio',
+      'executive_split',
+      'nordic_minimal',
+      'tech_timeline',
+      'editorial_luxury',
+      'accent_sidebar_light',
+      'bento_grid',
+      'gradient_header',
+      'color_block',
+      'ribbon_banner',
+    ];
+
+    for (final tId in templateIds) {
+      cvWithMonths.templateId = tId;
+      final bytes = await PdfGenerator.generatePdf(cvWithMonths);
+      expect(bytes.isNotEmpty, true, reason: 'Template $tId failed to generate with full month names');
     }
   });
 }

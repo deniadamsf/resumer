@@ -147,7 +147,7 @@ class _SignaturePadModalState extends State<SignaturePadModal> {
                     right: 0,
                     child: Center(
                       child: Text(
-                        'X  Garis Batas Tanda Tangan',
+                        'cover_letter.signature_baseline'.tr,
                         style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary.withValues(alpha: 0.5)),
                       ),
                     ),

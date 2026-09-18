@@ -140,8 +140,8 @@ class _AtsScoreGaugeState extends State<AtsScoreGauge>
             widget.verdict ??
                 (isTested
                     ? (widget.score! >= 85
-                        ? 'Top 5% ATS Ready'
-                        : (widget.score! >= 60 ? 'Skor Menengah' : 'Perlu Optimasi'))
+                        ? 'ats.verdict_top_tier'.tr
+                        : (widget.score! >= 60 ? 'ats.verdict_mid_tier'.tr : 'ats.verdict_needs_opt'.tr))
                     : 'ats.untested_verdict'.tr),
             style: GoogleFonts.outfit(
               fontSize: 12,

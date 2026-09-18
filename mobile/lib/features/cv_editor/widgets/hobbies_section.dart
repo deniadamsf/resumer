@@ -65,7 +65,7 @@ class HobbiesSection extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'Opsional',
+                        'form.optional_badge'.tr,
                         style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                       ),
                     ),
@@ -119,7 +119,7 @@ class HobbiesSection extends StatelessWidget {
                       controller.clear();
                     }
                   },
-                  tooltip: 'Tambah Hobi',
+                  tooltip: 'form.add_hobby_tooltip'.tr,
                   icon: const Icon(Icons.add_rounded, size: 20),
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.midnightNavy,
@@ -135,7 +135,7 @@ class HobbiesSection extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
-                  'Belum ada hobi/minat ditambahkan (opsional).',
+                  'form.empty_hobbies'.tr,
                   style: GoogleFonts.outfit(fontSize: 11.5, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
                 ),
               )

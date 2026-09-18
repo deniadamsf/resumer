@@ -132,7 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: titleController,
               decoration: InputDecoration(
-                labelText: 'Nama Profil',
+                labelText: 'profile.field_profile_title'.tr,
                 hintText: 'profile.rename_hint'.tr,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -141,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: roleController,
               decoration: InputDecoration(
-                labelText: 'Posisi Target',
+                labelText: 'profile.field_target_position'.tr,
                 hintText: 'profile.target_role_hint'.tr,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -241,7 +241,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: 'profile.user_name_label'.tr,
-                    hintText: 'Nama lengkap profesional Anda',
+                    hintText: 'profile.user_name_hint'.tr,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     prefixIcon: const Icon(Icons.badge_outlined, size: 20, color: AppColors.midnightNavy),
                   ),
@@ -383,7 +383,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? _apiService.userName
         : (activeCv.personalInfo.fullName.isNotEmpty
             ? activeCv.personalInfo.fullName
-            : 'Pengguna Resumer');
+            : 'auth.default_user_name'.tr);
     final userEmail = _apiService.userEmail.isNotEmpty
         ? _apiService.userEmail
         : (activeCv.personalInfo.email.isNotEmpty
@@ -531,7 +531,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _apiService.isGuestMode ? 'Mode Tamu (Lokal)' : 'Google OAuth',
+                            _apiService.isGuestMode ? 'auth.guest_mode_badge'.tr : 'Google OAuth',
                             style: GoogleFonts.outfit(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w600,
@@ -657,7 +657,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: _buildLanguageOption(
                   label: 'profile.lang_indonesian'.tr,
                   flag: '🇮🇩',
-                  subLabel: 'Bahasa Baku HRD',
+                  subLabel: 'profile.lang_id_sub'.tr,
                   isSelected: isIndo,
                   onTap: () => _handleLanguageChange('id_ID'),
                 ),
@@ -667,7 +667,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: _buildLanguageOption(
                   label: 'profile.lang_english'.tr,
                   flag: '🇺🇸',
-                  subLabel: 'Executive English',
+                  subLabel: 'profile.lang_en_sub'.tr,
                   isSelected: !isIndo,
                   onTap: () => _handleLanguageChange('en_US'),
                 ),
@@ -978,7 +978,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        meta.targetJob.isNotEmpty ? meta.targetJob : 'Belum ditentukan posisi target',
+                        meta.targetJob.isNotEmpty ? meta.targetJob : 'profile.no_target_job'.tr,
                         style: GoogleFonts.outfit(
                           fontSize: 12,
                           color: AppColors.textSecondary,

@@ -17,7 +17,7 @@
   * Mengelola kuota harian (maksimal 5x per hari per User/Device UUID, reset pukul 00:00).
   * Rate limiting ketat (`throttle:5,1`) dan proteksi HMAC SHA-256 signature pada header request.
   * Menyimpan data teks CV dan riwayat skor ATS di MySQL hosting (kapasitas mikro ~2-5KB per CV).
-  * Folder core diletakkan di luar `public_html` pada server cPanel/hosting.
+  * Seluruh backend Laravel berada di `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/` dengan `.env` berproteksi chmod 600 dan dilindungi `.htaccess`.
 * **AI Gemini (Google Gemini 2.5 Flash Lite):**
   * Berperan murni sebagai **"Koki Teks"**.
   * Dilarang keras memproses/menghasilkan layout grafis atau PDF.
@@ -30,7 +30,7 @@
 * **ATURAN MUTLAK KEAMANAN (Zero-Secret-in-Client Policy):**
   * **DILARANG KERAS** menyimpan Gemini API Key, Master Secret, atau kredensial sensitif apa pun di dalam kode Flutter (`.dart`), BuildConfig, maupun file asset `.env` di dalam bundel APK/AAB.
   * File APK sangat mudah di-*decompile* (menggunakan JADX / APKTool / Strings viewer); menaruh `.env` di dalam APK sama dengan membagikan API Key secara publik.
-  * Gemini API Key **100% EKSKLUSIF** hanya boleh ada di file `.env` server Laravel (yang diletakkan di luar `public_html`).
+  * Gemini API Key **100% EKSKLUSIF** hanya boleh ada di file `.env` server Laravel di `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/.env`.
   * Aplikasi Flutter hanya boleh mengetahui Base URL publik Laravel (`https://resumer.cellanoma.my.id/api/v1`) dan berkomunikasi via token sesi Laravel Sanctum.
 
 ---
@@ -47,11 +47,12 @@
 * **Pengembangan Lokal Terlebih Dahulu:** Seluruh kode backend dan mobile app dibangun serta diuji coba di lingkungan lokal hingga stabil dan bebas error.
 * **Pengetesan Otomatis & Manual:** Memastikan endpoint API, schema JSON, dan UI widget berjalan mulus (`flutter test`, `flutter analyze`).
 * **Deploy ke Hosting Online (`resumer.cellanoma.my.id`):**
-  * **Subdomain Document Root:** `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/` (memuat `.htaccess`, `index.php`, `robots.txt`, `favicon.ico`).
-  * **Laravel Core Directory:** `/home/u731410318/resumer-core/` (diletakkan terisolasi di luar `public_html` demi keamanan mutlak).
+  * **Production & Laravel Root Directory:** `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/` (seluruh kode backend Laravel: `app/`, `config/`, `routes/`, `database/`, `.env`, `vendor/`, `artisan`, `index.php`, `.htaccess`, dsb. beroperasi langsung di dalam direktori ini).
   * **Database:** MySQL `u731410318_resumer`.
   * **Akses SSH:** Menggunakan alias `ssh -T -n resumer` atau `ssh -T -n hostinger` (Host `153.92.8.198`, Port `65002`, User `u731410318`).
-  * **ATURAN EKSEKUSI SSH:** Selalu sertakan flag `-T -n` (misal: `ssh -T -n resumer "<command>"`) guna menonaktifkan alokasi TTY & stdin agar eksekusi perintah remote di Hostinger berjalan instan (< 1 detik) tanpa pernah *hang*/terhenti.
+  * **ATURAN EKSEKUSI SSH & DEPLOY:**
+    * Selalu deploy file backend ke: `/home/u731410318/domains/cellanoma.my.id/public_html/resumer/` (DILARANG deploy ke folder lain seperti `resumer-core`).
+    * Selalu sertakan flag `-T -n` (misal: `ssh -T -n resumer "cd /home/u731410318/domains/cellanoma.my.id/public_html/resumer && php artisan optimize:clear"`) guna menonaktifkan alokasi TTY & stdin agar eksekusi perintah remote di Hostinger berjalan instan (< 1 detik) tanpa pernah *hang*/terhenti.
 
 ---
 

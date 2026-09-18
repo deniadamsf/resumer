@@ -596,8 +596,8 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
                               ),
                               Text(
                                 currentTemplate.isAtsFriendly
-                                    ? 'Kategori ATS (Skor 90-100)'
-                                    : 'Kategori Kreatif Non-ATS',
+                                    ? 'pdf_preview.cat_ats'.tr
+                                    : 'pdf_preview.cat_creative'.tr,
                                 style: GoogleFonts.outfit(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w500,
@@ -619,7 +619,7 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Ganti Desain',
+                                'pdf_preview.change_design'.tr,
                                 style: GoogleFonts.outfit(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,

@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await ApiService.instance.saveToken('guest_mode_token');
       await ApiService.instance.saveUserData(
-        name: 'Tamu Resumer',
+        name: 'auth.default_guest_name'.tr,
         email: 'guest@resumer.app',
       );
       if (mounted) {
@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response['success'] == true && mounted) {
         // Save user profile info
         final userObj = response['user'] as Map<String, dynamic>?;
-        final candidateName = userObj?['name'] ?? googleAccount.displayName ?? 'Pengguna Resumer';
+        final candidateName = userObj?['name'] ?? googleAccount.displayName ?? 'auth.default_user_name'.tr;
         final candidateEmail = userObj?['email'] ?? googleAccount.email;
         final candidateAvatar = userObj?['avatar_url'] ?? googleAccount.photoUrl;
 
@@ -73,7 +73,9 @@ class _LoginScreenState extends State<LoginScreen> {
         final cv = CvProfileManager.instance.currentCv;
         if (cv.personalInfo.fullName.isEmpty ||
             cv.personalInfo.fullName == 'Alexander Wright' ||
-            cv.personalInfo.fullName == 'Tamu Resumer') {
+            cv.personalInfo.fullName == 'Tamu Resumer' ||
+            cv.personalInfo.fullName == 'Resumer Guest' ||
+            cv.personalInfo.fullName == 'auth.default_guest_name'.tr) {
           cv.personalInfo.fullName = candidateName;
           if (cv.personalInfo.email.isEmpty ||
               cv.personalInfo.email == 'alexander.wright@executive.io' ||
@@ -91,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         return;
       } else {
-        throw Exception(response['message'] ?? 'Otentikasi server gagal.');
+        throw Exception(response['message'] ?? 'auth.auth_failed'.tr);
       }
     } catch (e) {
       if (mounted) {
@@ -250,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextButton(
                   onPressed: _isLoading ? null : _handleDeveloperBypass,
                   child: Text(
-                    'Lanjutkan sebagai Tamu (Mode Demo)',
+                    'auth.guest_login_btn'.tr,
                     style: GoogleFonts.outfit(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

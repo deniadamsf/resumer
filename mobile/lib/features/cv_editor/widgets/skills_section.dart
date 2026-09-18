@@ -36,7 +36,7 @@ class SkillsSection extends StatelessWidget {
         backgroundColor: AppColors.cardSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          isEditing ? 'Ubah Keahlian' : 'form.skills'.tr,
+          isEditing ? 'form.edit_skill'.tr : 'form.skills'.tr,
           style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.midnightNavy),
         ),
         content: SingleChildScrollView(
@@ -54,7 +54,7 @@ class SkillsSection extends StatelessWidget {
                 autofocus: true,
                 style: GoogleFonts.outfit(fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'cth: Flutter, Financial Analysis, Python',
+                  hintText: 'form.skill_name_hint'.tr,
                   hintStyle: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -71,7 +71,7 @@ class SkillsSection extends StatelessWidget {
                 maxLines: 3,
                 style: GoogleFonts.outfit(fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'cth: State management BLoC, REST APIs, CI/CD, Unit Testing (Dapat di-improve oleh AI)',
+                  hintText: 'form.skill_desc_hint'.tr,
                   hintStyle: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -104,7 +104,7 @@ class SkillsSection extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: Text(
-              isEditing ? 'Simpan' : 'Tambah',
+              isEditing ? 'common.save'.tr : 'form.add_btn'.tr,
               style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
             ),
           ),
@@ -196,7 +196,7 @@ class SkillsSection extends StatelessWidget {
                       _showSkillDialog(context);
                     }
                   },
-                  tooltip: 'Tambah Keahlian',
+                  tooltip: 'form.add_skill_tooltip'.tr,
                   icon: const Icon(Icons.add_rounded, size: 20),
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.midnightNavy,
@@ -222,7 +222,7 @@ class SkillsSection extends StatelessWidget {
               onPressed: () => _showSkillDialog(context),
               icon: const Icon(Icons.tune_rounded, size: 15, color: AppColors.accentSteel),
               label: Text(
-                'Tambah Keahlian dengan Deskripsi/Tools',
+                'form.add_skill_desc'.tr,
                 style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accentSteel),
               ),
               style: TextButton.styleFrom(

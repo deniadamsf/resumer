@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
@@ -286,14 +286,19 @@ class BentoGridTemplate extends CvTemplate {
         children: [
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                PdfTextSanitizer.clean(exp.position),
-                style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+              pw.Expanded(
+                child: pw.Text(
+                  PdfTextSanitizer.clean(exp.position),
+                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                ),
               ),
+              pw.SizedBox(width: 8),
               pw.Text(
                 '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
+                textAlign: pw.TextAlign.right,
               ),
             ],
           ),

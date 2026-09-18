@@ -128,7 +128,7 @@ class PersonalInfoSection extends StatelessWidget {
             const Icon(Icons.camera_alt_rounded, size: 16, color: AppColors.accentSteel),
             const SizedBox(width: 4),
             Text(
-              localPhotoPath != null ? 'Ganti Foto' : 'Pas Foto',
+              localPhotoPath != null ? 'form.photo_change'.tr : 'form.photo_btn'.tr,
               style: GoogleFonts.outfit(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -157,11 +157,11 @@ class PersonalInfoSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Pas Foto Tersimpan (Lokal HP)',
+                'form.photo_saved_locally'.tr,
                 style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600),
               ),
               Text(
-                '0 Byte Server Load • Aman & Privat',
+                'form.photo_secure_badge'.tr,
                 style: GoogleFonts.outfit(fontSize: 10, color: AppColors.forestPine),
               ),
             ],
@@ -170,7 +170,7 @@ class PersonalInfoSection extends StatelessWidget {
         IconButton(
           onPressed: () => onPhotoChanged(null),
           icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.crimsonBordeaux),
-          tooltip: 'Hapus Foto',
+          tooltip: 'form.delete_photo_tooltip'.tr,
         ),
       ],
     );

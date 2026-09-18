@@ -6,12 +6,25 @@ import '../../../core/localization/app_localizations.dart';
 /// Modular ATS Breakdown Section displaying the 4 core ATS criteria
 class AtsBreakdownSection extends StatelessWidget {
   final Map<String, dynamic>? breakdown;
+  final Map<String, dynamic>? keywordAnalysis;
 
-  const AtsBreakdownSection({super.key, this.breakdown});
+  const AtsBreakdownSection({
+    super.key,
+    this.breakdown,
+    this.keywordAnalysis,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isAnalyzed = breakdown != null && breakdown!.isNotEmpty;
+    final detectedKeywords = (keywordAnalysis?['detected_keywords'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
+    final missingKeywords = (keywordAnalysis?['missing_keywords'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -51,8 +64,80 @@ class AtsBreakdownSection extends StatelessWidget {
             'ats.completeness'.tr,
             isAnalyzed ? (breakdown!['completeness'] as num?)?.toInt() : null,
             25,
-            isLast: true,
+            isLast: !isAnalyzed && detectedKeywords.isEmpty && missingKeywords.isEmpty,
           ),
+          if (detectedKeywords.isNotEmpty || missingKeywords.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            const Divider(height: 1, color: AppColors.borderHairline),
+            const SizedBox(height: 12),
+            if (detectedKeywords.isNotEmpty) ...[
+              Text(
+                'ats.detected_keywords_title'.tr,
+                style: GoogleFonts.outfit(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.forestPine,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: detectedKeywords
+                    .map((kw) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.forestPine.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppColors.forestPine.withValues(alpha: 0.25)),
+                          ),
+                          child: Text(
+                            kw,
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.forestPine,
+                            ),
+                          ),
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (missingKeywords.isNotEmpty) ...[
+              Text(
+                'ats.missing_keywords_title'.tr,
+                style: GoogleFonts.outfit(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.antiqueBronze,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: missingKeywords
+                    .map((kw) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.antiqueBronze.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppColors.antiqueBronze.withValues(alpha: 0.25)),
+                          ),
+                          child: Text(
+                            kw,
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.antiqueBronze,
+                            ),
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ],
+          ],
           if (!isAnalyzed) ...[
             const SizedBox(height: 12),
             Container(

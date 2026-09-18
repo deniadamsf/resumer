@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
+import '../../../core/localization/app_localizations.dart';
 
 /// Shareable ATS Score Card widget (Spotify Wrapped Style)
 class AtsShareCard extends StatelessWidget {
@@ -174,15 +175,15 @@ class AtsShareCard extends StatelessWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    final text = 'Skor ATS CV saya: $score/100 ($verdict) diuji dengan Resumer AI ATS CV Maker! Coba di: https://resumer.cellanoma.my.id';
+                    final text = 'ats.share_card_copy_template'.trArgs([score.toString(), verdict]);
                     Clipboard.setData(ClipboardData(text: text));
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Ringkasan skor disalin ke clipboard!')),
+                      SnackBar(content: Text('ats.share_copied_snack'.tr)),
                     );
                   },
                   icon: const Icon(Icons.copy_rounded, size: 18),
-                  label: Text('Salin Hasil', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                  label: Text('ats.share_copy_btn'.tr, style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: AppColors.midnightNavy,

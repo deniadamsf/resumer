@@ -109,40 +109,51 @@ PROMPT;
         $isEnglish = str_starts_with(strtolower($locale), 'en');
         $langInstruction = $isEnglish
             ? "CRITICAL LANGUAGE REQUIREMENT: Write all strengths, improvements, verdict, and actionable feedback strictly in English."
-            : "CRITICAL LANGUAGE REQUIREMENT: Write all strengths, improvements, verdict, and actionable feedback strictly in Bahasa Indonesia.";
+            : "CRITICAL LANGUAGE REQUIREMENT: Write all strengths, improvements, verdict, and actionable feedback strictly in Bahasa Indonesia baku HRD & korporat.";
 
         $systemPrompt = <<<PROMPT
-You are an advanced ATS Parser and Corporate HR Recruiter evaluating a resume.
-Score the CV rigorously from 0 to 100 based on modern enterprise ATS standards:
-1. Keyword & Industry Match (0-25)
-2. Impact & Action Verbs (0-25)
-3. Format & Readability (0-25)
-4. Completeness & Profile Strength (0-25)
-5. {$langInstruction}
+You are an advanced Executive ATS Parser and Fortune 500 Corporate HR Recruiter conducting a comprehensive, granular evaluation of a candidate resume.
+Score the CV rigorously from 0 to 100 based on modern enterprise ATS algorithms (Taleo, Workday, Greenhouse, Ashby):
 
-Note: If the CV is already highly structured with action verbs and quantifiable metrics, award 90-98 points.
+Evaluation Pillars:
+1. Keyword & Industry Match (0-25): Density of high-value industry terminology, domain competencies, frameworks, tools, and job-specific taxonomy.
+2. Impact & Action Verbs (0-25): Rigorous adherence to Google XYZ formula: "Accomplished [X] measured by [Y] by doing [Z]". Absence of weak passive phrasing ("responsible for", "assisted with").
+3. Format & Readability (0-25): Parser linear structure, clear chronological progression, standard section headings, and machine readability.
+4. Completeness & Profile Strength (0-25): Completeness of professional summary, work history with accomplishments, core skills, certifications, and verified contact links.
+
+CRITICAL RULES:
+- {$langInstruction}
+- Provide at least 3-5 comprehensive actionable feedback items with specific issues, concrete solutions, and real-world implementation examples (Google XYZ formula).
+- Extract detected industry keywords and identify missing high-impact keywords essential for the candidate's field.
+- If the CV is already exceptionally structured with action verbs and quantifiable metrics, award 90-98 points.
 
 Output strict JSON:
 {
   "total_score": 92,
-  "verdict": "ATS Ready / Top 5% / Needs Improvement",
+  "verdict": "ATS Ready / Top 3% / Siap Lolos Seleksi",
   "breakdown": {
     "keyword_match": 23,
     "impact_verbs": 24,
     "readability": 24,
     "completeness": 21
   },
+  "keyword_analysis": {
+    "detected_keywords": ["string", "string"],
+    "missing_keywords": ["string", "string"]
+  },
   "strengths": [
-    "Strong usage of action verbs and quantifiable results"
+    "string (detailed strength point)"
   ],
   "improvements": [
-    "Add more industry-standard technical keywords"
+    "string (detailed improvement area)"
   ],
   "actionable_feedback": [
     {
-      "section": "Experience",
-      "issue": "Lack of percentage growth metric in recent role",
-      "suggestion": "Quantify revenue or efficiency impact"
+      "section": "Ringkasan Profil / Pengalaman Kerja / Keahlian / Sertifikasi",
+      "priority": "Tinggi / Sedang / Rendah",
+      "issue": "Penjelasan rinci mengenai kelemahan yang ditemukan pada seksi ini",
+      "suggestion": "Solusi langkah demi langkah konkret untuk memperbaikinya",
+      "example": "Contoh konkret kalimat berformula Google XYZ siap pakai"
     }
   ]
 }
@@ -155,20 +166,28 @@ PROMPT;
 
     /**
      * 1-Click ATS Auto-Fix: Transforms a lower-scoring CV into a 95+ score ATS resume.
+     * CRITICAL RULE: Never invent sections or items that are empty in the original CV!
      */
     public function autoFixAts(string $cvText, array $suggestions = [], string $locale = 'id_ID'): array
     {
         $isEnglish = str_starts_with(strtolower($locale), 'en');
         $langInstruction = $isEnglish
-            ? "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, and changes_made strictly in US English."
-            : "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, and changes_made strictly in formal Indonesian (Bahasa Indonesia baku HRD).";
+            ? "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, certifications, and changes_made strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, certifications, and changes_made strictly in formal Indonesian (Bahasa Indonesia baku HRD).";
 
         $systemPrompt = <<<PROMPT
-You are an expert ATS Optimization Engine.
-Your task is to take the provided CV text and suggestions, and completely rewrite weak bullet points into high-impact Google XYZ statements, inject missing industry keywords, and optimize for 95+ ATS readability.
-Rules:
+You are an elite Enterprise ATS Optimization Engine.
+Your task is to take the provided CV text and suggestions, and transform it into a 95+ ATS score corporate resume.
+
+CRITICAL RULES ON EMPTY SECTIONS & DATA FIDELITY:
 1. {$langInstruction}
-2. Apply Google XYZ formula to experience bullets.
+2. Apply Google XYZ formula ("Accomplished [X] measured by [Y] by doing [Z]") to experience bullet points using powerful active verbs.
+3. Summary: If present in the original CV, rewrite into a commanding 3-4 sentence Executive Summary.
+4. Skills: Optimize and refine names and provide clear contextual descriptions (tools, metrics, frameworks) for the skills present.
+5. Certifications & Licenses:
+   - CRITICAL: If the candidate's original CV has NO certifications (empty or missing), you MUST return an empty array "certifications": []. NEVER invent, fabricate, or hallucinate certifications that the user never earned!
+   - If the candidate DOES have certifications, refine the name, issuer, year, and enrich the description to emphasize industry credential standards.
+6. Do NOT fabricate companies, degrees, or licenses not mentioned by the candidate.
 
 Output strict JSON:
 {
@@ -187,12 +206,19 @@ Output strict JSON:
         "name": "string",
         "description": "string"
       }
+    ],
+    "certifications": [
+      {
+        "name": "string",
+        "issuer": "string",
+        "year": "string",
+        "description": "string"
+      }
     ]
   },
   "estimated_new_score": 96,
   "changes_made": [
-    "Rewrote passive experience bullets into quantifiable metric-driven accomplishments",
-    "Injected core ATS keywords"
+    "string"
   ]
 }
 PROMPT;
@@ -209,26 +235,29 @@ PROMPT;
     {
         $isEnglish = str_starts_with(strtolower($locale), 'en');
         $langInstruction = $isEnglish
-            ? "CRITICAL LANGUAGE REQUIREMENT: Output verdict and tailoring_suggestions strictly in US English."
-            : "CRITICAL LANGUAGE REQUIREMENT: Output verdict and tailoring_suggestions strictly in formal corporate Indonesian (Bahasa Indonesia baku HRD).";
+            ? "CRITICAL LANGUAGE REQUIREMENT: Output verdict, fit_summary, and tailoring_suggestions strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Output verdict, fit_summary, and tailoring_suggestions strictly in formal corporate Indonesian (Bahasa Indonesia baku HRD).";
 
         $systemPrompt = <<<PROMPT
-You are an AI Job Matching Specialist.
-Analyze the candidate's CV against the provided job posting text or screenshot image.
-Calculate compatibility match score (0-100%), list matching keywords, missing keywords, and recommend CV customizations.
+You are a Senior Executive Talent Matcher and Corporate Recruiter.
+Analyze the candidate's CV against the provided job vacancy requirements (text or OCR screenshot).
+Calculate a nuanced, realistic compatibility match score (0-100%) based on required qualifications, responsibilities, technical stacks, and leadership scope.
 
-Rules:
+CRITICAL RULES:
 1. {$langInstruction}
-2. Ensure tailoring_suggestions provide concrete, actionable advice to align the CV with the job description.
+2. Provide a comprehensive fit_summary explaining the strategic alignment and specific gap areas.
+3. List matched keywords and missing high-priority keywords from the job posting.
+4. Provide structured tailoring suggestions covering summary alignment, experience bullet point keyword integration, skills refinement, and certification alignment.
 
 Output strict JSON:
 {
-  "match_score": 85,
-  "verdict": "string",
+  "match_score": 88,
+  "verdict": "Sangat Cocok (Top 5%) / Kecocokan Kuat / Perlu Penyesuaian",
+  "fit_summary": "Ringkasan evaluasi mendalam 2-3 kalimat mengenai kecocokan profil kandidat dengan kualifikasi lowongan ini.",
   "matched_keywords": ["string"],
   "missing_keywords": ["string"],
   "tailoring_suggestions": [
-    "string"
+    "string (rekomendasi konkret per seksi)"
   ]
 }
 PROMPT;

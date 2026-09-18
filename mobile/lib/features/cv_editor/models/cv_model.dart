@@ -53,6 +53,28 @@ class CvDocument {
     );
   }
 
+  /// Memeriksa apakah CV masih kosong (belum diisi data pokok)
+  bool get isEmpty {
+    return personalInfo.fullName.trim().isEmpty &&
+        personalInfo.email.trim().isEmpty &&
+        personalInfo.phone.trim().isEmpty &&
+        summary.trim().isEmpty &&
+        experiences.isEmpty &&
+        educations.isEmpty &&
+        skills.isEmpty;
+  }
+
+  /// Blueprint Bagian 10: Validasi Pra-Generate AI & ATS Checker (Filter Kelayakan Data)
+  /// Wajib mengisi kolom inti (Nama, Kontak, min 1 Riwayat Kerja/Pendidikan, min 3 Keahlian, min 50 karakter teks)
+  bool get isEligibleForAi {
+    final hasName = personalInfo.fullName.trim().isNotEmpty;
+    final hasContact = personalInfo.email.trim().isNotEmpty || personalInfo.phone.trim().isNotEmpty;
+    final hasHistory = experiences.isNotEmpty || educations.isNotEmpty;
+    final hasSkills = skills.length >= 3;
+    final hasMinLength = toPlainText().trim().length >= 50;
+    return hasName && hasContact && hasHistory && hasSkills && hasMinLength;
+  }
+
   CvDocument clone() {
     final doc = CvDocument.fromJson(toJson());
     doc.personalInfo.localPhotoPath = personalInfo.localPhotoPath;
@@ -192,14 +214,14 @@ class CvDocument {
       buffer.writeln();
     }
 
-    if (showLanguages && languages.isNotEmpty) {
+    if (languages.isNotEmpty) {
       buffer.writeln('LANGUAGES');
       buffer.writeln('---------');
       buffer.writeln(languages.map((l) => '${l.name} (${l.proficiency})').join(' • '));
       buffer.writeln();
     }
 
-    if (showHobbies && hobbies.isNotEmpty) {
+    if (hobbies.isNotEmpty) {
       buffer.writeln('HOBBIES & INTERESTS');
       buffer.writeln('-------------------');
       buffer.writeln(hobbies.join(' • '));

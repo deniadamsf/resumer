@@ -280,14 +280,19 @@ class EditorialLuxuryTemplate extends CvTemplate {
         children: [
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                PdfTextSanitizer.clean(exp.position),
-                style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+              pw.Expanded(
+                child: pw.Text(
+                  PdfTextSanitizer.clean(exp.position),
+                  style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                ),
               ),
+              pw.SizedBox(width: 8),
               pw.Text(
                 '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                textAlign: pw.TextAlign.right,
               ),
             ],
           ),
@@ -331,14 +336,19 @@ class EditorialLuxuryTemplate extends CvTemplate {
           ),
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                PdfTextSanitizer.clean(edu.institution),
-                style: pw.TextStyle(fontSize: 8.5, color: accentColor, fontWeight: pw.FontWeight.bold),
+              pw.Expanded(
+                child: pw.Text(
+                  PdfTextSanitizer.clean(edu.institution),
+                  style: pw.TextStyle(fontSize: 8.5, color: accentColor, fontWeight: pw.FontWeight.bold),
+                ),
               ),
+              pw.SizedBox(width: 8),
               pw.Text(
                 PdfTextSanitizer.clean(edu.graduationYear),
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
+                textAlign: pw.TextAlign.right,
               ),
             ],
           ),

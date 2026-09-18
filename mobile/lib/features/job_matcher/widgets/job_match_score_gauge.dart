@@ -22,9 +22,16 @@ class JobMatchScoreGauge extends StatelessWidget {
     return AppColors.crimsonBordeaux;
   }
 
+  IconData _getStatusIcon() {
+    if (score >= 80) return Icons.verified_rounded;
+    if (score >= 60) return Icons.tune_rounded;
+    return Icons.warning_amber_rounded;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scoreColor = _getScoreColor();
+    final statusIcon = _getStatusIcon();
 
     return Center(
       child: Column(
@@ -88,20 +95,39 @@ class JobMatchScoreGauge extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              color: scoreColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: scoreColor.withValues(alpha: 0.25)),
-            ),
-            child: Text(
-              verdict,
-              style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: scoreColor,
+          const SizedBox(height: 14),
+
+          // Executive Verdict Badge Bubble (Responsive & Centered)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: scoreColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: scoreColor.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(statusIcon, size: 15, color: scoreColor),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      verdict,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: scoreColor,
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

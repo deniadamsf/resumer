@@ -326,11 +326,15 @@ class TechTimelineTemplate extends CvTemplate {
               children: [
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text(
-                      PdfTextSanitizer.clean(exp.position),
-                      style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                    pw.Expanded(
+                      child: pw.Text(
+                        PdfTextSanitizer.clean(exp.position),
+                        style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                      ),
                     ),
+                    pw.SizedBox(width: 8),
                     pw.Container(
                       padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: pw.BoxDecoration(
@@ -340,6 +344,7 @@ class TechTimelineTemplate extends CvTemplate {
                       child: pw.Text(
                         '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
                         style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+                        textAlign: pw.TextAlign.right,
                       ),
                     ),
                   ],
