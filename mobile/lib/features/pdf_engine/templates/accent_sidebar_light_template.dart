@@ -2,6 +2,9 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
+import '../../../core/utils/social_link_helper.dart';
 import '../utils/pdf_text_sanitizer.dart';
 import 'cv_template_interface.dart';
 
@@ -96,8 +99,18 @@ class AccentSidebarLightTemplate extends CvTemplate {
                           _buildContactRow('Phone', PdfTextSanitizer.clean(info.phone)),
                         if (info.location.isNotEmpty)
                           _buildContactRow('Location', PdfTextSanitizer.clean(info.location)),
-                        if (info.linkedin.isNotEmpty)
-                          _buildContactRow('LinkedIn', PdfTextSanitizer.clean(info.linkedin)),
+                        if (_buildSocialContactRow(SocialPlatform.linkedin, info.linkedin, accentColor) != null)
+                          _buildSocialContactRow(SocialPlatform.linkedin, info.linkedin, accentColor)!,
+                        if (_buildSocialContactRow(SocialPlatform.github, info.github, accentColor) != null)
+                          _buildSocialContactRow(SocialPlatform.github, info.github, accentColor)!,
+                        if (_buildSocialContactRow(SocialPlatform.website, info.website, accentColor) != null)
+                          _buildSocialContactRow(SocialPlatform.website, info.website, accentColor)!,
+                        if (_buildSocialContactRow(SocialPlatform.whatsapp, info.whatsapp, accentColor) != null)
+                          _buildSocialContactRow(SocialPlatform.whatsapp, info.whatsapp, accentColor)!,
+                        if (_buildSocialContactRow(SocialPlatform.instagram, info.instagram, accentColor) != null)
+                          _buildSocialContactRow(SocialPlatform.instagram, info.instagram, accentColor)!,
+                        if (_buildSocialContactRow(SocialPlatform.facebook, info.facebook, accentColor) != null)
+                          _buildSocialContactRow(SocialPlatform.facebook, info.facebook, accentColor)!,
                         pw.SizedBox(height: 16),
 
                         // Skills
@@ -294,6 +307,37 @@ class AccentSidebarLightTemplate extends CvTemplate {
     );
   }
 
+  pw.Widget? _buildSocialContactRow(SocialPlatform platform, String rawInput, PdfColor accentColor) {
+    if (rawInput.trim().isEmpty) return null;
+    final url = SocialLinkHelper.buildUrl(platform, rawInput);
+    final display = SocialLinkHelper.buildDisplayText(platform, rawInput);
+    final hex = '#${(accentColor.red * 255).toInt().toRadixString(16).padLeft(2, '0')}'
+        '${(accentColor.green * 255).toInt().toRadixString(16).padLeft(2, '0')}'
+        '${(accentColor.blue * 255).toInt().toRadixString(16).padLeft(2, '0')}';
+    final svg = SocialLinkHelper.getSvgIcon(platform, hexColor: hex, size: 8.0);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 5),
+      child: pw.UrlLink(
+        destination: url,
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            pw.SvgImage(svg: svg, width: 8.0, height: 8.0),
+            pw.SizedBox(width: 4),
+            pw.Expanded(
+              child: pw.Text(
+                display,
+                style: pw.TextStyle(fontSize: 8.0, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                maxLines: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   pw.Widget _buildMainHeading(String title, PdfColor accentColor) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -314,6 +358,9 @@ class AccentSidebarLightTemplate extends CvTemplate {
   }
 
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 8),
       child: pw.Column(
@@ -331,7 +378,7 @@ class AccentSidebarLightTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                dateRange,
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
                 textAlign: pw.TextAlign.right,
               ),
@@ -366,6 +413,9 @@ class AccentSidebarLightTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 5),
       child: pw.Row(
@@ -389,7 +439,7 @@ class AccentSidebarLightTemplate extends CvTemplate {
           ),
           pw.SizedBox(width: 8),
           pw.Text(
-            PdfTextSanitizer.clean(edu.graduationYear),
+            eduDate,
             style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
             textAlign: pw.TextAlign.right,
           ),

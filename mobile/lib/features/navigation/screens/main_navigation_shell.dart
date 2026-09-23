@@ -69,7 +69,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   Widget build(BuildContext context) {
     final currentLocale = AppLocalizations.instance.currentLocale;
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.oysterCanvas,
       body: IndexedStack(
         key: ValueKey(currentLocale),

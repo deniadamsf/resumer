@@ -3,7 +3,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
 import '../utils/pdf_text_sanitizer.dart';
+import '../utils/social_icon_pdf_widget.dart';
 import 'cv_template_interface.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
 
 /// Ribbon Banner Professional CV Template.
 /// Eye-catching executive layout featuring full-width accent ribbon banners,
@@ -22,7 +25,7 @@ class RibbonBannerTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Profesional / Visual';
+  String get atsScoreRange => 'form.template_score_ribbon_banner';
 
   @override
   bool get supportsPhoto => true;
@@ -87,8 +90,14 @@ class RibbonBannerTemplate extends CvTemplate {
                               _buildBannerContact(info.phone),
                             if (info.location.isNotEmpty)
                               _buildBannerContact(info.location),
-                            if (info.linkedin.isNotEmpty)
-                              _buildBannerContact(info.linkedin),
+                            ...SocialIconPdfWidget.buildAllItems(
+                              info: info,
+                              isAtsMode: false,
+                              accentColor: PdfColors.white,
+                              textColor: PdfColors.white,
+                              fontSize: 8.0,
+                              iconSize: 8.0,
+                            ),
                           ],
                         ),
                       ],
@@ -308,6 +317,9 @@ class RibbonBannerTemplate extends CvTemplate {
   }
 
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor, PdfColor badgeBg) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 8),
       child: pw.Column(
@@ -331,7 +343,7 @@ class RibbonBannerTemplate extends CvTemplate {
                   borderRadius: pw.BorderRadius.circular(3),
                 ),
                 child: pw.Text(
-                  '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                  dateRange,
                   style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: accentColor),
                   textAlign: pw.TextAlign.right,
                 ),
@@ -367,6 +379,9 @@ class RibbonBannerTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 5),
       child: pw.Row(
@@ -393,7 +408,7 @@ class RibbonBannerTemplate extends CvTemplate {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                PdfTextSanitizer.clean(edu.graduationYear),
+                eduDate,
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
                 textAlign: pw.TextAlign.right,
               ),

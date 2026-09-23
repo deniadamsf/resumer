@@ -325,9 +325,8 @@ class EducationSection extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  DateFormatHelper.formatDateRange(
+                  DateFormatHelper.formatEducationDate(
                     edu.graduationYear,
-                    null,
                     isEnglish: AppLocalizations.instance.currentLocale.startsWith('en'),
                   ),
                   style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accentSteel),

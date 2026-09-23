@@ -1,4 +1,4 @@
-﻿# Flutter Wrapper
+# Flutter Wrapper
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.**  { *; }
 -keep class io.flutter.util.**  { *; }
@@ -35,3 +35,13 @@
 # Google Sign-In & Auth
 -keep class com.google.android.gms.auth.** { *; }
 -keep class com.google.android.gms.common.** { *; }
+
+# Suppress harmless warnings from dependencies
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**
+-dontwarn org.checkerframework.**
+-dontwarn com.google.j2objc.annotations.**
+-dontwarn androidx.window.**
+-dontwarn androidx.media.**
+-dontwarn com.google.android.play.core.**
+

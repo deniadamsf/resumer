@@ -473,7 +473,7 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          template.atsScoreRange,
+                          template.atsScoreRange.tr,
                           style: GoogleFonts.outfit(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,

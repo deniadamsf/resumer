@@ -2,6 +2,9 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
+import '../../../core/utils/social_link_helper.dart';
 import '../utils/pdf_text_sanitizer.dart';
 import 'cv_template_interface.dart';
 
@@ -22,7 +25,7 @@ class ColorBlockTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Desain Modular';
+  String get atsScoreRange => 'form.template_score_color_block';
 
   @override
   bool get supportsPhoto => true;
@@ -89,8 +92,18 @@ class ColorBlockTemplate extends CvTemplate {
                               _buildContactPill(info.phone, mediumTint, accentColor),
                             if (info.location.isNotEmpty)
                               _buildContactPill(info.location, mediumTint, accentColor),
-                            if (info.linkedin.isNotEmpty)
-                              _buildContactPill(info.linkedin, mediumTint, accentColor),
+                            if (_buildSocialContactPill(SocialPlatform.linkedin, info.linkedin, mediumTint, accentColor) != null)
+                              _buildSocialContactPill(SocialPlatform.linkedin, info.linkedin, mediumTint, accentColor)!,
+                            if (_buildSocialContactPill(SocialPlatform.github, info.github, mediumTint, accentColor) != null)
+                              _buildSocialContactPill(SocialPlatform.github, info.github, mediumTint, accentColor)!,
+                            if (_buildSocialContactPill(SocialPlatform.website, info.website, mediumTint, accentColor) != null)
+                              _buildSocialContactPill(SocialPlatform.website, info.website, mediumTint, accentColor)!,
+                            if (_buildSocialContactPill(SocialPlatform.whatsapp, info.whatsapp, mediumTint, accentColor) != null)
+                              _buildSocialContactPill(SocialPlatform.whatsapp, info.whatsapp, mediumTint, accentColor)!,
+                            if (_buildSocialContactPill(SocialPlatform.instagram, info.instagram, mediumTint, accentColor) != null)
+                              _buildSocialContactPill(SocialPlatform.instagram, info.instagram, mediumTint, accentColor)!,
+                            if (_buildSocialContactPill(SocialPlatform.facebook, info.facebook, mediumTint, accentColor) != null)
+                              _buildSocialContactPill(SocialPlatform.facebook, info.facebook, mediumTint, accentColor)!,
                           ],
                         ),
                       ],
@@ -333,9 +346,44 @@ class ColorBlockTemplate extends CvTemplate {
     );
   }
 
+  pw.Widget? _buildSocialContactPill(SocialPlatform platform, String rawInput, PdfColor bg, PdfColor accentColor) {
+    if (rawInput.trim().isEmpty) return null;
+    final url = SocialLinkHelper.buildUrl(platform, rawInput);
+    final display = SocialLinkHelper.buildDisplayText(platform, rawInput);
+    final hex = '#${(accentColor.red * 255).toInt().toRadixString(16).padLeft(2, '0')}'
+        '${(accentColor.green * 255).toInt().toRadixString(16).padLeft(2, '0')}'
+        '${(accentColor.blue * 255).toInt().toRadixString(16).padLeft(2, '0')}';
+    final svg = SocialLinkHelper.getSvgIcon(platform, hexColor: hex, size: 8.0);
+
+    return pw.UrlLink(
+      destination: url,
+      child: pw.Container(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: pw.BoxDecoration(
+          color: bg,
+          borderRadius: pw.BorderRadius.circular(4),
+        ),
+        child: pw.Row(
+          mainAxisSize: pw.MainAxisSize.min,
+          children: [
+            pw.SvgImage(svg: svg, width: 8.0, height: 8.0),
+            pw.SizedBox(width: 3.5),
+            pw.Text(
+              PdfTextSanitizer.clean(display),
+              style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: accentColor),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor, PdfColor softTint) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 8),
+      padding: const pw.EdgeInsets.only(bottom: 7),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -346,7 +394,7 @@ class ColorBlockTemplate extends CvTemplate {
               pw.Expanded(
                 child: pw.Text(
                   PdfTextSanitizer.clean(exp.position),
-                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                  style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
                 ),
               ),
               pw.SizedBox(width: 8),
@@ -357,7 +405,7 @@ class ColorBlockTemplate extends CvTemplate {
                   borderRadius: pw.BorderRadius.circular(3),
                 ),
                 child: pw.Text(
-                  '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                  dateRange,
                   style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: accentColor),
                   textAlign: pw.TextAlign.right,
                 ),
@@ -393,6 +441,9 @@ class ColorBlockTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 4),
       child: pw.Row(
@@ -419,7 +470,7 @@ class ColorBlockTemplate extends CvTemplate {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                PdfTextSanitizer.clean(edu.graduationYear),
+                eduDate,
                 style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
                 textAlign: pw.TextAlign.right,
               ),

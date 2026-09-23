@@ -2,7 +2,10 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
 import '../utils/pdf_text_sanitizer.dart';
+import '../utils/social_icon_pdf_widget.dart';
 import 'cv_template_interface.dart';
 
 /// Executive Split & Serif Template
@@ -23,7 +26,7 @@ class ExecutiveSplitTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Eksekutif / C-Level';
+  String get atsScoreRange => 'form.template_score_executive_split';
 
   @override
   bool get supportsPhoto => true;
@@ -79,9 +82,19 @@ class ExecutiveSplitTemplate extends CvTemplate {
                             if (info.email.isNotEmpty) PdfTextSanitizer.clean(info.email),
                             if (info.phone.isNotEmpty) PdfTextSanitizer.clean(info.phone),
                             if (info.location.isNotEmpty) PdfTextSanitizer.clean(info.location),
-                            if (info.linkedin.isNotEmpty) PdfTextSanitizer.clean(info.linkedin),
                           ].join('   |   '),
                           style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
+                        ),
+                        pw.SizedBox(height: 4),
+                        SocialIconPdfWidget.buildWrapList(
+                          info: info,
+                          isAtsMode: false,
+                          accentColor: accentColor,
+                          textColor: PdfColors.grey700,
+                          fontSize: 8.5,
+                          iconSize: 8.5,
+                          spacing: 8.0,
+                          runSpacing: 3.0,
                         ),
                       ],
                     ),
@@ -256,6 +269,9 @@ class ExecutiveSplitTemplate extends CvTemplate {
   }
 
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 7),
       child: pw.Column(
@@ -273,7 +289,7 @@ class ExecutiveSplitTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                dateRange,
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
                 textAlign: pw.TextAlign.right,
               ),
@@ -307,6 +323,9 @@ class ExecutiveSplitTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 4),
       child: pw.Row(
@@ -330,7 +349,7 @@ class ExecutiveSplitTemplate extends CvTemplate {
           ),
           pw.SizedBox(width: 8),
           pw.Text(
-            PdfTextSanitizer.clean(edu.graduationYear),
+            eduDate,
             style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
             textAlign: pw.TextAlign.right,
           ),

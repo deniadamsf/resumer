@@ -3,7 +3,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
 import '../utils/pdf_text_sanitizer.dart';
+import '../utils/social_icon_pdf_widget.dart';
 import 'cv_template_interface.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
 
 /// Tech Timeline CV Template.
 /// Modern engineering & tech layout with a visual vertical chronological line,
@@ -22,7 +25,7 @@ class TechTimelineTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Tech Lead / Startup';
+  String get atsScoreRange => 'form.template_score_tech_timeline';
 
   @override
   bool get supportsPhoto => true;
@@ -94,8 +97,14 @@ class TechTimelineTemplate extends CvTemplate {
                             _buildIconText(PdfTextSanitizer.clean(info.phone)),
                           if (info.location.isNotEmpty)
                             _buildIconText(PdfTextSanitizer.clean(info.location)),
-                          if (info.linkedin.isNotEmpty)
-                            _buildIconText(PdfTextSanitizer.clean(info.linkedin)),
+                          ...SocialIconPdfWidget.buildAllItems(
+                            info: info,
+                            isAtsMode: false,
+                            accentColor: accentColor,
+                            textColor: PdfColors.grey700,
+                            fontSize: 9.0,
+                            iconSize: 8.5,
+                          ),
                         ],
                       ),
                     ],
@@ -153,6 +162,8 @@ class TechTimelineTemplate extends CvTemplate {
                           _buildLeftTitle('EDUCATION', accentColor),
                           pw.SizedBox(height: 6),
                           ...cv.educations.map((edu) {
+                            final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+                            final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
                             return pw.Container(
                               margin: const pw.EdgeInsets.only(bottom: 8),
                               padding: const pw.EdgeInsets.all(8),
@@ -174,7 +185,7 @@ class TechTimelineTemplate extends CvTemplate {
                                     style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: accentColor),
                                   ),
                                   pw.Text(
-                                    PdfTextSanitizer.clean(edu.graduationYear),
+                                    eduDate,
                                     style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
                                   ),
                                 ],
@@ -246,6 +257,14 @@ class TechTimelineTemplate extends CvTemplate {
                         pw.SizedBox(height: 8),
                         ...cv.experiences.map((exp) => _buildTimelineItem(exp, accentColor, borderTint)),
                       ],
+
+                      // Projects Timeline
+                      if (cv.showProjects && cv.projects.isNotEmpty) ...[
+                        pw.SizedBox(height: 12),
+                        _buildRightTitle('PROJECTS & PORTFOLIO', accentColor),
+                        pw.SizedBox(height: 8),
+                        ...cv.projects.map((proj) => _buildProjectTimelineItem(proj, accentColor, borderTint)),
+                      ],
                     ],
                   ),
                 ),
@@ -294,6 +313,9 @@ class TechTimelineTemplate extends CvTemplate {
   }
 
   pw.Widget _buildTimelineItem(WorkExperience exp, PdfColor accentColor, PdfColor timelineLineColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -342,7 +364,7 @@ class TechTimelineTemplate extends CvTemplate {
                         borderRadius: pw.BorderRadius.circular(3),
                       ),
                       child: pw.Text(
-                        '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                        dateRange,
                         style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
                         textAlign: pw.TextAlign.right,
                       ),
@@ -371,6 +393,72 @@ class TechTimelineTemplate extends CvTemplate {
                     ),
                   ),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildProjectTimelineItem(ProjectItem proj, PdfColor accentColor, PdfColor timelineLineColor) {
+    final cleanName = PdfTextSanitizer.clean(proj.name);
+    final cleanRole = PdfTextSanitizer.clean(proj.role);
+    final period = PdfTextSanitizer.clean(proj.displayPeriod);
+    final cleanDesc = PdfTextSanitizer.clean(proj.description);
+
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(
+          width: 14,
+          child: pw.Column(
+            children: [
+              pw.Container(
+                width: 7,
+                height: 7,
+                decoration: pw.BoxDecoration(
+                  color: accentColor,
+                  shape: pw.BoxShape.circle,
+                ),
+              ),
+              pw.Container(width: 1.5, height: 35, color: timelineLineColor),
+            ],
+          ),
+        ),
+        pw.Expanded(
+          child: pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 10),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Expanded(
+                      child: pw.Text(
+                        cleanName,
+                        style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                      ),
+                    ),
+                    if (period.isNotEmpty)
+                      pw.Text(period, style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700)),
+                  ],
+                ),
+                if (cleanRole.isNotEmpty) ...[
+                  pw.SizedBox(height: 1),
+                  pw.Text(
+                    cleanRole,
+                    style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: accentColor),
+                  ),
+                ],
+                if (cleanDesc.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    cleanDesc,
+                    style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800, lineSpacing: 1.3),
+                  ),
+                ],
               ],
             ),
           ),

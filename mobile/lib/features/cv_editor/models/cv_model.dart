@@ -1,3 +1,6 @@
+import '../../../core/utils/date_format_helper.dart';
+import '../../../core/utils/social_link_helper.dart';
+
 class CvDocument {
   String templateId; // 'asian_ats' or 'western_strict'
   String fontFamily; // 'Outfit', 'Calibri', 'Arial', 'Garamond'
@@ -13,6 +16,8 @@ class CvDocument {
   bool showSkills;
   List<CertificationItem> certifications;
   bool showCertifications;
+  List<ProjectItem> projects;
+  bool showProjects;
   List<LanguageItem> languages;
   bool showLanguages;
   List<String> hobbies;
@@ -33,6 +38,8 @@ class CvDocument {
     this.showSkills = true,
     this.certifications = const [],
     this.showCertifications = true,
+    this.projects = const [],
+    this.showProjects = true,
     this.languages = const [],
     this.showLanguages = false,
     this.hobbies = const [],
@@ -46,6 +53,8 @@ class CvDocument {
       educations: [],
       skills: [],
       certifications: [],
+      projects: [],
+      showProjects: true,
       languages: [],
       showLanguages: false,
       hobbies: [],
@@ -61,7 +70,8 @@ class CvDocument {
         summary.trim().isEmpty &&
         experiences.isEmpty &&
         educations.isEmpty &&
-        skills.isEmpty;
+        skills.isEmpty &&
+        projects.isEmpty;
   }
 
   /// Blueprint Bagian 10: Validasi Pra-Generate AI & ATS Checker (Filter Kelayakan Data)
@@ -76,17 +86,17 @@ class CvDocument {
   }
 
   CvDocument clone() {
-    final doc = CvDocument.fromJson(toJson());
+    final doc = CvDocument.fromJson(toJson(forLocalPersistence: true));
     doc.personalInfo.localPhotoPath = personalInfo.localPhotoPath;
     return doc;
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool forLocalPersistence = false}) {
     return {
       'template_id': templateId,
       'font_family': fontFamily,
       'accent_color': accentColor,
-      'personal_info': personalInfo.toJson(),
+      'personal_info': personalInfo.toJson(forLocalPersistence: forLocalPersistence),
       'summary': summary,
       'show_summary': showSummary,
       'experiences': experiences.map((e) => e.toJson()).toList(),
@@ -97,6 +107,8 @@ class CvDocument {
       'show_skills': showSkills,
       'certifications': certifications.map((c) => c.toJson()).toList(),
       'show_certifications': showCertifications,
+      'projects': projects.map((p) => p.toJson()).toList(),
+      'show_projects': showProjects,
       'languages': languages.map((l) => l.toJson()).toList(),
       'show_languages': showLanguages,
       'hobbies': hobbies,
@@ -104,8 +116,84 @@ class CvDocument {
     };
   }
 
+  /// Map representation for local offline storage (includes localPhotoPath)
+  Map<String, dynamic> toLocalMap() => toJson(forLocalPersistence: true);
+
+  /// Ensures all experience and education items have full month names.
+  /// Migrates legacy or year-only entries (e.g. "2026" -> "Januari 2026", "2020" -> "Agustus 2020").
+  void ensureMonthIntegrity({bool isEnglish = false}) {
+    for (final exp in experiences) {
+      if (exp.startDate.isNotEmpty) {
+        final pStart = DateFormatHelper.parse(exp.startDate);
+        if (pStart.hasYear && !pStart.hasMonth) {
+          exp.startDate = DateFormatHelper.formatMonthYear(
+            1,
+            pStart.year,
+            isEnglish: isEnglish,
+            full: true,
+          );
+        }
+      }
+      if (exp.endDate.isNotEmpty) {
+        final pEnd = DateFormatHelper.parse(exp.endDate);
+        if (pEnd.isPresent) {
+          exp.endDate = isEnglish ? 'Present' : 'Sekarang';
+        } else if (pEnd.hasYear && !pEnd.hasMonth) {
+          exp.endDate = DateFormatHelper.formatMonthYear(
+            12,
+            pEnd.year,
+            isEnglish: isEnglish,
+            full: true,
+          );
+        }
+      }
+    }
+
+    for (final edu in educations) {
+      if (edu.graduationYear.isNotEmpty) {
+        final pEdu = DateFormatHelper.parse(edu.graduationYear);
+        if (pEdu.hasYear && !pEdu.hasMonth) {
+          edu.graduationYear = DateFormatHelper.formatMonthYear(
+            8,
+            pEdu.year,
+            isEnglish: isEnglish,
+            full: true,
+          );
+        }
+      }
+    }
+
+    for (final proj in projects) {
+      if (proj.startDate.isNotEmpty) {
+        final pStart = DateFormatHelper.parse(proj.startDate);
+        if (pStart.hasYear && !pStart.hasMonth) {
+          proj.startDate = DateFormatHelper.formatMonthYear(
+            1,
+            pStart.year,
+            isEnglish: isEnglish,
+            full: true,
+          );
+        }
+      }
+      if (proj.endDate.isNotEmpty && !proj.isCurrent) {
+        final pEnd = DateFormatHelper.parse(proj.endDate);
+        if (pEnd.isPresent) {
+          proj.endDate = isEnglish ? 'Present' : 'Sekarang';
+          proj.isCurrent = true;
+        } else if (pEnd.hasYear && !pEnd.hasMonth) {
+          proj.endDate = DateFormatHelper.formatMonthYear(
+            12,
+            pEnd.year,
+            isEnglish: isEnglish,
+            full: true,
+          );
+        }
+      }
+    }
+  }
+
   factory CvDocument.fromJson(Map<String, dynamic> json) {
-    return CvDocument(
+    final doc = CvDocument(
       templateId: json['template_id'] as String? ?? 'asian_ats',
       fontFamily: json['font_family'] as String? ?? 'Outfit',
       accentColor: json['accent_color'] as String? ?? '#0B132B',
@@ -134,6 +222,11 @@ class CvDocument {
               .toList() ??
           [],
       showCertifications: json['show_certifications'] as bool? ?? true,
+      projects: (json['projects'] as List<dynamic>?)
+              ?.map((p) => ProjectItem.fromJson(p))
+              .toList() ??
+          [],
+      showProjects: json['show_projects'] as bool? ?? true,
       languages: (json['languages'] as List<dynamic>?)
               ?.map((l) => LanguageItem.fromJson(l))
               .toList() ??
@@ -145,6 +238,8 @@ class CvDocument {
           [],
       showHobbies: json['show_hobbies'] as bool? ?? false,
     );
+    doc.ensureMonthIntegrity();
+    return doc;
   }
 
   /// Converts CV to pure plain text for ATS Robot Parser simulation
@@ -153,7 +248,28 @@ class CvDocument {
     buffer.writeln(personalInfo.fullName.toUpperCase());
     buffer.writeln(personalInfo.professionalTitle);
     buffer.writeln('${personalInfo.email} | ${personalInfo.phone} | ${personalInfo.location}');
-    if (personalInfo.linkedin.isNotEmpty) buffer.writeln(personalInfo.linkedin);
+    final socialEntries = <String>[];
+    if (personalInfo.linkedin.isNotEmpty) {
+      socialEntries.add('LinkedIn: ${SocialLinkHelper.buildDisplayText(SocialPlatform.linkedin, personalInfo.linkedin)}');
+    }
+    if (personalInfo.github.isNotEmpty) {
+      socialEntries.add('GitHub: ${SocialLinkHelper.buildDisplayText(SocialPlatform.github, personalInfo.github)}');
+    }
+    if (personalInfo.website.isNotEmpty) {
+      socialEntries.add('Portfolio: ${SocialLinkHelper.buildDisplayText(SocialPlatform.website, personalInfo.website)}');
+    }
+    if (personalInfo.whatsapp.isNotEmpty) {
+      socialEntries.add('WhatsApp: ${SocialLinkHelper.buildDisplayText(SocialPlatform.whatsapp, personalInfo.whatsapp)}');
+    }
+    if (personalInfo.instagram.isNotEmpty) {
+      socialEntries.add('Instagram: ${SocialLinkHelper.buildDisplayText(SocialPlatform.instagram, personalInfo.instagram)}');
+    }
+    if (personalInfo.facebook.isNotEmpty) {
+      socialEntries.add('Facebook: ${SocialLinkHelper.buildDisplayText(SocialPlatform.facebook, personalInfo.facebook)}');
+    }
+    if (socialEntries.isNotEmpty) {
+      buffer.writeln(socialEntries.join(' | '));
+    }
     buffer.writeln();
 
     if (showSummary && summary.isNotEmpty) {
@@ -214,6 +330,30 @@ class CvDocument {
       buffer.writeln();
     }
 
+    if (showProjects && projects.isNotEmpty) {
+      buffer.writeln('PROJECTS & PORTFOLIO');
+      buffer.writeln('--------------------');
+      for (final p in projects) {
+        final titleLine = p.role.isNotEmpty ? '${p.name} | ${p.role}' : p.name;
+        buffer.writeln(titleLine);
+        final period = p.displayPeriod;
+        if (period.isNotEmpty) buffer.writeln(period);
+        if (p.description.trim().isNotEmpty) {
+          for (final line in p.description.trim().split('\n')) {
+            final trimmed = line.trim();
+            if (trimmed.isNotEmpty) {
+              if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
+                buffer.writeln(trimmed);
+              } else {
+                buffer.writeln('• $trimmed');
+              }
+            }
+          }
+        }
+        buffer.writeln();
+      }
+    }
+
     if (languages.isNotEmpty) {
       buffer.writeln('LANGUAGES');
       buffer.writeln('---------');
@@ -239,6 +379,11 @@ class PersonalInfo {
   String phone;
   String location;
   String linkedin;
+  String github;
+  String instagram;
+  String facebook;
+  String whatsapp;
+  String website;
   String? localPhotoPath; // 100% Client-side local path, NEVER sent to server
 
   PersonalInfo({
@@ -248,19 +393,33 @@ class PersonalInfo {
     this.phone = '',
     this.location = '',
     this.linkedin = '',
+    this.github = '',
+    this.instagram = '',
+    this.facebook = '',
+    this.whatsapp = '',
+    this.website = '',
     this.localPhotoPath,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
+  Map<String, dynamic> toJson({bool forLocalPersistence = false}) {
+    final map = <String, dynamic>{
       'full_name': fullName,
       'professional_title': professionalTitle,
       'email': email,
       'phone': phone,
       'location': location,
       'linkedin': linkedin,
-      // localPhotoPath is strictly excluded from server sync
+      'github': github,
+      'instagram': instagram,
+      'facebook': facebook,
+      'whatsapp': whatsapp,
+      'website': website,
     };
+    // localPhotoPath is strictly excluded from server sync unless explicitly saving locally
+    if (forLocalPersistence && localPhotoPath != null) {
+      map['local_photo_path'] = localPhotoPath;
+    }
+    return map;
   }
 
   factory PersonalInfo.fromJson(Map<String, dynamic> json) {
@@ -271,6 +430,12 @@ class PersonalInfo {
       phone: json['phone'] as String? ?? '',
       location: json['location'] as String? ?? '',
       linkedin: json['linkedin'] as String? ?? '',
+      github: json['github'] as String? ?? '',
+      instagram: json['instagram'] as String? ?? '',
+      facebook: json['facebook'] as String? ?? '',
+      whatsapp: json['whatsapp'] as String? ?? '',
+      website: json['website'] as String? ?? '',
+      localPhotoPath: json['local_photo_path'] as String? ?? json['localPhotoPath'] as String?,
     );
   }
 }
@@ -488,6 +653,59 @@ class LanguageItem {
       );
     }
     return LanguageItem(name: json?.toString() ?? '');
+  }
+}
+
+class ProjectItem {
+  String name;
+  String role;
+  String startDate;
+  String endDate;
+  bool isCurrent;
+  String description;
+
+  ProjectItem({
+    this.name = '',
+    this.role = '',
+    this.startDate = '',
+    this.endDate = '',
+    this.isCurrent = false,
+    this.description = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'role': role,
+        'start_date': startDate,
+        'end_date': endDate,
+        'is_current': isCurrent,
+        'description': description,
+      };
+
+  factory ProjectItem.fromJson(dynamic json) {
+    if (json is! Map) return ProjectItem();
+    final endDateStr = json['end_date']?.toString() ?? json['endDate']?.toString() ?? '';
+    final isCurr = json['is_current'] as bool? ??
+        (endDateStr.toLowerCase().contains('sekarang') ||
+            endDateStr.toLowerCase().contains('present'));
+    return ProjectItem(
+      name: json['name'] as String? ?? json['title'] as String? ?? '',
+      role: json['role'] as String? ?? json['technologies']?.toString() ?? '',
+      startDate: json['start_date'] as String? ?? json['startDate'] as String? ?? '',
+      endDate: endDateStr,
+      isCurrent: isCurr,
+      description: json['description'] as String? ?? '',
+    );
+  }
+
+  String get displayPeriod {
+    if (startDate.isEmpty && endDate.isEmpty && !isCurrent) return '';
+    final end = endDate.isNotEmpty ? endDate : (isCurrent ? 'Sekarang' : '');
+    if (startDate.isNotEmpty && end.isNotEmpty) {
+      return '$startDate - $end';
+    }
+    if (startDate.isNotEmpty) return startDate;
+    return end;
   }
 }
 

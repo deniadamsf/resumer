@@ -179,11 +179,13 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
       final preservedLanguages = List<LanguageItem>.from(cv.languages);
       final preservedHobbies = List<String>.from(cv.hobbies);
       final preservedCertifications = List<CertificationItem>.from(cv.certifications);
+      final preservedProjects = List<ProjectItem>.from(cv.projects);
       final preservedEducations = List<Education>.from(cv.educations);
       final preservedPersonalInfo = cv.personalInfo;
       final preservedShowLanguages = cv.showLanguages;
       final preservedShowHobbies = cv.showHobbies;
       final preservedShowCertifications = cv.showCertifications;
+      final preservedShowProjects = cv.showProjects;
 
       final response = await ApiService.instance.autoFixAts(cv.toPlainText());
 
@@ -246,20 +248,46 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
               }
             }
           }
+
+          // 5. Optimize projects & portfolio (ONLY if user already has projects)
+          // ATURAN MUTLAK USER: "tapi kalo kosong ya jangan diisi"
+          if (preservedProjects.isNotEmpty &&
+              improvedData['projects'] != null &&
+              (improvedData['projects'] as List).isNotEmpty) {
+            final rawProjects = improvedData['projects'] as List;
+            for (int i = 0; i < rawProjects.length && i < cv.projects.length; i++) {
+              final projMap = rawProjects[i];
+              if (projMap is Map) {
+                if (projMap['name'] != null && (projMap['name'] as String).trim().isNotEmpty) {
+                  cv.projects[i].name = projMap['name'].toString().trim();
+                }
+                if (projMap['role'] != null && (projMap['role'] as String).trim().isNotEmpty) {
+                  cv.projects[i].role = projMap['role'].toString().trim();
+                }
+                if (projMap['description'] != null && (projMap['description'] as String).trim().isNotEmpty) {
+                  cv.projects[i].description = projMap['description'].toString().trim();
+                }
+              }
+            }
+          }
         }
 
         // Restore and guarantee that core user sections are 100% intact
         cv.languages = preservedLanguages;
         cv.hobbies = preservedHobbies;
-        // JIKA USER TIDAK MEMILIKI SERTIFIKASI, JAMIN TETAP KOSONG 100%
+        // JIKA USER TIDAK MEMILIKI SERTIFIKASI / PROYEK, JAMIN TETAP KOSONG 100%
         if (preservedCertifications.isEmpty) {
           cv.certifications = [];
+        }
+        if (preservedProjects.isEmpty) {
+          cv.projects = [];
         }
         cv.educations = preservedEducations;
         cv.personalInfo = preservedPersonalInfo;
         cv.showLanguages = preservedShowLanguages;
         cv.showHobbies = preservedShowHobbies;
         cv.showCertifications = preservedShowCertifications;
+        cv.showProjects = preservedShowProjects;
 
         final newScore = (improved?['estimated_new_score'] as num?)?.toInt() ?? 96;
         const newVerdict = 'Top 5% ATS Ready';
@@ -361,8 +389,8 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        // UI UX Pro Max: bottom padding 120px to prevent being obscured by bottom navigation bar
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
+        // UI UX Pro Max: bottom padding 24px above bottom bar & banner ad
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -182,21 +182,38 @@ class DateFormatHelper {
   }
 
   /// Formats date range cleanly for PDF display and preview.
-  /// Converts "januari 2024" and "sekarang" to "Januari 2024 - Sekarang"
+  /// Converts "januari 2024" and "sekarang" to "Januari 2024 - Sekarang" / "January 2024 - Present".
+  /// Intelligently provides fallback months for year-only inputs (defaultStartMonth: 1, defaultEndMonth: 12).
   static String formatDateRange(
     String? start,
     String? end, {
     bool isEnglish = false,
     bool full = true,
+    int? defaultStartMonth = 1,
+    int? defaultEndMonth = 12,
   }) {
-    final startParts = parse(start);
-    final endParts = parse(end);
+    // If start string contains a hyphenated range and end is empty, split them automatically
+    String effectiveStart = start?.trim() ?? '';
+    String effectiveEnd = end?.trim() ?? '';
+
+    if (effectiveEnd.isEmpty && effectiveStart.isNotEmpty) {
+      final rangeMatch = RegExp(r'^(.+?)\s*(?:[-–—]|sampai|to)\s*(.+)$', caseSensitive: false).firstMatch(effectiveStart);
+      if (rangeMatch != null) {
+        effectiveStart = rangeMatch.group(1)?.trim() ?? effectiveStart;
+        effectiveEnd = rangeMatch.group(2)?.trim() ?? '';
+      }
+    }
+
+    final startParts = parse(effectiveStart);
+    final endParts = parse(effectiveEnd);
 
     String startFormatted = '';
     if (startParts.hasMonth && startParts.hasYear) {
       startFormatted = formatMonthYear(startParts.month, startParts.year, isEnglish: isEnglish, full: full);
-    } else if (start != null && start.trim().isNotEmpty) {
-      startFormatted = start.trim();
+    } else if (startParts.hasYear && defaultStartMonth != null) {
+      startFormatted = formatMonthYear(defaultStartMonth, startParts.year, isEnglish: isEnglish, full: full);
+    } else if (effectiveStart.isNotEmpty) {
+      startFormatted = effectiveStart;
     }
 
     String endFormatted = '';
@@ -204,8 +221,10 @@ class DateFormatHelper {
       endFormatted = isEnglish ? 'Present' : 'Sekarang';
     } else if (endParts.hasMonth && endParts.hasYear) {
       endFormatted = formatMonthYear(endParts.month, endParts.year, isEnglish: isEnglish, full: full);
-    } else if (end != null && end.trim().isNotEmpty) {
-      endFormatted = end.trim();
+    } else if (endParts.hasYear && defaultEndMonth != null) {
+      endFormatted = formatMonthYear(defaultEndMonth, endParts.year, isEnglish: isEnglish, full: full);
+    } else if (effectiveEnd.isNotEmpty) {
+      endFormatted = effectiveEnd;
     }
 
     if (startFormatted.isNotEmpty && endFormatted.isNotEmpty) {
@@ -217,4 +236,23 @@ class DateFormatHelper {
     }
     return '';
   }
+
+  /// Formats single date e.g. for education graduation date.
+  /// Converts "2020", "08/2020", or "agustus 2020" to "Agustus 2020" (or "August 2020" if English).
+  static String formatEducationDate(
+    String? date, {
+    bool isEnglish = false,
+    bool full = true,
+    int? defaultMonth = 8,
+  }) {
+    if (date == null || date.trim().isEmpty) return '';
+    final parts = parse(date);
+    if (parts.hasMonth && parts.hasYear) {
+      return formatMonthYear(parts.month, parts.year, isEnglish: isEnglish, full: full);
+    } else if (parts.hasYear && defaultMonth != null) {
+      return formatMonthYear(defaultMonth, parts.year, isEnglish: isEnglish, full: full);
+    }
+    return date.trim();
+  }
 }
+

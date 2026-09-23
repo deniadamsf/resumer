@@ -4,6 +4,9 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
 import '../utils/pdf_text_sanitizer.dart';
 import 'cv_template_interface.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
+import '../../../core/utils/social_link_helper.dart';
 
 /// Gradient Vivid Header CV Template.
 /// High-end creative resume featuring a vibrant colored header banner,
@@ -22,7 +25,7 @@ class GradientHeaderTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Desain Berwarna';
+  String get atsScoreRange => 'form.template_score_gradient_header';
 
   @override
   bool get supportsPhoto => true;
@@ -91,8 +94,18 @@ class GradientHeaderTemplate extends CvTemplate {
                               _buildHeaderContact(info.phone),
                             if (info.location.isNotEmpty)
                               _buildHeaderContact(info.location),
-                            if (info.linkedin.isNotEmpty)
-                              _buildHeaderContact(info.linkedin),
+                            if (_buildSocialHeaderContact(SocialPlatform.linkedin, info.linkedin, accentColor) != null)
+                              _buildSocialHeaderContact(SocialPlatform.linkedin, info.linkedin, accentColor)!,
+                            if (_buildSocialHeaderContact(SocialPlatform.github, info.github, accentColor) != null)
+                              _buildSocialHeaderContact(SocialPlatform.github, info.github, accentColor)!,
+                            if (_buildSocialHeaderContact(SocialPlatform.website, info.website, accentColor) != null)
+                              _buildSocialHeaderContact(SocialPlatform.website, info.website, accentColor)!,
+                            if (_buildSocialHeaderContact(SocialPlatform.whatsapp, info.whatsapp, accentColor) != null)
+                              _buildSocialHeaderContact(SocialPlatform.whatsapp, info.whatsapp, accentColor)!,
+                            if (_buildSocialHeaderContact(SocialPlatform.instagram, info.instagram, accentColor) != null)
+                              _buildSocialHeaderContact(SocialPlatform.instagram, info.instagram, accentColor)!,
+                            if (_buildSocialHeaderContact(SocialPlatform.facebook, info.facebook, accentColor) != null)
+                              _buildSocialHeaderContact(SocialPlatform.facebook, info.facebook, accentColor)!,
                           ],
                         ),
                       ],
@@ -298,6 +311,38 @@ class GradientHeaderTemplate extends CvTemplate {
     );
   }
 
+  pw.Widget? _buildSocialHeaderContact(SocialPlatform platform, String rawInput, PdfColor accentColor) {
+    if (rawInput.trim().isEmpty) return null;
+    final url = SocialLinkHelper.buildUrl(platform, rawInput);
+    final display = SocialLinkHelper.buildDisplayText(platform, rawInput);
+    final hex = '#${(accentColor.red * 255).toInt().toRadixString(16).padLeft(2, '0')}'
+        '${(accentColor.green * 255).toInt().toRadixString(16).padLeft(2, '0')}'
+        '${(accentColor.blue * 255).toInt().toRadixString(16).padLeft(2, '0')}';
+    final svg = SocialLinkHelper.getSvgIcon(platform, hexColor: hex, size: 8.0);
+
+    return pw.UrlLink(
+      destination: url,
+      child: pw.Container(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: pw.BoxDecoration(
+          color: PdfColors.white,
+          borderRadius: pw.BorderRadius.circular(3),
+        ),
+        child: pw.Row(
+          mainAxisSize: pw.MainAxisSize.min,
+          children: [
+            pw.SvgImage(svg: svg, width: 8.0, height: 8.0),
+            pw.SizedBox(width: 3.5),
+            pw.Text(
+              PdfTextSanitizer.clean(display),
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey800),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   pw.Widget _buildSectionTitle(String title, PdfColor accentColor) {
     return pw.Row(
       children: [
@@ -321,6 +366,9 @@ class GradientHeaderTemplate extends CvTemplate {
   }
 
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 8),
       child: pw.Column(
@@ -338,7 +386,7 @@ class GradientHeaderTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                dateRange,
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
                 textAlign: pw.TextAlign.right,
               ),
@@ -373,6 +421,9 @@ class GradientHeaderTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 6),
       child: pw.Row(
@@ -399,7 +450,7 @@ class GradientHeaderTemplate extends CvTemplate {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                PdfTextSanitizer.clean(edu.graduationYear),
+                eduDate,
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
                 textAlign: pw.TextAlign.right,
               ),

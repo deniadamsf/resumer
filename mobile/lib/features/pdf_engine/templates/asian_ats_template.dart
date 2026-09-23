@@ -2,7 +2,10 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
 import '../utils/pdf_text_sanitizer.dart';
+import '../utils/social_icon_pdf_widget.dart';
 import 'cv_template_interface.dart';
 
 /// Asian ATS Classic Template
@@ -22,7 +25,7 @@ class AsianAtsTemplate extends CvTemplate {
   bool get isAtsFriendly => true;
 
   @override
-  String get atsScoreRange => 'Skor: 85-95';
+  String get atsScoreRange => 'form.template_score_asian';
 
   @override
   bool get supportsPhoto => true;
@@ -147,6 +150,12 @@ class AsianAtsTemplate extends CvTemplate {
               }),
               pw.SizedBox(height: 8),
             ],
+            if (cv.showProjects && cv.projects.isNotEmpty) ...[
+              PdfTextSanitizer.buildSectionTitle('PROJECTS & PORTFOLIO', accentColor),
+              pw.SizedBox(height: 4),
+              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor)),
+              pw.SizedBox(height: 8),
+            ],
             if (cv.showLanguages && cv.languages.isNotEmpty) ...[
               PdfTextSanitizer.buildSectionTitle('LANGUAGES', accentColor),
               pw.SizedBox(height: 4),
@@ -208,13 +217,15 @@ class AsianAtsTemplate extends CvTemplate {
                 '${PdfTextSanitizer.clean(info.email)}  |  ${PdfTextSanitizer.clean(info.phone)}  |  ${PdfTextSanitizer.clean(info.location)}',
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
               ),
-              if (info.linkedin.isNotEmpty) ...[
-                pw.SizedBox(height: 2),
-                pw.Text(
-                  PdfTextSanitizer.clean(info.linkedin),
-                  style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.blue800),
-                ),
-              ],
+              pw.SizedBox(height: 3),
+              SocialIconPdfWidget.buildWrapList(
+                info: info,
+                isAtsMode: true,
+                textColor: PdfColors.blue800,
+                fontSize: 8.5,
+                spacing: 8.0,
+                runSpacing: 2.0,
+              ),
             ],
           ),
         ),
@@ -236,6 +247,9 @@ class AsianAtsTemplate extends CvTemplate {
   }
 
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 8),
       child: pw.Column(
@@ -253,7 +267,7 @@ class AsianAtsTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                dateRange,
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
                 textAlign: pw.TextAlign.right,
               ),
@@ -291,6 +305,9 @@ class AsianAtsTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 6),
       child: pw.Row(
@@ -317,7 +334,7 @@ class AsianAtsTemplate extends CvTemplate {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                PdfTextSanitizer.clean(edu.graduationYear),
+                eduDate,
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
                 textAlign: pw.TextAlign.right,
               ),
@@ -329,6 +346,69 @@ class AsianAtsTemplate extends CvTemplate {
                 ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor) {
+    final cleanName = PdfTextSanitizer.clean(proj.name);
+    final cleanRole = PdfTextSanitizer.clean(proj.role);
+    final period = PdfTextSanitizer.clean(proj.displayPeriod);
+    final cleanDesc = PdfTextSanitizer.clean(proj.description);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 6),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: cleanName,
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.grey900,
+                        ),
+                      ),
+                      if (cleanRole.isNotEmpty)
+                        pw.TextSpan(
+                          text: ' | $cleanRole',
+                          style: pw.TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.grey800,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (period.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Text(
+                  period,
+                  style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ],
+            ],
+          ),
+          if (cleanDesc.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              cleanDesc,
+              style: const pw.TextStyle(fontSize: 9.5, color: PdfColors.grey800),
+              textAlign: pw.TextAlign.justify,
+            ),
+          ],
         ],
       ),
     );

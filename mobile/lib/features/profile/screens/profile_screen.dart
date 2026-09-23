@@ -398,8 +398,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         showBackButton: false,
       ),
       body: SingleChildScrollView(
-        // 120px bottom padding to prevent bottom tab bar overlap per UI UX Pro Max
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
+        // 24px bottom padding above bottom bar & banner ad per UI UX Pro Max
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

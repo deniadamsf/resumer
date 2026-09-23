@@ -37,6 +37,7 @@ class EditorBottomBar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
+        bottom: false,
         child: Row(
           children: [
             // AI Polish CTA

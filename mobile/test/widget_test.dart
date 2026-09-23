@@ -6,6 +6,7 @@ import 'package:resumer/core/services/signature_service.dart';
 import 'package:resumer/features/cover_letter/models/cover_letter_model.dart';
 import 'package:resumer/features/cv_editor/models/cv_model.dart';
 import 'package:resumer/features/pdf_engine/pdf_generator.dart';
+import 'package:resumer/features/pdf_engine/templates/template_registry.dart';
 
 void main() {
   test('CvDocument model serialization and plain text export', () {
@@ -150,4 +151,68 @@ void main() {
     expect(pdfWithSig.isNotEmpty, true);
     expect(String.fromCharCodes(pdfWithSig.take(5)), '%PDF-');
   });
+
+  test('ProjectItem serialization and CvDocument projects plain text export', () {
+    final project = ProjectItem(
+      name: 'Resumer AI Mobile Platform',
+      role: 'Lead Architect',
+      startDate: 'Januari 2024',
+      endDate: 'Present',
+      isCurrent: true,
+      description: 'Engineered ATS CV maker and client-side PDF rendering system.',
+    );
+
+    final pJson = project.toJson();
+    expect(pJson['name'], 'Resumer AI Mobile Platform');
+    expect(pJson['role'], 'Lead Architect');
+    expect(pJson['is_current'], true);
+
+    final pRestored = ProjectItem.fromJson(pJson);
+    expect(pRestored.name, 'Resumer AI Mobile Platform');
+    expect(pRestored.displayPeriod, 'Januari 2024 - Present');
+
+    final doc = CvDocument(
+      personalInfo: PersonalInfo(fullName: 'Alexander Wright'),
+      projects: [project],
+      showProjects: true,
+    );
+
+    final plainText = doc.toPlainText();
+    expect(plainText, contains('PROJECTS & PORTFOLIO'));
+    expect(plainText, contains('Resumer AI Mobile Platform | Lead Architect'));
+    expect(plainText, contains('Engineered ATS CV maker'));
+  });
+
+  test('PdfGenerator renders projects across templates successfully', () async {
+    final doc = CvDocument(
+      personalInfo: PersonalInfo(
+        fullName: 'Alexander Wright',
+        professionalTitle: 'Lead Mobile Architect',
+        email: 'alex@example.com',
+        phone: '08123456789',
+        location: 'Jakarta',
+      ),
+      summary: 'Executive Summary.',
+      skills: ['Flutter', 'Dart'].map((s) => SkillItem(name: s)).toList(),
+      projects: [
+        ProjectItem(
+          name: 'Enterprise Cloud Portal',
+          role: 'Fullstack Lead',
+          startDate: 'Maret 2023',
+          endDate: 'Desember 2023',
+          isCurrent: false,
+          description: 'Architected scalable multi-tenant services.',
+        ),
+      ],
+      showProjects: true,
+    );
+
+    for (final template in TemplateRegistry.all) {
+      doc.templateId = template.id;
+      final bytes = await PdfGenerator.generatePdf(doc);
+      expect(bytes.isNotEmpty, true);
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+    }
+  });
 }
+

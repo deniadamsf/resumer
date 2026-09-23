@@ -19,6 +19,7 @@ class AdMobBannerWidget extends StatefulWidget {
 
 class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
   BannerAd? _bannerAd;
+  AdSize? _adSize;
   bool _isLoaded = false;
   Orientation? _currentOrientation;
 
@@ -27,7 +28,7 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
     super.didChangeDependencies();
     final orientation = MediaQuery.orientationOf(context);
     final width = MediaQuery.sizeOf(context).width.truncate();
-    if (_currentOrientation != orientation) {
+    if (_currentOrientation != orientation && width > 0) {
       _currentOrientation = orientation;
       _loadAdaptiveBanner(width);
     }
@@ -38,26 +39,31 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
     if (!mounted) return;
     setState(() {
       _bannerAd = null;
+      _adSize = null;
       _isLoaded = false;
     });
 
-    final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
-
-    if (size == null) {
-      debugPrint('[AdMobBanner] Unable to determine adaptive banner size.');
-      return;
-    }
+    // Request standard anchored adaptive banner to prevent oversized slots and blank whitespace
+    // ignore: deprecated_member_use
+    AdSize? size = await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+    size ??= await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
+    size ??= AdSize.banner;
 
     final banner = BannerAd(
       adUnitId: AdService.instance.bannerUnitId,
       size: size,
       request: const AdRequest(),
       listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          debugPrint('[AdMobBanner] Banner successfully loaded ($size).');
+        onAdLoaded: (ad) async {
+          final bannerAd = ad as BannerAd;
+          // Retrieve the exact pixel height and width from native platform
+          // so the container hugs the ad creative perfectly with zero empty space.
+          final platformSize = await bannerAd.getPlatformAdSize();
+          debugPrint('[AdMobBanner] Banner successfully loaded. Requested: ${bannerAd.size}, Platform: $platformSize');
           if (mounted) {
             setState(() {
-              _bannerAd = ad as BannerAd;
+              _bannerAd = bannerAd;
+              _adSize = platformSize ?? bannerAd.size;
               _isLoaded = true;
             });
           }
@@ -68,6 +74,7 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
           if (mounted) {
             setState(() {
               _bannerAd = null;
+              _adSize = null;
               _isLoaded = false;
             });
           }
@@ -86,14 +93,22 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isLoaded || _bannerAd == null) {
+    if (!_isLoaded || _bannerAd == null || _adSize == null) {
       // Gracefully collapse when ad is loading or unavailable
       return const SizedBox.shrink();
     }
 
+    final adHeight = _adSize!.height.toDouble();
+    final adWidth = _adSize!.width.toDouble();
+
+    if (adHeight <= 0) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
-      width: _bannerAd!.size.width.toDouble(),
-      height: _bannerAd!.size.height.toDouble(),
+      width: double.infinity,
+      height: adHeight,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
         border: widget.showTopBorder
@@ -105,7 +120,11 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
               )
             : null,
       ),
-      child: AdWidget(ad: _bannerAd!),
+      child: SizedBox(
+        width: adWidth > 0 ? adWidth : double.infinity,
+        height: adHeight,
+        child: AdWidget(ad: _bannerAd!),
+      ),
     );
   }
 }

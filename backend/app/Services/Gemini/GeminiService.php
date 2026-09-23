@@ -87,9 +87,11 @@ Output JSON structure:
   "hobbies": ["string"],
   "projects": [
     {
-      "title": "string",
-      "description": "string",
-      "technologies": ["string"]
+      "name": "string",
+      "role": "string",
+      "start_date": "string",
+      "end_date": "string",
+      "description": "string"
     }
   ]
 }
@@ -117,9 +119,9 @@ Score the CV rigorously from 0 to 100 based on modern enterprise ATS algorithms 
 
 Evaluation Pillars:
 1. Keyword & Industry Match (0-25): Density of high-value industry terminology, domain competencies, frameworks, tools, and job-specific taxonomy.
-2. Impact & Action Verbs (0-25): Rigorous adherence to Google XYZ formula: "Accomplished [X] measured by [Y] by doing [Z]". Absence of weak passive phrasing ("responsible for", "assisted with").
+2. Impact & Action Verbs (0-25): Rigorous adherence to Google XYZ formula: "Accomplished [X] measured by [Y] by doing [Z]" across work experience and project descriptions. Absence of weak passive phrasing ("responsible for", "assisted with").
 3. Format & Readability (0-25): Parser linear structure, clear chronological progression, standard section headings, and machine readability.
-4. Completeness & Profile Strength (0-25): Completeness of professional summary, work history with accomplishments, core skills, certifications, and verified contact links.
+4. Completeness & Profile Strength (0-25): Completeness of professional summary, work history with accomplishments, core skills, certifications, portfolio projects (if present), and verified contact links (LinkedIn, GitHub/Portfolio, Website, WhatsApp). Candidates with professional portfolio links demonstrate higher industry readiness.
 
 CRITICAL RULES:
 - {$langInstruction}
@@ -149,7 +151,7 @@ Output strict JSON:
   ],
   "actionable_feedback": [
     {
-      "section": "Ringkasan Profil / Pengalaman Kerja / Keahlian / Sertifikasi",
+      "section": "Ringkasan Profil / Pengalaman Kerja / Keahlian / Sertifikasi / Proyek & Portofolio",
       "priority": "Tinggi / Sedang / Rendah",
       "issue": "Penjelasan rinci mengenai kelemahan yang ditemukan pada seksi ini",
       "suggestion": "Solusi langkah demi langkah konkret untuk memperbaikinya",
@@ -172,8 +174,8 @@ PROMPT;
     {
         $isEnglish = str_starts_with(strtolower($locale), 'en');
         $langInstruction = $isEnglish
-            ? "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, certifications, and changes_made strictly in US English."
-            : "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, certifications, and changes_made strictly in formal Indonesian (Bahasa Indonesia baku HRD).";
+            ? "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, certifications, projects, and changes_made strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Output improved summary, bullet points, skills, certifications, projects, and changes_made strictly in formal Indonesian (Bahasa Indonesia baku HRD).";
 
         $systemPrompt = <<<PROMPT
 You are an elite Enterprise ATS Optimization Engine.
@@ -187,7 +189,10 @@ CRITICAL RULES ON EMPTY SECTIONS & DATA FIDELITY:
 5. Certifications & Licenses:
    - CRITICAL: If the candidate's original CV has NO certifications (empty or missing), you MUST return an empty array "certifications": []. NEVER invent, fabricate, or hallucinate certifications that the user never earned!
    - If the candidate DOES have certifications, refine the name, issuer, year, and enrich the description to emphasize industry credential standards.
-6. Do NOT fabricate companies, degrees, or licenses not mentioned by the candidate.
+6. Projects & Portfolio:
+   - CRITICAL: If the candidate's original CV has NO projects (empty or missing), you MUST return an empty array "projects": []. NEVER invent, fabricate, or hallucinate projects the user never created!
+   - If the candidate DOES have projects, refine the project name, role, period, and enrich the description into a powerful Google XYZ / STAR format highlighting accomplishments, technologies, and measurable results.
+7. Do NOT fabricate companies, degrees, projects, or licenses not mentioned by the candidate.
 
 Output strict JSON:
 {
@@ -212,6 +217,14 @@ Output strict JSON:
         "name": "string",
         "issuer": "string",
         "year": "string",
+        "description": "string"
+      }
+    ],
+    "projects": [
+      {
+        "name": "string",
+        "role": "string",
+        "period": "string",
         "description": "string"
       }
     ]
@@ -247,7 +260,7 @@ CRITICAL RULES:
 1. {$langInstruction}
 2. Provide a comprehensive fit_summary explaining the strategic alignment and specific gap areas.
 3. List matched keywords and missing high-priority keywords from the job posting.
-4. Provide structured tailoring suggestions covering summary alignment, experience bullet point keyword integration, skills refinement, and certification alignment.
+4. Provide structured tailoring suggestions covering summary alignment, experience bullet point keyword integration, skills refinement, project alignment, and certification alignment.
 
 Output strict JSON:
 {
@@ -300,9 +313,9 @@ Draft a bespoke, highly compelling 3-paragraph corporate cover letter for the ca
 Tone: Confident, sophisticated, bespoke executive, and strictly grounded in the candidate's actual qualifications.
 
 CRITICAL GROUNDING RULES:
-1. Menganalisis secara mendalam seluruh isi CV kandidat yang diberikan (posisi saat ini, riwayat pekerjaan, pencapaian berformula Google XYZ dengan metrik terukur, keahlian utama, dan pendidikan).
+1. Menganalisis secara mendalam seluruh isi CV kandidat yang diberikan (posisi saat ini, riwayat pekerjaan, seksi portofolio proyek kandidat, pencapaian berformula Google XYZ dengan metrik terukur, keahlian utama, dan pendidikan).
 2. Paragraf 1 (Pembuka): Nyatakan antusiasme melamar posisi {$role} di {$company}. Kemukakan ringkasan nilai jual utama (unique selling proposition) kandidat yang berakar langsung pada rekam jejak spesialisasi CV-nya.
-3. Paragraf 2 (Korelasi Bukti & Capaian CV): Ambil 2-3 pencapaian nyata, metrik persentase/skala, proyek, atau keahlian spesifik dari riwayat kerja di CV kandidat. Tunjukkan korelasi bagaimana pencapaian masa lalu tersebut akan langsung menyelesaikan tantangan bisnis atau mendorong target strategis di {$company}. DILARANG MENGARANG fakta di luar CV!
+3. Paragraf 2 (Korelasi Bukti & Capaian CV): Ambil 2-3 pencapaian nyata, metrik persentase/skala, proyek/portofolio, atau keahlian spesifik dari riwayat kerja dan seksi proyek di CV kandidat. Jika kandidat menyertakan repositori GitHub atau portofolio/website pada kontak CV, rujuk keberadaan portofolio/kode tersebut sebagai bukti kesiapan teknis kandidat. DILARANG MENGARANG fakta atau tautan fiktif di luar CV!
 4. Paragraf 3 (Visi Kontribusi & Penutup): Sampaikan visi kontribusi kandidat terhadap inovasi dan pertumbuhan {$company}, serta seruan aksi (call to action) untuk tahap wawancara dengan sopan dan percaya diri.
 5. Signoff: Penutup profesional satu baris tanpa menyertakan nama (misal: "Sincerely," atau "Hormat saya,"). Nama dan tanda tangan kandidat akan disematkan secara dinamis oleh sistem.
 6. {$langInstruction}

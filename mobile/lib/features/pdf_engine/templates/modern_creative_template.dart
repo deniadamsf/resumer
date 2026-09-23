@@ -4,6 +4,9 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
 import '../utils/pdf_text_sanitizer.dart';
 import 'cv_template_interface.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
+import '../../../core/utils/social_link_helper.dart';
 
 /// Modern Creative Two-Column Template
 /// Visually compelling 2-column layout designed specifically for human recruiters,
@@ -22,7 +25,7 @@ class ModernCreativeTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Portofolio / HR Langsung';
+  String get atsScoreRange => 'form.template_score_modern_creative';
 
   @override
   bool get supportsPhoto => true;
@@ -91,8 +94,18 @@ class ModernCreativeTemplate extends CvTemplate {
                           _buildContactItem('Phone', PdfTextSanitizer.clean(info.phone)),
                         if (info.location.isNotEmpty)
                           _buildContactItem('Location', PdfTextSanitizer.clean(info.location)),
-                        if (info.linkedin.isNotEmpty)
-                          _buildContactItem('Portfolio', PdfTextSanitizer.clean(info.linkedin)),
+                        if (_buildSocialContactItem(SocialPlatform.linkedin, info.linkedin) != null)
+                          _buildSocialContactItem(SocialPlatform.linkedin, info.linkedin)!,
+                        if (_buildSocialContactItem(SocialPlatform.github, info.github) != null)
+                          _buildSocialContactItem(SocialPlatform.github, info.github)!,
+                        if (_buildSocialContactItem(SocialPlatform.website, info.website) != null)
+                          _buildSocialContactItem(SocialPlatform.website, info.website)!,
+                        if (_buildSocialContactItem(SocialPlatform.whatsapp, info.whatsapp) != null)
+                          _buildSocialContactItem(SocialPlatform.whatsapp, info.whatsapp)!,
+                        if (_buildSocialContactItem(SocialPlatform.instagram, info.instagram) != null)
+                          _buildSocialContactItem(SocialPlatform.instagram, info.instagram)!,
+                        if (_buildSocialContactItem(SocialPlatform.facebook, info.facebook) != null)
+                          _buildSocialContactItem(SocialPlatform.facebook, info.facebook)!,
                         pw.SizedBox(height: 16),
 
                         // Skills Section
@@ -320,6 +333,38 @@ class ModernCreativeTemplate extends CvTemplate {
     );
   }
 
+  pw.Widget? _buildSocialContactItem(SocialPlatform platform, String rawInput) {
+    if (rawInput.trim().isEmpty) return null;
+    final url = SocialLinkHelper.buildUrl(platform, rawInput);
+    final display = SocialLinkHelper.buildDisplayText(platform, rawInput);
+    final svg = SocialLinkHelper.getSvgIcon(platform, hexColor: '#FFFFFF', size: 8.0);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 6),
+      child: pw.UrlLink(
+        destination: url,
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            pw.SvgImage(svg: svg, width: 8.0, height: 8.0),
+            pw.SizedBox(width: 4),
+            pw.Expanded(
+              child: pw.Text(
+                display,
+                style: const pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.white,
+                ),
+                maxLines: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   pw.Widget _buildMainSectionTitle(String title, PdfColor accentColor) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -340,6 +385,9 @@ class ModernCreativeTemplate extends CvTemplate {
   }
 
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 9),
       child: pw.Column(
@@ -357,7 +405,7 @@ class ModernCreativeTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                dateRange,
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
                 textAlign: pw.TextAlign.right,
               ),
@@ -392,6 +440,9 @@ class ModernCreativeTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 6),
       child: pw.Row(
@@ -415,7 +466,7 @@ class ModernCreativeTemplate extends CvTemplate {
           ),
           pw.SizedBox(width: 8),
           pw.Text(
-            PdfTextSanitizer.clean(edu.graduationYear),
+            eduDate,
             style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
             textAlign: pw.TextAlign.right,
           ),

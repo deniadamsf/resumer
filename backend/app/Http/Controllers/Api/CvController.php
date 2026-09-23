@@ -100,6 +100,7 @@ class CvController extends Controller
             'experiences' => 'nullable|array',
             'educations' => 'nullable|array',
             'skills' => 'nullable|array',
+            'projects' => 'nullable|array',
         ]);
 
         /** @var DailyQuota $dailyQuota */

@@ -18,10 +18,8 @@ void main() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       statusBarBrightness: Brightness.light,
-      systemNavigationBarColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
@@ -81,10 +79,8 @@ class ResumerApp extends StatelessWidget {
               backgroundColor: Colors.transparent,
               elevation: 0,
               systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
                 statusBarIconBrightness: Brightness.dark,
                 statusBarBrightness: Brightness.light,
-                systemNavigationBarColor: Colors.transparent,
                 systemNavigationBarIconBrightness: Brightness.dark,
               ),
             ),

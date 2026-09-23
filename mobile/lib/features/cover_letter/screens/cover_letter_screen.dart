@@ -216,8 +216,8 @@ class _CoverLetterScreenState extends State<CoverLetterScreen> {
       ),
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        // UI UX Pro Max: bottom padding 120px to prevent being obscured by bottom navigation bar
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
+        // UI UX Pro Max: bottom padding 24px above bottom bar & banner ad
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 24),
         child: _generatedLetter == null ? _buildInputForm() : _buildLetterPreview(),
       ),
     );

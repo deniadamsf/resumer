@@ -192,7 +192,17 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
         }
       }
 
-      // 3. Align Professional Summary with target keywords if summary is active
+      // 3. Optimize Projects & Portfolio (ONLY if user already has projects)
+      // ATURAN MUTLAK USER: "tapi kalo kosong ya jangan diisi"
+      if (_cv.projects.isNotEmpty) {
+        for (final proj in _cv.projects) {
+          if (proj.description.trim().isEmpty) {
+            proj.description = 'job_match.tailor_project_desc'.tr;
+          }
+        }
+      }
+
+      // 4. Align Professional Summary with target keywords if summary is active
       if (_cv.summary.trim().isNotEmpty && _result!.matchedKeywords.isNotEmpty) {
         final topKeywords = _result!.matchedKeywords.take(3).join(', ');
         final addition = 'job_match.tailor_summary_addition'.trArgs([topKeywords]);
@@ -205,10 +215,11 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       widget.onCvUpdated?.call(_cv);
 
       if (mounted) {
-        final certMention = _cv.certifications.isNotEmpty
-            ? 'job_match.tailor_cert_mention'.tr
-            : '';
-        final successMsg = 'job_match.tailor_success_detailed'.trArgs([certMention]);
+        final additions = <String>[];
+        if (_cv.certifications.isNotEmpty) additions.add('job_match.tailor_cert_mention'.tr);
+        if (_cv.projects.isNotEmpty) additions.add('job_match.tailor_project_mention'.tr);
+        final extraMention = additions.join('');
+        final successMsg = 'job_match.tailor_success_detailed'.trArgs([extraMention]);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -240,7 +251,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       body: SingleChildScrollView(
         controller: _scrollController,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 140),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

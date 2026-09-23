@@ -79,24 +79,24 @@ Dokumen ini merangkum perjalanan diskusi mengenai strategi pengembangan aplikasi
    * Menganalisis kualitas CV dengan output **Skor 0 – 100**.
    * Parameter penilaian:
      * *Keyword & Industry Match* (Kesesuaian kata kunci posisi pekerjaan).
-     * *Impact & Action Verbs* (Tingkat penggunaan kata kerja aktif dan pencapaian kuantitatif).
+     * *Impact & Action Verbs* (Tingkat penggunaan kata kerja aktif dan pencapaian kuantitatif, termasuk pada riwayat pengalaman dan deskripsi proyek).
      * *Format & ATS Readability* (Keterbacaan tata letak oleh parser ATS).
-     * *Completeness* (Kelengkapan data kontak, riwayat pendidikan, dan portofolio).
-   * Memberikan *Actionable Feedback* (poin-poin rekomendasi perbaikan konkret).
+     * *Completeness* (Kelengkapan data kontak, riwayat pendidikan, keahlian, sertifikasi, dan portofolio proyek).
+   * Memberikan *Actionable Feedback* (poin-poin rekomendasi perbaikan konkret, termasuk saran formula XYZ untuk seksi pengalaman dan proyek).
 3. **Jaminan Skor Tinggi Bawaan (Self-Calibrated Generation Engine):**
    * Prompt AI Gemini dikalibrasi secara langsung agar selaras 100% dengan algoritma ATS Checker di dalam aplikasi.
    * **Hasil:** CV yang dihasilkan oleh aplikasi Resumer **dijamin langsung memperoleh skor sangat tinggi (90 – 98+)** ketika diuji menggunakan fitur Cek Skor ATS aplikasi ini. Memberikan kepuasan instan (*instant user satisfaction*) dan membangun reputasi aplikasi yang sangat kuat.
 4. **Fitur Perbaikan Otomatis AI (1-Click ATS Auto-Fix):**
    * Jika pengguna mengunggah CV lama atau mengetik data yang menghasilkan skor rendah/sedang (misal skor 50–75):
    * Sistem menyediakan tombol sakti: **"Perbaiki Otomatis dengan AI"**.
-   * Setelah menonton *Rewarded Video Ad* (menggunakan 1 jatah kuota AI), Gemini otomatis merombak kalimat pasif menjadi aktif, menyisipkan estimasi metrik/persentase dampak kerja, dan menyelaraskan kata kunci ATS.
+   * Setelah menonton *Rewarded Video Ad* (menggunakan 1 jatah kuota AI), Gemini otomatis merombak kalimat pasif menjadi aktif, menyisipkan estimasi metrik/persentase dampak kerja, dan menyelaraskan kata kunci ATS pada ringkasan, riwayat kerja, keahlian, serta **deskripsi proyek** (dengan aturan ketat anti-halusinasi: jika seksi proyek/sertifikasi kosong, AI tidak boleh mengarang proyek fiktif).
    * Skor CV langsung melonjak tinggi (misal dari 65 menjadi 95+) dalam hitungan detik.
 5. **Fitur "Job Matcher" (Pencocok CV dengan Lowongan Kerja) — *Tanpa Tempel Link*:**
    * **Menghilangkan Tempel Link (URL):** Ditiadakan karena situs loker besar (Glints, LinkedIn, JobStreet) memblokir request cURL/scraping dengan Cloudflare WAF dan menggunakan rendering JavaScript (SPA).
    * **2 Pilihan Input Anti-Gagal:**
      1. **Unggah Screenshot Loker:** Pengguna mengunggah tangkapan layar poster lowongan/kualifikasi dari HP. Gemini membaca gambar via *multimodal OCR* secara instan.
      2. **Salin-Tempel Teks Loker:** Pengguna menempel teks syarat kualifikasi secara langsung.
-   * **Hasil Analisis:** Menampilkan **Job Match Score (%)**, daftar kata kunci yang cocok vs hilang, serta tombol **"Sesuaikan CV dengan Loker Ini"** (AI otomatis menyisipkan kata kunci loker ke pengalaman kerja pengguna dengan imbalan menonton Rewarded Ad).
+   * **Hasil Analisis:** Menampilkan **Job Match Score (%)**, daftar kata kunci yang cocok vs hilang, serta tombol **"Sesuaikan CV dengan Loker Ini"** (AI otomatis menyisipkan kata kunci dan teknologi loker ke keahlian, ringkasan, riwayat kerja, dan deskripsi proyek pengguna dengan imbalan menonton Rewarded Ad).
 6. **Multi-Profil CV (Satu Akun, Banyak Variasi CV):**
    * Pengguna dapat menyimpan hingga **3 profil CV berbeda** (misal: Versi Administrasi, Versi Digital Marketing, Versi IT Support) di database MySQL hosting.
    * Pengguna dapat beralih (*switch*) profil kapan saja tanpa takut data tertimpa atau hilang.
@@ -107,20 +107,34 @@ Dokumen ini merangkum perjalanan diskusi mengenai strategi pengembangan aplikasi
    * Pengguna dapat mengunggah file CV lama (PDF atau foto dokumen). Data diekstraksi otomatis menjadi format isian formulir digital tanpa mengetik ulang dari awal.
 9. **Sistem Kolom Isian Modular (Toggle ON/OFF Dinamis):**
    * Pengguna bebas mengaktifkan/menonaktifkan seksi isian CV sesuai kebutuhan:
-     * `[Wajib / Default ON]` Informasi Pribadi & Kontak
+      * `[Wajib / Default ON]` Informasi Pribadi & Kontak:
+        * Kolom Pokok: Nama Lengkap, Jabatan Target, Email, Nomor Telepon/WA, Lokasi (Kota, Negara).
+        * Kolom Tautan & Portofolio Digital (Opsional - Input Cukup Username/Handle):
+          * **LinkedIn, GitHub, Instagram, Facebook, WhatsApp, Website / Portofolio**.
+          * **Normalisasi Cerdas (`SocialLinkHelper`):** Sistem otomatis membersihkan simbol `@`, protokol `http://`/`https://`, dan nama domain jika pengguna menempelkan link penuh (mencegah bug link ganda). Untuk WhatsApp lokal (`0812...`), dikonversi otomatis ke nomor internasional (`62812...`).
+          * **Interactive Hyperlinks di PDF (`pw.UrlLink`):** Seluruh tautan di file PDF dapat diklik langsung oleh HRD untuk membuka profil LinkedIn, repositori GitHub, chat WhatsApp, atau website portofolio kandidat.
+          * **Pemisahan Desain ATS vs Non-ATS (Golden Rule Industri):**
+            * **Template Non-ATS (11 Template Visual):** Menampilkan **ikon vektor brand tajam** (`pw.SvgImage`) bersanding dengan teks ringkas/handle.
+            * **Template ATS (3 Template Standar Mesin):** Menampilkan tautan sebagai **teks linear bersih** (`pw.Wrap`) guna menjamin 100% kompatibilitas mesin ATS korporat (*Taleo, Workday*) tanpa risiko missing glyph box (`☒`).
+          * **Integrasi Menyeluruh dengan AI Gemini:**
+            * *ATS Score Checker:* Menilai pilar *Completeness* kontak dan portofolio profesional kandidat.
+            * *AI Cover Letter:* Paragraf 2 secara cerdas merujuk keberadaan repositori GitHub / website portofolio kandidat sebagai bukti kompetensi nyata.
+            * *Auto-Fix & Job Matcher:* Menjaga keaslian tautan tanpa fabrikasi/halusinasi akun fiktif.
      * `[Toggle ON/OFF]` Ringkasan Profil Profesional (*Executive Summary*)
      * `[Toggle ON/OFF]` Riwayat Pengalaman Kerja (*Work Experience*)
      * `[Toggle ON/OFF]` Riwayat Pendidikan (*Education*)
      * `[Toggle ON/OFF]` Keahlian Teknis & Soft Skills (*Skills*)
      * `[Toggle ON/OFF]` Foto Profil (*Profile Photo*) - Default: OFF (atau ON untuk mode Asian ATS)
      * `[Toggle ON/OFF]` Sertifikasi & Pelatihan (*Certifications*)
-     * `[Toggle ON/OFF]` Proyek / Portofolio (*Projects*)
+     * `[Toggle ON/OFF]` Proyek / Portofolio (*Projects*):
+       * Kolom Isian: **Nama Proyek** (*Project Name*), **Peran / Tech Stack** (*Role / Technologies*), **Tanggal Mulai** (*Start Date*: Bulan & Tahun), **Tanggal Selesai** (*End Date*: Bulan & Tahun) dipadu opsi centang *"Masih Berjalan / Aktif"* ($\rightarrow$ "Sekarang" / "Present"), serta **Deskripsi Proyek** (*multiline* berfokus capaian formula Google XYZ / STAR).
+       * Terintegrasi 100% pada render Template PDF ATS/Kreatif, Cek Skor ATS, Auto-Fix AI, Job Matcher, dan Cover Letter.
      * `[Toggle ON/OFF]` Pengalaman Organisasi / Relawan (*Volunteer & Organization*)
      * `[Toggle ON/OFF]` Penguasaan Bahasa (*Languages*)
      * `[Toggle ON/OFF]` Penghargaan / Prestasi (*Awards & Honors*)
    * Seksi yang dinonaktifkan **tidak akan diproses oleh Gemini API** (menghemat token) dan **tidak dicetak pada file PDF**.
 10. **Validasi Pra-Generate AI (Filter Kelayakan Data):**
-    * Syarat Minimal: Wajib mengisi kolom inti (Nama, Kontak, min. 1 Riwayat Kerja/Pendidikan, min. 3 Keahlian).
+    * Syarat Minimal: Wajib mengisi kolom inti (Nama, Kontak, min. 1 Riwayat Kerja/Pendidikan, min. 3 Keahlian). Proyek bersifat opsional sebagai nilai tambah portofolio.
     * Jika kolom inti masih kosong, tombol *Generate AI* terkunci (*disabled*) untuk melindungi pengguna dari pemborosan kuota harian.
 11. **Pilihan Kategori Template CV:**
     * **Template Asian ATS Standard (Favorit Pasar Asia):** Tata letak linear ramah mesin ATS dengan slot foto formal di header terisolasi. Skor ATS tetap tinggi (85–95).
@@ -319,7 +333,8 @@ Untuk mencegah teks dan komponen visual saling bertabrakan atau meletup keluar l
      * `min_app_version` & `force_update`: Memaksa update aplikasi jika terdapat bug kritis.
      * `is_maintenance`: Saklar mode pemeliharaan server.
 3. **Fitur Pendamping: AI Cover Letter (Surat Lamaran Kerja) Generator:**
-   * Pengguna memasukkan *Nama Perusahaan* dan *Posisi yang Dilamar*. AI Gemini meramu data CV yang ada di database menjadi 3 paragraf surat lamaran formal profesional.
+   * Pengguna memasukkan *Nama Perusahaan* dan *Posisi yang Dilamar*. AI Gemini meramu data CV menjadi 3 paragraf surat lamaran formal profesional berstandar eksekutif.
+   * **Pemindaian Proyek Mandatori:** Pada Paragraf 2 (Korelasi Bukti & Capaian), AI secara aktif memindai riwayat kerja dan seksi **Proyek / Portofolio** kandidat, mengutip pencapaian atau teknologi spesifik dari proyek yang relevan dengan perusahaan target.
    * Monetisasi: Pengguna menonton **1 Rewarded Video Ad ekstra** untuk mengekspor surat lamaran tersebut.
 4. **Kepatuhan Kebijakan Google Play Console (AI & Privacy Policy):**
    * **Halaman Kebijakan Privasi (Privacy Policy):** Route statis di backend Laravel (`https://api.namadomain.com/privacy-policy`) yang menegaskan bahwa foto dan dokumen diproses di memori lokal perangkat.

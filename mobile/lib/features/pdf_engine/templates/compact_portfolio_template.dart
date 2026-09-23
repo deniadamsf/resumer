@@ -2,7 +2,10 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
 import '../utils/pdf_text_sanitizer.dart';
+import '../utils/social_icon_pdf_widget.dart';
 import 'cv_template_interface.dart';
 
 /// Compact Slate Portfolio Template
@@ -22,7 +25,7 @@ class CompactPortfolioTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Portofolio / Proyek';
+  String get atsScoreRange => 'form.template_score_compact_portfolio';
 
   @override
   bool get supportsPhoto => true;
@@ -83,8 +86,14 @@ class CompactPortfolioTemplate extends CvTemplate {
                               pw.Text(PdfTextSanitizer.clean(info.phone), style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.white)),
                             if (info.location.isNotEmpty)
                               pw.Text(PdfTextSanitizer.clean(info.location), style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey300)),
-                            if (info.linkedin.isNotEmpty)
-                              pw.Text(PdfTextSanitizer.clean(info.linkedin), style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey300)),
+                            ...SocialIconPdfWidget.buildAllItems(
+                              info: info,
+                              isAtsMode: false,
+                              accentColor: PdfColors.white,
+                              textColor: PdfColors.grey300,
+                              fontSize: 8.5,
+                              iconSize: 8.5,
+                            ),
                           ],
                         ),
                       ],
@@ -205,6 +214,14 @@ class CompactPortfolioTemplate extends CvTemplate {
               pw.SizedBox(height: 8),
             ],
 
+            // Projects
+            if (cv.showProjects && cv.projects.isNotEmpty) ...[
+              _buildSectionBar('PROJECTS & PORTFOLIO', accentColor),
+              pw.SizedBox(height: 4),
+              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor)),
+              pw.SizedBox(height: 8),
+            ],
+
             // Languages & Interests
             if ((cv.showLanguages && cv.languages.isNotEmpty) || (cv.showHobbies && cv.hobbies.isNotEmpty)) ...[
               pw.Row(
@@ -274,6 +291,9 @@ class CompactPortfolioTemplate extends CvTemplate {
   }
 
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 7),
       child: pw.Column(
@@ -291,7 +311,7 @@ class CompactPortfolioTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                dateRange,
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
                 textAlign: pw.TextAlign.right,
               ),
@@ -325,6 +345,9 @@ class CompactPortfolioTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu, PdfColor cardBg) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 4),
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -356,7 +379,7 @@ class CompactPortfolioTemplate extends CvTemplate {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                PdfTextSanitizer.clean(edu.graduationYear),
+                eduDate,
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
                 textAlign: pw.TextAlign.right,
               ),
@@ -368,6 +391,69 @@ class CompactPortfolioTemplate extends CvTemplate {
                 ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor) {
+    final cleanName = PdfTextSanitizer.clean(proj.name);
+    final cleanRole = PdfTextSanitizer.clean(proj.role);
+    final period = PdfTextSanitizer.clean(proj.displayPeriod);
+    final cleanDesc = PdfTextSanitizer.clean(proj.description);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 6),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: cleanName,
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.grey900,
+                        ),
+                      ),
+                      if (cleanRole.isNotEmpty)
+                        pw.TextSpan(
+                          text: ' | $cleanRole',
+                          style: pw.TextStyle(
+                            fontSize: 9,
+                            fontWeight: pw.FontWeight.bold,
+                            color: accentColor,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (period.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Text(
+                  period,
+                  style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ],
+            ],
+          ),
+          if (cleanDesc.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              cleanDesc,
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800),
+              textAlign: pw.TextAlign.justify,
+            ),
+          ],
         ],
       ),
     );

@@ -21,6 +21,7 @@ import '../widgets/education_section.dart';
 import '../widgets/executive_summary_section.dart';
 import '../widgets/job_matcher_banner.dart';
 import '../widgets/languages_section.dart';
+import '../widgets/projects_section.dart';
 import '../widgets/hobbies_section.dart';
 import '../widgets/personal_info_section.dart';
 import '../widgets/profile_switcher_bar.dart';
@@ -49,6 +50,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
   final _phoneController = TextEditingController();
   final _locationController = TextEditingController();
   final _linkedinController = TextEditingController();
+  final _githubController = TextEditingController();
+  final _instagramController = TextEditingController();
+  final _facebookController = TextEditingController();
+  final _whatsappController = TextEditingController();
+  final _websiteController = TextEditingController();
   final _summaryController = TextEditingController();
 
   int _lastKnownProfileIndex = 1;
@@ -73,6 +79,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     _phoneController.addListener(_onFieldChanged);
     _locationController.addListener(_onFieldChanged);
     _linkedinController.addListener(_onFieldChanged);
+    _githubController.addListener(_onFieldChanged);
+    _instagramController.addListener(_onFieldChanged);
+    _facebookController.addListener(_onFieldChanged);
+    _whatsappController.addListener(_onFieldChanged);
+    _websiteController.addListener(_onFieldChanged);
     _summaryController.addListener(_onFieldChanged);
   }
 
@@ -83,6 +94,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     _phoneController.removeListener(_onFieldChanged);
     _locationController.removeListener(_onFieldChanged);
     _linkedinController.removeListener(_onFieldChanged);
+    _githubController.removeListener(_onFieldChanged);
+    _instagramController.removeListener(_onFieldChanged);
+    _facebookController.removeListener(_onFieldChanged);
+    _whatsappController.removeListener(_onFieldChanged);
+    _websiteController.removeListener(_onFieldChanged);
     _summaryController.removeListener(_onFieldChanged);
   }
 
@@ -133,10 +149,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
       return;
     }
 
-    // If profile index didn't change, only reload if external source (e.g. AI Auto-Fix or Job Matcher) altered it
-    final currentLocalJson = _cv.toJson();
-    final mgrJson = mgrCv.toJson();
-    if (json.encode(currentLocalJson) != json.encode(mgrJson)) {
+    // If profile index didn't change, only reload if external source (e.g. AI Auto-Fix, Job Matcher, or cloud sync) altered it
+    final currentLocalJson = _cv.toLocalMap();
+    final mgrJson = mgrCv.toLocalMap();
+    if (json.encode(currentLocalJson) != json.encode(mgrJson) ||
+        _cv.personalInfo.localPhotoPath != mgrCv.personalInfo.localPhotoPath) {
       setState(() {
         _cv = mgrCv.clone();
         _syncControllersFromModel();
@@ -155,6 +172,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     _phoneController.dispose();
     _locationController.dispose();
     _linkedinController.dispose();
+    _githubController.dispose();
+    _instagramController.dispose();
+    _facebookController.dispose();
+    _whatsappController.dispose();
+    _websiteController.dispose();
     _summaryController.dispose();
     super.dispose();
   }
@@ -167,6 +189,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     _phoneController.text = _cv.personalInfo.phone;
     _locationController.text = _cv.personalInfo.location;
     _linkedinController.text = _cv.personalInfo.linkedin;
+    _githubController.text = _cv.personalInfo.github;
+    _instagramController.text = _cv.personalInfo.instagram;
+    _facebookController.text = _cv.personalInfo.facebook;
+    _whatsappController.text = _cv.personalInfo.whatsapp;
+    _websiteController.text = _cv.personalInfo.website;
     _summaryController.text = _cv.summary;
     _isSyncingControllers = false;
   }
@@ -178,6 +205,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     _cv.personalInfo.phone = _phoneController.text;
     _cv.personalInfo.location = _locationController.text;
     _cv.personalInfo.linkedin = _linkedinController.text;
+    _cv.personalInfo.github = _githubController.text;
+    _cv.personalInfo.instagram = _instagramController.text;
+    _cv.personalInfo.facebook = _facebookController.text;
+    _cv.personalInfo.whatsapp = _whatsappController.text;
+    _cv.personalInfo.website = _websiteController.text;
     _cv.summary = _summaryController.text;
   }
 
@@ -420,6 +452,10 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
 
   Future<void> _executeExportPdf() async {
     _syncModelFromControllers();
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    _cv.ensureMonthIntegrity(isEnglish: isEn);
+    _profileMgr.updateDraftSilently(_cv);
+    _profileMgr.persistDraftLocally();
 
     if (!mounted) return;
     final cv = _cv;
@@ -488,8 +524,8 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
       ),
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        // UI UX Pro Max standard: 110px bottom padding to prevent being obscured by floating action bar
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 110),
+        // UI UX Pro Max standard: 24px bottom padding above persistent editor bottom bar
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -530,10 +566,24 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
               phoneController: _phoneController,
               locationController: _locationController,
               linkedinController: _linkedinController,
+              githubController: _githubController,
+              instagramController: _instagramController,
+              facebookController: _facebookController,
+              whatsappController: _whatsappController,
+              websiteController: _websiteController,
               localPhotoPath: _cv.personalInfo.localPhotoPath,
               showPhotoOption: TemplateRegistry.supportsPhoto(_cv.templateId),
-              onPhotoChanged: (path) {
-                setState(() => _cv.personalInfo.localPhotoPath = path);
+              onPhotoChanged: (path) async {
+                if (path != null) {
+                  final permanentPath = await _profileMgr.saveProfilePhoto(
+                    _profileMgr.currentIndex,
+                    path,
+                  );
+                  setState(() => _cv.personalInfo.localPhotoPath = permanentPath);
+                } else {
+                  await _profileMgr.deleteProfilePhoto(_profileMgr.currentIndex);
+                  setState(() => _cv.personalInfo.localPhotoPath = null);
+                }
                 _onSectionDataChanged();
               },
             ),
@@ -627,6 +677,27 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
               },
               onUpdateCertification: (idx, c) {
                 setState(() => _cv.certifications[idx] = c);
+                _onSectionDataChanged();
+              },
+            ),
+            const SizedBox(height: 14),
+            ProjectsSection(
+              projects: _cv.projects,
+              isEnabled: _cv.showProjects,
+              onToggle: (val) {
+                setState(() => _cv.showProjects = val);
+                _onSectionDataChanged();
+              },
+              onAddProject: (p) {
+                setState(() => _cv.projects.add(p));
+                _onSectionDataChanged();
+              },
+              onRemoveProject: (idx) {
+                setState(() => _cv.projects.removeAt(idx));
+                _onSectionDataChanged();
+              },
+              onUpdateProject: (idx, p) {
+                setState(() => _cv.projects[idx] = p);
                 _onSectionDataChanged();
               },
             ),

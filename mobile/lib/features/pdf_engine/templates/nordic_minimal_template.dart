@@ -3,7 +3,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
 import '../utils/pdf_text_sanitizer.dart';
+import '../utils/social_icon_pdf_widget.dart';
 import 'cv_template_interface.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
 
 /// Nordic Minimalist CV Template.
 /// Asymmetric Scandinavian clean grid with generous whitespace, hairline rules,
@@ -22,7 +25,7 @@ class NordicMinimalTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Minimalis / Desainer';
+  String get atsScoreRange => 'form.template_score_nordic_minimal';
 
   @override
   bool get supportsPhoto => true;
@@ -80,8 +83,14 @@ class NordicMinimalTemplate extends CvTemplate {
                             _buildMetaPill(PdfTextSanitizer.clean(info.phone)),
                           if (info.location.isNotEmpty)
                             _buildMetaPill(PdfTextSanitizer.clean(info.location)),
-                          if (info.linkedin.isNotEmpty)
-                            _buildMetaPill(PdfTextSanitizer.clean(info.linkedin)),
+                          ...SocialIconPdfWidget.buildAllItems(
+                            info: info,
+                            isAtsMode: false,
+                            accentColor: accentColor,
+                            textColor: PdfColors.grey700,
+                            fontSize: 9.0,
+                            iconSize: 8.5,
+                          ),
                         ],
                       ),
                     ],
@@ -269,6 +278,9 @@ class NordicMinimalTemplate extends CvTemplate {
   }
 
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor, PdfColor hairlineColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 10),
       child: pw.Column(
@@ -286,7 +298,7 @@ class NordicMinimalTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                dateRange,
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
                 textAlign: pw.TextAlign.right,
               ),
@@ -319,6 +331,9 @@ class NordicMinimalTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 6),
       child: pw.Row(
@@ -342,7 +357,7 @@ class NordicMinimalTemplate extends CvTemplate {
           ),
           pw.SizedBox(width: 8),
           pw.Text(
-            PdfTextSanitizer.clean(edu.graduationYear),
+            eduDate,
             style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
             textAlign: pw.TextAlign.right,
           ),

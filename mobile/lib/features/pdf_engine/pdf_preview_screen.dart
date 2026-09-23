@@ -273,7 +273,7 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: Text(
-                                              t.atsScoreRange,
+                                              t.atsScoreRange.tr,
                                               style: GoogleFonts.outfit(
                                                 fontSize: 9.5,
                                                 fontWeight: FontWeight.w700,

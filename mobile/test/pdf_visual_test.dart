@@ -387,5 +387,102 @@ void main() {
       expect(bytes.isNotEmpty, true, reason: 'Template $tId failed to generate with full month names');
     }
   });
+
+  test('ensureMonthIntegrity automatically adds months to year-only inputs and templates render them', () async {
+    final rawYearCv = CvDocument(
+      personalInfo: PersonalInfo(
+        fullName: 'Deni Adam',
+        professionalTitle: 'Software Engineer',
+        email: 'deni@example.com',
+      ),
+      experiences: [
+        WorkExperience(
+          company: 'Tech Corp',
+          position: 'Software Engineer',
+          startDate: '2021',
+          endDate: '2023',
+          highlights: ['Built apps'],
+        ),
+        WorkExperience(
+          company: 'Current Corp',
+          position: 'Senior Engineer',
+          startDate: '2023',
+          endDate: 'Present',
+          highlights: ['Leading architecture'],
+        ),
+      ],
+      educations: [
+        Education(
+          institution: 'Universitas Indonesia',
+          degree: 'S.Kom',
+          fieldOfStudy: 'Computer Science',
+          graduationYear: '2021',
+        ),
+      ],
+      skills: [SkillItem(name: 'Flutter')],
+    );
+
+    // Test ensureMonthIntegrity
+    rawYearCv.ensureMonthIntegrity(isEnglish: false);
+    expect(rawYearCv.experiences[0].startDate, 'Januari 2021');
+    expect(rawYearCv.experiences[0].endDate, 'Desember 2023');
+    expect(rawYearCv.experiences[1].startDate, 'Januari 2023');
+    expect(rawYearCv.experiences[1].endDate, 'Sekarang');
+    expect(rawYearCv.educations[0].graduationYear, 'Agustus 2021');
+
+    // Test English integrity
+    final rawEnglishCv = CvDocument(
+      personalInfo: PersonalInfo(fullName: 'John Doe'),
+      experiences: [
+        WorkExperience(
+          company: 'Global Inc',
+          position: 'Engineer',
+          startDate: '2020',
+          endDate: 'Present',
+        ),
+      ],
+      educations: [
+        Education(
+          institution: 'MIT',
+          degree: 'B.S.',
+          graduationYear: '2019',
+        ),
+      ],
+    );
+    rawEnglishCv.ensureMonthIntegrity(isEnglish: true);
+    expect(rawEnglishCv.experiences[0].startDate, 'January 2020');
+    expect(rawEnglishCv.experiences[0].endDate, 'Present');
+    expect(rawEnglishCv.educations[0].graduationYear, 'August 2019');
+
+    // Test DateFormatHelper direct fallbacks
+    expect(DateFormatHelper.formatDateRange('2021', '2024', isEnglish: false), 'Januari 2021 - Desember 2024');
+    expect(DateFormatHelper.formatDateRange('2021', 'Present', isEnglish: true), 'January 2021 - Present');
+    expect(DateFormatHelper.formatEducationDate('2022', isEnglish: false), 'Agustus 2022');
+    expect(DateFormatHelper.formatEducationDate('2022', isEnglish: true), 'August 2022');
+
+    // Verify all 14 templates generate without error on this document
+    final templateIds = [
+      'asian_ats',
+      'western_strict',
+      'modern_ats',
+      'modern_creative',
+      'compact_portfolio',
+      'executive_split',
+      'nordic_minimal',
+      'tech_timeline',
+      'editorial_luxury',
+      'accent_sidebar_light',
+      'bento_grid',
+      'gradient_header',
+      'color_block',
+      'ribbon_banner',
+    ];
+
+    for (final tId in templateIds) {
+      rawYearCv.templateId = tId;
+      final bytes = await PdfGenerator.generatePdf(rawYearCv);
+      expect(bytes.isNotEmpty, true, reason: 'Template $tId failed to generate with migrated months');
+    }
+  });
 }
 

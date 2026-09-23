@@ -2,6 +2,9 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
+import '../../../core/utils/social_link_helper.dart';
 import '../utils/pdf_text_sanitizer.dart';
 import 'cv_template_interface.dart';
 
@@ -22,7 +25,7 @@ class BentoGridTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Modern Tech / Startup';
+  String get atsScoreRange => 'form.template_score_bento_grid';
 
   @override
   bool get supportsPhoto => true;
@@ -86,8 +89,18 @@ class BentoGridTemplate extends CvTemplate {
                               _buildPill(PdfTextSanitizer.clean(info.phone)),
                             if (info.location.isNotEmpty)
                               _buildPill(PdfTextSanitizer.clean(info.location)),
-                            if (info.linkedin.isNotEmpty)
-                              _buildPill(PdfTextSanitizer.clean(info.linkedin)),
+                            if (_buildSocialPill(SocialPlatform.linkedin, info.linkedin, accentColor) != null)
+                              _buildSocialPill(SocialPlatform.linkedin, info.linkedin, accentColor)!,
+                            if (_buildSocialPill(SocialPlatform.github, info.github, accentColor) != null)
+                              _buildSocialPill(SocialPlatform.github, info.github, accentColor)!,
+                            if (_buildSocialPill(SocialPlatform.website, info.website, accentColor) != null)
+                              _buildSocialPill(SocialPlatform.website, info.website, accentColor)!,
+                            if (_buildSocialPill(SocialPlatform.whatsapp, info.whatsapp, accentColor) != null)
+                              _buildSocialPill(SocialPlatform.whatsapp, info.whatsapp, accentColor)!,
+                            if (_buildSocialPill(SocialPlatform.instagram, info.instagram, accentColor) != null)
+                              _buildSocialPill(SocialPlatform.instagram, info.instagram, accentColor)!,
+                            if (_buildSocialPill(SocialPlatform.facebook, info.facebook, accentColor) != null)
+                              _buildSocialPill(SocialPlatform.facebook, info.facebook, accentColor)!,
                           ],
                         ),
                       ],
@@ -225,7 +238,10 @@ class BentoGridTemplate extends CvTemplate {
                         children: [
                           _buildCardTitle('EDUCATION', accentColor),
                           pw.SizedBox(height: 6),
-                          ...cv.educations.map((edu) => pw.Padding(
+                          ...cv.educations.map((edu) {
+                            final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+                            final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+                            return pw.Padding(
                                 padding: const pw.EdgeInsets.only(bottom: 6),
                                 child: pw.Column(
                                   crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -235,12 +251,13 @@ class BentoGridTemplate extends CvTemplate {
                                       style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
                                     ),
                                     pw.Text(
-                                      '${PdfTextSanitizer.clean(edu.institution)} (${PdfTextSanitizer.clean(edu.graduationYear)})',
+                                      '${PdfTextSanitizer.clean(edu.institution)} ($eduDate)',
                                       style: pw.TextStyle(fontSize: 8, color: accentColor, fontWeight: pw.FontWeight.bold),
                                     ),
                                   ],
                                 ),
-                              )),
+                              );
+                          }),
                         ],
                       ),
                     ),
@@ -278,7 +295,39 @@ class BentoGridTemplate extends CvTemplate {
     );
   }
 
+  pw.Widget? _buildSocialPill(SocialPlatform platform, String rawInput, PdfColor accentColor) {
+    if (rawInput.trim().isEmpty) return null;
+    final url = SocialLinkHelper.buildUrl(platform, rawInput);
+    final display = SocialLinkHelper.buildDisplayText(platform, rawInput);
+    final hex = '#${(accentColor.red * 255).toInt().toRadixString(16).padLeft(2, '0')}'
+        '${(accentColor.green * 255).toInt().toRadixString(16).padLeft(2, '0')}'
+        '${(accentColor.blue * 255).toInt().toRadixString(16).padLeft(2, '0')}';
+    final svg = SocialLinkHelper.getSvgIcon(platform, hexColor: hex, size: 8.5);
+
+    return pw.UrlLink(
+      destination: url,
+      child: pw.Container(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+        decoration: pw.BoxDecoration(
+          color: PdfColors.white,
+          borderRadius: pw.BorderRadius.circular(3),
+        ),
+        child: pw.Row(
+          mainAxisSize: pw.MainAxisSize.min,
+          children: [
+            pw.SvgImage(svg: svg, width: 8.5, height: 8.5),
+            pw.SizedBox(width: 3.5),
+            pw.Text(display, style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800)),
+          ],
+        ),
+      ),
+    );
+  }
+
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 9),
       child: pw.Column(
@@ -296,7 +345,7 @@ class BentoGridTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                dateRange,
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
                 textAlign: pw.TextAlign.right,
               ),

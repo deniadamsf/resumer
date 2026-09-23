@@ -80,6 +80,12 @@
   * **Aksi Edit & Opsi Lanjutan:** Wajib menggunakan tombol titik tiga (`Icons.more_horiz_rounded` atau `Icons.more_vert_rounded`) yang menampilkan menu/modal dengan teks aksi jelas ("Ubah Profil", "Kelola Data").
   * **Indikator Kuota / Metrik:** Wajib menggunakan icon eksekutif minimalis dan elegan (misal `Icons.donut_large_rounded`, `Icons.data_usage_rounded`, atau `Icons.tune_rounded`) dengan palet monokromatik yang tenang.
   * **Warna Icon:** Wajib serasi dan monokromatik mengikuti palet Quiet Luxury (`Midnight Oxford Navy`, `Muted Steel Slate`, atau putih pada tombol). Dilarang menyisipkan warna-warni kontras murahan.
+* **Standar Tautan Portofolio & Ikon Media Sosial (6 Platform):**
+  * Mendukung 6 platform: LinkedIn, GitHub, Instagram, Facebook, WhatsApp, Website / Portofolio.
+  * Di editor: Input opsional berbasis username / nomor via helper cerdas `SocialLinkHelper`.
+  * Di Template Non-ATS: Menampilkan **ikon vektor brand tajam** (`pw.SvgImage`) bersanding dengan teks link ringkas, dibungkus `pw.UrlLink` interaktif.
+  * Di Template ATS: Menampilkan **teks linear bersih** (`pw.Wrap`) untuk menjamin 100% keterbacaan parser mesin ATS tanpa memicu karakter encoding box (`☒`).
+  * Integrasi AI: Terbaca di ATS plain text simulation, ATS Score completeness pillar, dan dikutip pada Paragraf 2 AI Cover Letter.
 
 ---
 

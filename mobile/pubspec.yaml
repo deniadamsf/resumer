@@ -2,7 +2,7 @@ name: resumer
 description: "Resumer - AI ATS CV Maker, Score Checker & Job Matcher"
 publish_to: 'none'
 
-version: 1.0.2+3
+version: 1.0.4+5
 
 environment:
   sdk: ^3.12.2
@@ -48,4 +48,3 @@ flutter_native_splash:
     icon_background_color: "#0B132B"
     color_dark: "#0B132B"
     image_dark: assets/icons/splash_logo_android12.png
-  fullscreen: true

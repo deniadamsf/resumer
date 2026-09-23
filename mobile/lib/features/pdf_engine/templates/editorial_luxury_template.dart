@@ -2,7 +2,10 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../cv_editor/models/cv_model.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/date_format_helper.dart';
 import '../utils/pdf_text_sanitizer.dart';
+import '../utils/social_icon_pdf_widget.dart';
 import 'cv_template_interface.dart';
 
 /// Editorial Luxury CV Template.
@@ -22,7 +25,7 @@ class EditorialLuxuryTemplate extends CvTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  String get atsScoreRange => 'Eksekutif / Editorial';
+  String get atsScoreRange => 'form.template_score_editorial_luxury';
 
   @override
   bool get supportsPhoto => true;
@@ -77,18 +80,25 @@ class EditorialLuxuryTemplate extends CvTemplate {
                           ),
                         ),
                         pw.SizedBox(height: 8),
-                        pw.Row(
+                        pw.Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: pw.WrapCrossAlignment.center,
                           children: [
                             if (info.email.isNotEmpty)
                               _buildHeaderContact(PdfTextSanitizer.clean(info.email)),
-                            if (info.phone.isNotEmpty) ...[
-                              _buildDotSeparator(),
+                            if (info.phone.isNotEmpty)
                               _buildHeaderContact(PdfTextSanitizer.clean(info.phone)),
-                            ],
-                            if (info.location.isNotEmpty) ...[
-                              _buildDotSeparator(),
+                            if (info.location.isNotEmpty)
                               _buildHeaderContact(PdfTextSanitizer.clean(info.location)),
-                            ],
+                            ...SocialIconPdfWidget.buildAllItems(
+                              info: info,
+                              isAtsMode: false,
+                              accentColor: accentColor,
+                              textColor: PdfColors.grey700,
+                              fontSize: 8.5,
+                              iconSize: 8.5,
+                            ),
                           ],
                         ),
                       ],
@@ -246,13 +256,6 @@ class EditorialLuxuryTemplate extends CvTemplate {
     return pw.Text(text, style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700));
   }
 
-  pw.Widget _buildDotSeparator() {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 6),
-      child: PdfTextSanitizer.buildBulletDot(PdfColors.grey500, size: 2.5),
-    );
-  }
-
   pw.Widget _buildSectionTitle(String title, PdfColor accentColor) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -273,6 +276,9 @@ class EditorialLuxuryTemplate extends CvTemplate {
   }
 
   pw.Widget _buildExperienceItem(WorkExperience exp, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final dateRange = DateFormatHelper.formatDateRange(exp.startDate, exp.endDate, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 9),
       child: pw.Column(
@@ -290,7 +296,7 @@ class EditorialLuxuryTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                '${PdfTextSanitizer.clean(exp.startDate)} - ${PdfTextSanitizer.clean(exp.endDate)}',
+                dateRange,
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
                 textAlign: pw.TextAlign.right,
               ),
@@ -325,6 +331,9 @@ class EditorialLuxuryTemplate extends CvTemplate {
   }
 
   pw.Widget _buildEducationItem(Education edu, PdfColor accentColor) {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final eduDate = DateFormatHelper.formatEducationDate(edu.graduationYear, isEnglish: isEn);
+
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 6),
       child: pw.Column(
@@ -346,7 +355,7 @@ class EditorialLuxuryTemplate extends CvTemplate {
               ),
               pw.SizedBox(width: 8),
               pw.Text(
-                PdfTextSanitizer.clean(edu.graduationYear),
+                eduDate,
                 style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
                 textAlign: pw.TextAlign.right,
               ),
