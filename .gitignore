@@ -47,8 +47,20 @@ google-services.json
 laporan_*.md
 persiapan_*.md
 
-# Agent, IDE & OS
+# AI Agent & Tool Configs
 .agents/
+.claude/
+.claude_*
+CLAUDE.md
+GEMINI.md
+rangkuman_*.md
+.cursorrules
+.cursor/
+.gemini/
+.copilot/
+.aider*
+
+# IDE & OS
 .idea/
 .vscode/
 *.iml
