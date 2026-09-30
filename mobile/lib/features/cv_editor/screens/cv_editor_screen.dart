@@ -6,6 +6,7 @@ import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/ad_service.dart';
+import '../../../core/widgets/coin_badge.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../job_matcher/screens/job_matcher_screen.dart';
 import '../../pdf_engine/pdf_generator.dart';
@@ -519,6 +520,10 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
             },
             icon: const Icon(Icons.save_outlined, color: AppColors.midnightNavy),
             tooltip: 'common.save'.tr,
+          ),
+          const Padding(
+            padding: EdgeInsets.only(right: 6),
+            child: CoinBadge(),
           ),
         ],
       ),

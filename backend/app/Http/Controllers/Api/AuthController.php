@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\DailyQuota;
+use App\Models\ClaimedDeviceBonus;
+use App\Models\CoinTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -53,6 +55,25 @@ class AuthController extends Controller
             ]);
         }
 
+        // Check & grant 5 coins welcome bonus if device has never claimed it
+        if (!empty($deviceUuid) && !ClaimedDeviceBonus::where('device_uuid', $deviceUuid)->exists()) {
+            ClaimedDeviceBonus::create([
+                'device_uuid' => $deviceUuid,
+                'user_id' => $user->id,
+                'claimed_at' => now(),
+            ]);
+            $user->increment('coins', 5);
+            $user->refresh();
+
+            CoinTransaction::create([
+                'user_id' => $user->id,
+                'amount' => 5,
+                'action_type' => 'welcome_bonus',
+                'description' => 'Bonus Pengguna Baru (5 Koin)',
+                'balance_after' => $user->coins,
+            ]);
+        }
+
         // Revoke old tokens and create a fresh Sanctum token
         $user->tokens()->delete();
         $token = $user->createToken('resumer_mobile_token')->plainTextToken;
@@ -70,6 +91,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'avatar_url' => $user->avatar_url,
                 'device_uuid' => $user->device_uuid,
+                'coins' => (int) $user->coins,
             ],
             'quota' => [
                 'used' => $quota->used_count,
@@ -133,6 +155,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'avatar_url' => $user->avatar_url,
                 'device_uuid' => $user->device_uuid,
+                'coins' => (int) $user->coins,
             ],
         ]);
     }
@@ -159,6 +182,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'avatar_url' => $user->avatar_url,
                 'device_uuid' => $user->device_uuid,
+                'coins' => (int) $user->coins,
             ],
         ]);
     }

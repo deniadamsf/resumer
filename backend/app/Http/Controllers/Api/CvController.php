@@ -237,6 +237,16 @@ class CvController extends Controller
             ], 422);
         }
 
+        $user = $request->user();
+        if ($user && $user->coins < 4) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Saldo koin Anda tidak mencukupi untuk analisis Job Matcher (membutuhkan 4 koin). Silakan top-up koin terlebih dahulu.',
+                'required_coins' => 4,
+                'current_coins' => (int) $user->coins,
+            ], 402);
+        }
+
         try {
             $matchResult = $this->gemini->matchJob(
                 $request->input('cv_text'),
@@ -245,9 +255,23 @@ class CvController extends Controller
                 $request->input('language', 'id_ID')
             );
 
+            // Deduct 4 coins upon successful job match
+            if ($user) {
+                $user->decrement('coins', 4);
+                $user->refresh();
+                \App\Models\CoinTransaction::create([
+                    'user_id' => $user->id,
+                    'amount' => -4,
+                    'action_type' => 'job_match_spent',
+                    'description' => 'Analisis Job Matcher & Penyesuaian Loker (4 Koin)',
+                    'balance_after' => $user->coins,
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'match_result' => $matchResult,
+                'coins' => $user ? (int) $user->coins : null,
             ]);
         } catch (Exception $e) {
             return response()->json([

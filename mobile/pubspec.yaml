@@ -2,7 +2,7 @@ name: resumer
 description: "Resumer - AI ATS CV Maker, Score Checker & Job Matcher"
 publish_to: 'none'
 
-version: 1.0.4+5
+version: 1.0.5+6
 
 environment:
   sdk: ^3.12.2

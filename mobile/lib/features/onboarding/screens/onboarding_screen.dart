@@ -25,6 +25,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const int _totalSlides = 4;
 
+  @override
+  void initState() {
+    super.initState();
+    AppLocalizations.instance.localeNotifier.addListener(_onLocaleChanged);
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _handleLanguageChange(String newLocale) async {
+    if (AppLocalizations.instance.currentLocale == newLocale) return;
+    HapticFeedback.mediumImpact();
+    await AppLocalizations.instance.setLocale(newLocale);
+    if (mounted) setState(() {});
+  }
+
   Future<void> _completeOnboarding() async {
     HapticFeedback.mediumImpact();
     final prefs = await SharedPreferences.getInstance();
@@ -61,14 +78,55 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   void dispose() {
+    AppLocalizations.instance.localeNotifier.removeListener(_onLocaleChanged);
     _pageController.dispose();
     super.dispose();
+  }
+
+  Widget _buildTopLanguageToggle(String currentLocale) {
+    final isId = currentLocale == 'id_ID';
+    return InkWell(
+      onTap: () => _handleLanguageChange(isId ? 'en_US' : 'id_ID'),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 28,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.subtleSlateTint,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.borderHairline),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(isId ? '🇮🇩' : '🇺🇸', style: const TextStyle(fontSize: 13)),
+            const SizedBox(width: 4),
+            Text(
+              isId ? 'ID' : 'EN',
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: AppColors.midnightNavy,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(width: 3),
+            const Icon(
+              Icons.swap_horiz_rounded,
+              size: 13,
+              color: AppColors.accentSteel,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.paddingOf(context).top;
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final currentLocale = AppLocalizations.instance.currentLocale;
 
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(
@@ -83,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           bottom: false,
           child: Column(
             children: [
-              // 1. Top Bar with Brand and Skip Button
+              // 1. Top Bar with Brand, Language Quick-Toggle, and Skip Button
               Padding(
                 padding: EdgeInsets.only(
                   top: topPadding > 0 ? 4 : 12,
@@ -126,24 +184,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ],
                       ),
                     ),
-                    // Skip Button
-                    if (_currentPage < _totalSlides - 1)
-                      TextButton(
-                        onPressed: _completeOnboarding,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          foregroundColor: AppColors.textSecondary,
-                        ),
-                        child: Text(
-                          'onboarding.skip'.tr,
-                          style: GoogleFonts.outfit(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
-                    else
-                      const SizedBox(width: 48, height: 32),
+
+                    // Right-side actions: Language Switcher + Skip Button
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildTopLanguageToggle(currentLocale),
+                        const SizedBox(width: 8),
+                        if (_currentPage < _totalSlides - 1)
+                          TextButton(
+                            onPressed: _completeOnboarding,
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              foregroundColor: AppColors.textSecondary,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              'onboarding.skip'.tr,
+                              style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox(width: 44, height: 32),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -154,24 +222,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _currentPage = index),
                   children: [
-                    const _EditorialHeroSlide(),
+                    _EditorialHeroSlide(
+                      key: ValueKey('hero_$currentLocale'),
+                      currentLocale: currentLocale,
+                      onLanguageChanged: _handleLanguageChange,
+                    ),
                     _buildSlide(
                       badge: 'onboarding.badge_1'.tr,
                       title: 'onboarding.title_1'.tr,
                       desc: 'onboarding.desc_1'.tr,
-                      visualWidget: const _InteractiveSlideOneVisual(),
+                      visualWidget: _InteractiveSlideOneVisual(
+                        key: ValueKey('s1_$currentLocale'),
+                      ),
                     ),
                     _buildSlide(
                       badge: 'onboarding.badge_2'.tr,
                       title: 'onboarding.title_2'.tr,
                       desc: 'onboarding.desc_2'.tr,
-                      visualWidget: const _InteractiveSlideTwoVisual(),
+                      visualWidget: _InteractiveSlideTwoVisual(
+                        key: ValueKey('s2_$currentLocale'),
+                      ),
                     ),
                     _buildSlide(
                       badge: 'onboarding.badge_3'.tr,
                       title: 'onboarding.title_3'.tr,
                       desc: 'onboarding.desc_3'.tr,
-                      visualWidget: const _InteractiveSlideThreeVisual(),
+                      visualWidget: _InteractiveSlideThreeVisual(
+                        key: ValueKey('s3_$currentLocale'),
+                      ),
                     ),
                   ],
                 ),
@@ -344,15 +422,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 // SLIDE 0: Editorial Hero Statement (Pure Typography, Non-Interactive)
 // =============================================================================
 class _EditorialHeroSlide extends StatelessWidget {
-  const _EditorialHeroSlide();
+  final String currentLocale;
+  final ValueChanged<String> onLanguageChanged;
+
+  const _EditorialHeroSlide({
+    super.key,
+    required this.currentLocale,
+    required this.onLanguageChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isIndo = currentLocale == 'id_ID';
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 4),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight: constraints.maxHeight - 12,
@@ -360,11 +447,15 @@ class _EditorialHeroSlide extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
                 // Abstract diamond icon composition
                 _buildAbstractMark(),
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
+
+                // Prominent Language Selection Menu on Slide 0
+                _buildLanguageSelector(isIndo),
+                const SizedBox(height: 18),
 
                 // Eyebrow divider
                 Row(
@@ -409,21 +500,21 @@ class _EditorialHeroSlide extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Hero headline — large, bold, editorial
                 Text(
                   'onboarding.hero_headline'.tr,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.outfit(
-                    fontSize: 28,
+                    fontSize: 25,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                     height: 1.2,
                     letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
 
                 // Subheadline — elegant, softer
                 Padding(
@@ -432,32 +523,32 @@ class _EditorialHeroSlide extends StatelessWidget {
                     'onboarding.hero_subheadline'.tr,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.outfit(
-                      fontSize: 13.5,
+                      fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: AppColors.textSecondary,
-                      height: 1.5,
+                      height: 1.45,
                     ),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 18),
 
                 // Value proposition pills
                 _buildValuePill(
                   icon: Icons.verified_outlined,
                   text: 'onboarding.hero_pill_1'.tr,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 9),
                 _buildValuePill(
                   icon: Icons.insights_rounded,
                   text: 'onboarding.hero_pill_2'.tr,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 9),
                 _buildValuePill(
                   icon: Icons.memory_rounded,
                   text: 'onboarding.hero_pill_3'.tr,
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -466,19 +557,229 @@ class _EditorialHeroSlide extends StatelessWidget {
     );
   }
 
+  /// Prominent language selection card on slide 0
+  Widget _buildLanguageSelector(bool isIndo) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderHairline, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4.5),
+                decoration: BoxDecoration(
+                  color: AppColors.subtleSlateTint,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: const Icon(
+                  Icons.language_rounded,
+                  size: 14,
+                  color: AppColors.midnightNavy,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'onboarding.lang_menu_label'.tr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: AppColors.forestPine.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: AppColors.forestPine,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4.5),
+                    Text(
+                      isIndo ? 'onboarding.lang_id_active'.tr : 'onboarding.lang_en_active'.tr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.forestPine,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildLanguageOptionCard(
+                  flag: '🇮🇩',
+                  title: 'onboarding.lang_id_title'.tr,
+                  subLabel: 'onboarding.lang_id_sub'.tr,
+                  isSelected: isIndo,
+                  onTap: () => onLanguageChanged('id_ID'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildLanguageOptionCard(
+                  flag: '🇺🇸',
+                  title: 'onboarding.lang_en_title'.tr,
+                  subLabel: 'onboarding.lang_en_sub'.tr,
+                  isSelected: !isIndo,
+                  onTap: () => onLanguageChanged('en_US'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageOptionCard({
+    required String flag,
+    required String title,
+    required String subLabel,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.midnightNavy
+                : AppColors.subtleSlateTint.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.midnightNavy
+                  : AppColors.borderHairline,
+              width: isSelected ? 1.5 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.midnightNavy.withValues(alpha: 0.22),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    flag,
+                    style: const TextStyle(fontSize: 22),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.white : Colors.transparent,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? Colors.white : AppColors.borderHairline,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: isSelected
+                        ? const Center(
+                            child: Icon(
+                              Icons.check_rounded,
+                              size: 13,
+                              color: AppColors.midnightNavy,
+                            ),
+                          )
+                        : null,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.outfit(
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.outfit(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.75)
+                      : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Abstract diamond mark — minimalist icon composition
   /// that evokes precision AI craftsmanship.
   Widget _buildAbstractMark() {
     return SizedBox(
-      width: 80,
-      height: 80,
+      width: 68,
+      height: 68,
       child: Stack(
         alignment: Alignment.center,
         children: [
           // Outer ring
           Container(
-            width: 72,
-            height: 72,
+            width: 62,
+            height: 62,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
@@ -489,16 +790,16 @@ class _EditorialHeroSlide extends StatelessWidget {
           ),
           // Inner filled circle
           Container(
-            width: 52,
-            height: 52,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.midnightNavy,
               boxShadow: [
                 BoxShadow(
                   color: AppColors.midnightNavy.withValues(alpha: 0.18),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
                 ),
               ],
             ),
@@ -506,17 +807,17 @@ class _EditorialHeroSlide extends StatelessWidget {
               child: Icon(
                 Icons.description_rounded,
                 color: Colors.white,
-                size: 24,
+                size: 20,
               ),
             ),
           ),
           // Top-right accent dot
           Positioned(
             top: 4,
-            right: 6,
+            right: 5,
             child: Container(
-              width: 10,
-              height: 10,
+              width: 9,
+              height: 9,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.forestPineLight,
@@ -590,7 +891,7 @@ class _EditorialHeroSlide extends StatelessWidget {
 // SLIDE 1: Interactive Before vs After Google XYZ Formula
 // =============================================================================
 class _InteractiveSlideOneVisual extends StatefulWidget {
-  const _InteractiveSlideOneVisual();
+  const _InteractiveSlideOneVisual({super.key});
 
   @override
   State<_InteractiveSlideOneVisual> createState() => _InteractiveSlideOneVisualState();
@@ -916,7 +1217,7 @@ class _InteractiveSlideOneVisualState extends State<_InteractiveSlideOneVisual> 
 // SLIDE 2: Interactive ATS Diagnostic Scanner & 1-Click Auto-Fix
 // =============================================================================
 class _InteractiveSlideTwoVisual extends StatefulWidget {
-  const _InteractiveSlideTwoVisual();
+  const _InteractiveSlideTwoVisual({super.key});
 
   @override
   State<_InteractiveSlideTwoVisual> createState() => _InteractiveSlideTwoVisualState();
@@ -1183,7 +1484,7 @@ class _InteractiveSlideTwoVisualState extends State<_InteractiveSlideTwoVisual> 
 // SLIDE 3: Interactive Multimodal Job Matcher & Smart Cover Letter
 // =============================================================================
 class _InteractiveSlideThreeVisual extends StatefulWidget {
-  const _InteractiveSlideThreeVisual();
+  const _InteractiveSlideThreeVisual({super.key});
 
   @override
   State<_InteractiveSlideThreeVisual> createState() => _InteractiveSlideThreeVisualState();

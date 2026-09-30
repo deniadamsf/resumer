@@ -23,6 +23,7 @@ class User extends Authenticatable
         'google_id',
         'avatar_url',
         'device_uuid',
+        'coins',
         'password',
     ];
 
@@ -46,6 +47,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'coins' => 'integer',
         ];
     }
 
@@ -71,5 +73,21 @@ class User extends Authenticatable
     public function atsHistories(): HasMany
     {
         return $this->hasMany(AtsHistory::class);
+    }
+
+    /**
+     * User's coin transaction history.
+     */
+    public function coinTransactions(): HasMany
+    {
+        return $this->hasMany(CoinTransaction::class)->latest();
+    }
+
+    /**
+     * User's IAP purchases.
+     */
+    public function iapPurchases(): HasMany
+    {
+        return $this->hasMany(IapPurchase::class)->latest();
     }
 }

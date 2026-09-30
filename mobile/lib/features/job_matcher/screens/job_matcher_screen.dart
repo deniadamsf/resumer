@@ -5,8 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
-import '../../../core/services/ad_service.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/coin_service.dart';
+import '../../../core/widgets/coin_badge.dart';
+import '../../../core/widgets/coin_dialogs.dart';
+import '../../../core/widgets/coin_topup_sheet.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../cv_editor/models/cv_model.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
@@ -97,12 +100,21 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       return;
     }
 
-    // Rewarded Ad 3: Quiet Luxury prompt before running AI match
-    await AdService.instance.showRewardedAd(
+    // Eksklusif Koin: Fitur Job Matcher memakan 4 Koin (tidak bisa pakai iklan)
+    if (!CoinService.instance.hasEnoughCoins(4)) {
+      if (mounted) CoinTopupSheet.show(context);
+      return;
+    }
+
+    final confirmed = await CoinDialogs.showConfirm(
       context: context,
-      prompt: 'ad.reward_prompt_job_match'.tr,
-      onRewarded: _executeJobMatch,
+      cost: 4,
+      featureName: 'Pencocok CV & Loker (Job Matcher)',
+      subtitle: 'Analisis kecocokan dan rekomendasi penyesuaian CV memakan 4 koin.',
     );
+    if (!confirmed || !mounted) return;
+
+    await _executeJobMatch();
   }
 
   Future<void> _executeJobMatch() async {
@@ -122,6 +134,14 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       );
 
       if (response['success'] == true && mounted) {
+        // Sinkronisasi saldo koin yang telah dipotong backend
+        if (response['coins'] != null) {
+          final serverCoins = (response['coins'] as num).toInt();
+          await CoinService.instance.updateBalance(serverCoins);
+        } else {
+          await CoinService.instance.deductLocally(4);
+        }
+
         final rawResult = (response['match_result'] ?? response['ats_result'] ?? {}) as Map<String, dynamic>;
         setState(() {
           _result = JobMatchResult.fromJson(rawResult);
@@ -136,6 +156,10 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
           }
         });
       } else if (mounted) {
+        final statusCode = response['statusCode'];
+        if (statusCode == 402 || (response['message']?.toString().toLowerCase().contains('koin') ?? false)) {
+          CoinTopupSheet.show(context);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response['message'] ?? 'common.error'.tr)),
         );
@@ -247,6 +271,12 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       appBar: FrostedAppBar(
         title: 'job_match.title'.tr,
         showBackButton: widget.showBackButton ?? (Navigator.canPop(context)),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: CoinBadge(),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         controller: _scrollController,
@@ -313,9 +343,42 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.compare_arrows_rounded, size: 20, color: Colors.white),
-              label: Text(
-                _isLoading ? 'common.loading'.tr : 'job_match.match_btn'.tr,
-                style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w700),
+              label: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _isLoading ? 'common.loading'.tr : 'job_match.match_btn'.tr,
+                      style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                    if (!_isLoading) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD97706),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.toll_rounded, size: 11, color: Colors.white),
+                            const SizedBox(width: 3),
+                            Text(
+                              '4 Koin',
+                              style: GoogleFonts.outfit(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.midnightNavy,

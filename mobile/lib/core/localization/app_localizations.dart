@@ -20,7 +20,14 @@ class AppLocalizations {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedLocale = prefs.getString('app_locale');
-      currentLocale = locale ?? savedLocale ?? 'id_ID';
+      if (locale != null) {
+        currentLocale = locale;
+      } else if (savedLocale != null && (savedLocale == 'id_ID' || savedLocale == 'en_US')) {
+        currentLocale = savedLocale;
+      } else {
+        final systemLang = PlatformDispatcher.instance.locale.languageCode.toLowerCase();
+        currentLocale = (systemLang == 'en') ? 'en_US' : 'id_ID';
+      }
     } catch (_) {
       currentLocale = locale ?? 'id_ID';
     }

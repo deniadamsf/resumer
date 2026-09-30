@@ -247,16 +247,37 @@ class ResumerApiTest extends TestCase
     {
         $response = $this->get('/privacy-policy');
         $response->assertStatus(200)
-            ->assertSee('Privacy Policy')
-            ->assertSee('Zero Server Photo Processing Guarantee');
+            ->assertSee('Kebijakan Privasi')
+            ->assertSee('Cellanoma Studio');
     }
 
     /**
-     * Test Job Matcher endpoint with text and mock image input.
+     * Test Job Matcher endpoint coin protection (requires 4 coins).
      */
     public function test_job_match_analysis_with_text_and_image(): void
     {
-        $user = User::factory()->create(['device_uuid' => 'device-jobmatch-test']);
+        $user = User::factory()->create([
+            'device_uuid' => 'device-jobmatch-test',
+            'coins' => 0, // Starts with 0 coins
+        ]);
+
+        // Attempt without enough coins should return 402 Payment Required
+        $responseFailed = $this->actingAs($user)
+            ->withHeader('X-Device-UUID', 'device-jobmatch-test')
+            ->postJson('/api/v1/cv/job-match', [
+                'cv_text' => 'Experienced Flutter Engineer with deep knowledge of Dart, Clean Architecture, and RESTful APIs.',
+                'job_text' => 'We are looking for a Senior Mobile Engineer proficient in Flutter, CI/CD, and Automated Testing.',
+                'job_image' => 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD...',
+            ]);
+
+        $responseFailed->assertStatus(402)
+            ->assertJson([
+                'success' => false,
+                'required_coins' => 4,
+            ]);
+
+        // Now grant 10 coins
+        $user->update(['coins' => 10]);
 
         $response = $this->actingAs($user)
             ->withHeader('X-Device-UUID', 'device-jobmatch-test')
@@ -269,6 +290,7 @@ class ResumerApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
+                'coins' => 6, // 10 - 4 = 6 coins remaining!
             ])
             ->assertJsonStructure([
                 'match_result' => [
@@ -283,6 +305,72 @@ class ResumerApiTest extends TestCase
         $this->assertIsInt($response->json('match_result.match_score'));
         $this->assertIsArray($response->json('match_result.matched_keywords'));
         $this->assertIsArray($response->json('match_result.missing_keywords'));
+        $this->assertEquals(6, $user->fresh()->coins);
+    }
+
+    /**
+     * Test Coin Wallet & In-App Purchase lifecycle.
+     */
+    public function test_coin_wallet_and_iap_flow(): void
+    {
+        $user = User::factory()->create([
+            'device_uuid' => 'device-wallet-test-01',
+            'coins' => 0,
+        ]);
+
+        // 1. Check initial balance
+        $balanceRes = $this->actingAs($user)
+            ->withHeader('X-Device-UUID', 'device-wallet-test-01')
+            ->getJson('/api/v1/coins/balance');
+        $balanceRes->assertStatus(200)->assertJson(['coins' => 0, 'has_claimed_welcome_bonus' => false]);
+
+        // 2. Claim welcome bonus (5 coins)
+        $claimRes = $this->actingAs($user)
+            ->withHeader('X-Device-UUID', 'device-wallet-test-01')
+            ->postJson('/api/v1/coins/claim-welcome');
+        $claimRes->assertStatus(200)->assertJson(['success' => true, 'coins' => 5]);
+        $this->assertEquals(5, $user->fresh()->coins);
+
+        // 3. Second claim with same device must fail (anti-nuyul)
+        $duplicateClaim = $this->actingAs($user)
+            ->withHeader('X-Device-UUID', 'device-wallet-test-01')
+            ->postJson('/api/v1/coins/claim-welcome');
+        $duplicateClaim->assertStatus(400);
+
+        // 4. Verify IAP purchase (30 coins)
+        $iapRes = $this->actingAs($user)
+            ->postJson('/api/v1/coins/verify-purchase', [
+                'order_id' => 'GPA.1234-5678-9012-34567',
+                'product_id' => 'resumer_coins_30',
+                'purchase_token' => 'mock_token_abc_xyz',
+            ]);
+        $iapRes->assertStatus(200)->assertJson(['success' => true, 'coins' => 35, 'coins_granted' => 30]);
+
+        // 5. Replay attack with same order_id must be rejected (409)
+        $replayRes = $this->actingAs($user)
+            ->postJson('/api/v1/coins/verify-purchase', [
+                'order_id' => 'GPA.1234-5678-9012-34567',
+                'product_id' => 'resumer_coins_30',
+                'purchase_token' => 'mock_token_abc_xyz',
+            ]);
+        $replayRes->assertStatus(409);
+
+        // 6. Spend 1 coin for PDF export
+        $spendRes = $this->actingAs($user)
+            ->postJson('/api/v1/coins/spend', [
+                'amount' => 1,
+                'action_type' => 'export_pdf',
+                'description' => 'Bypass Iklan Ekspor PDF',
+            ]);
+        $spendRes->assertStatus(200)->assertJson(['coins' => 34]);
+
+        // 7. Spend exceeding balance
+        $overSpend = $this->actingAs($user)
+            ->postJson('/api/v1/coins/spend', [
+                'amount' => 999,
+                'action_type' => 'job_match',
+            ]);
+        $overSpend->assertStatus(402);
     }
 
     /**

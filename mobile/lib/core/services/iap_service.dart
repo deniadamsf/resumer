@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'coin_service.dart';
 
 /// Service: IapService
 /// Menangani komunikasi dengan Google Play Billing & Apple App Store IAP.
@@ -9,6 +10,16 @@ class IapService {
   static final IapService instance = IapService._internal();
 
   IapService._internal();
+
+  static const String coinTier30 = 'resumer_coins_30';
+  static const String coinTier70 = 'resumer_coins_70';
+  static const String coinTier200 = 'resumer_coins_200';
+
+  static const Set<String> coinProductIds = {
+    coinTier30,
+    coinTier70,
+    coinTier200,
+  };
 
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
@@ -49,6 +60,9 @@ class IapService {
           purchaseErrorNotifier.value = error.toString();
         },
       );
+
+      // Otomatis muat produk koin Play Console
+      await loadProducts(coinProductIds);
     } catch (e, stack) {
       debugPrint('IapService: Error initializing IAP: $e\n$stack');
     }
@@ -157,10 +171,13 @@ class IapService {
         case PurchaseStatus.restored:
           isPurchasingNotifier.value = false;
           purchaseErrorNotifier.value = null;
-          // Verifikasi dan konsumsi/selesaikan transaksi
+          // Verifikasi transaksi ke backend & tambahkan saldo koin
+          await CoinService.instance.onPurchaseVerified(purchase);
+
+          // Selesaikan dan konsumsi transaksi
           if (purchase.pendingCompletePurchase) {
             await _iap.completePurchase(purchase);
-            debugPrint('IapService: Completed purchase for ${purchase.productID}');
+            debugPrint('IapService: Completed & consumed purchase for ${purchase.productID}');
           }
           break;
 

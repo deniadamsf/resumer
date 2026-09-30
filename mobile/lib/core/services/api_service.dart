@@ -405,27 +405,35 @@ class ApiService {
       final response = await http.post(url, headers: _buildHeaders(body), body: body);
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final err = json.decode(response.body) as Map<String, dynamic>;
+          return {
+            'success': false,
+            'statusCode': response.statusCode,
+            'message': err['message'] ??
+                (isEn
+                    ? 'Failed to match job (${response.statusCode})'
+                    : 'Gagal menganalisis kecocokan loker (${response.statusCode})'),
+          };
+        } catch (_) {
+          return {
+            'success': false,
+            'statusCode': response.statusCode,
+            'message': isEn
+                ? 'Server returned status ${response.statusCode}'
+                : 'Server mengembalikan status ${response.statusCode}',
+          };
+        }
       }
-    } catch (_) {}
-
-    return {
-      'success': true,
-      'match_result': {
-        'match_score': 88,
-        'verdict': isEn ? 'Very High Compatibility' : 'Kecocokan Sangat Tinggi',
-        'matched_keywords': ['Python', 'SQL', 'Data Pipelines', 'Enterprise Dashboards', 'Analytical Thinking'],
-        'missing_keywords': ['CI/CD Pipelines', 'Docker', 'Automated Testing'],
-        'tailoring_suggestions': isEn
-            ? [
-                'Emphasize CI/CD automation and containerization in your profile summary',
-                'Include SQL query optimization and data pipeline scalability metrics'
-              ]
-            : [
-                'Tambahkan pengalaman otomatisasi CI/CD dan containerization pada ringkasan profil',
-                'Sertakan metrik optimasi query SQL dan skalabilitas data pipeline'
-              ]
-      }
-    };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': isEn
+            ? 'Unable to connect to server. Please check your internet connection.'
+            : 'Gagal terhubung ke server. Periksa koneksi internet Anda.',
+      };
+    }
   }
 
   Future<Map<String, dynamic>> generateCoverLetter(String cvText, String company, String role) async {
@@ -462,5 +470,85 @@ class ApiService {
               'signoff': 'Hormat saya,\n$userName'
             }
     };
+  }
+
+  /// Ambil saldo koin dan status bonus perangkat
+  Future<Map<String, dynamic>> getCoinsBalance() async {
+    final url = Uri.parse('$baseUrl/coins/balance');
+    try {
+      final response = await http.get(url, headers: _buildHeaders(''));
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return {'success': false, 'coins': 0};
+  }
+
+  /// Klaim bonus selamat datang 5 koin (Device UUID locked)
+  Future<Map<String, dynamic>> claimWelcomeBonus() async {
+    final url = Uri.parse('$baseUrl/coins/claim-welcome');
+    final body = json.encode({'device_uuid': deviceUuid});
+    try {
+      final response = await http.post(url, headers: _buildHeaders(body), body: body);
+      return json.decode(response.body) as Map<String, dynamic>;
+    } catch (_) {}
+    return {'success': false, 'message': 'Gagal mengklaim bonus selamat datang.'};
+  }
+
+  /// Verifikasi pembelian In-App Purchase dari Google Play ke Backend
+  Future<Map<String, dynamic>> verifyIapPurchase({
+    required String orderId,
+    required String productId,
+    required String purchaseToken,
+  }) async {
+    final url = Uri.parse('$baseUrl/coins/verify-purchase');
+    final body = json.encode({
+      'order_id': orderId,
+      'product_id': productId,
+      'purchase_token': purchaseToken,
+    });
+    try {
+      final response = await http.post(url, headers: _buildHeaders(body), body: body);
+      return json.decode(response.body) as Map<String, dynamic>;
+    } catch (_) {}
+    return {'success': false, 'message': 'Gagal memverifikasi pembelian koin.'};
+  }
+
+  /// Gunakan koin untuk aksi tertentu (Job Matcher, Ekspor PDF, dsb.)
+  Future<Map<String, dynamic>> spendCoins({
+    required int amount,
+    required String actionType,
+    String? description,
+  }) async {
+    final url = Uri.parse('$baseUrl/coins/spend');
+    final body = json.encode({
+      'amount': amount,
+      'action_type': actionType,
+      'description': description,
+    });
+    try {
+      final response = await http.post(url, headers: _buildHeaders(body), body: body);
+      return json.decode(response.body) as Map<String, dynamic>;
+    } catch (_) {}
+    return {'success': false, 'message': 'Gagal memproses transaksi koin.'};
+  }
+
+  /// Pengembalian koin jika operasi AI gagal di downstream
+  Future<Map<String, dynamic>> refundCoins({
+    required int amount,
+    required String reason,
+    required String originalAction,
+  }) async {
+    final url = Uri.parse('$baseUrl/coins/refund');
+    final body = json.encode({
+      'amount': amount,
+      'reason': reason,
+      'original_action': originalAction,
+    });
+    try {
+      final response = await http.post(url, headers: _buildHeaders(body), body: body);
+      return json.decode(response.body) as Map<String, dynamic>;
+    } catch (_) {}
+    return {'success': false};
   }
 }

@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/coin_service.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
 import '../../navigation/screens/main_navigation_shell.dart';
 
@@ -22,23 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
     scopes: ['email', 'profile'],
   );
 
-  Future<void> _handleDeveloperBypass() async {
-    setState(() => _isLoading = true);
-    try {
-      await ApiService.instance.saveToken('guest_mode_token');
-      await ApiService.instance.saveUserData(
-        name: 'auth.default_guest_name'.tr,
-        email: 'guest@resumer.app',
-      );
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainNavigationShell()),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
@@ -68,6 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
           email: candidateEmail,
           avatar: candidateAvatar,
         );
+
+        // Sync live coins balance from backend for this user
+        await CoinService.instance.refreshBalance();
 
         // Sync to CV if active CV still uses empty name or legacy default name
         final cv = CvProfileManager.instance.currentCv;
@@ -244,18 +231,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: _isLoading ? null : _handleDeveloperBypass,
-                  child: Text(
-                    'auth.guest_login_btn'.tr,
-                    style: GoogleFonts.outfit(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.mutedSteelSlate,
-                    ),
                   ),
                 ),
               ],

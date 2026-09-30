@@ -9,6 +9,11 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/colors.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/services/ad_service.dart';
+import '../../core/services/coin_service.dart';
+import '../../core/widgets/coin_badge.dart';
+import '../../core/widgets/coin_dialogs.dart';
+import '../../core/widgets/coin_topup_sheet.dart';
 import '../../core/widgets/frosted_app_bar.dart';
 import '../cv_editor/models/cv_model.dart';
 import 'pdf_generator.dart';
@@ -62,6 +67,7 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
   bool _isSaving = false;
   String? _error;
   CvDocument? _activeCv;
+  bool _hasUnlockedExport = false;
 
   @override
   void initState() {
@@ -390,8 +396,161 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
     return file;
   }
 
+  Future<bool> _ensureExportUnlocked() async {
+    if (_hasUnlockedExport) return true;
+
+    // Jika video iklan belum ready / buffering di memori
+    if (!AdService.instance.isRewardedAdReady) {
+      final choice = await CoinDialogs.showAdBufferingFallback(context: context, coinCost: 1);
+      if (choice == 'coin') {
+        if (!CoinService.instance.hasEnoughCoins(1)) {
+          if (mounted) CoinTopupSheet.show(context);
+          return false;
+        }
+        final spent = await CoinService.instance.spend(1, 'export_pdf', description: 'Bypass Iklan Ekspor PDF');
+        if (spent) {
+          if (mounted) setState(() => _hasUnlockedExport = true);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Modal pilihan: Tonton Iklan (Gratis) ATAU Lewati dengan 1 Koin
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.cardSurface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.borderHairline,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Pilih Metode Ekspor PDF',
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.midnightNavy,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Simpan dokumen CV berkualitas tinggi tanpa batas.',
+              style: GoogleFonts.outfit(fontSize: 12.5, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            // Opsi 1: Lewati dengan 1 Koin
+            ListTile(
+              onTap: () => Navigator.of(ctx).pop('coin'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: Color(0xFFFDE68A), width: 1.2),
+              ),
+              tileColor: const Color(0xFFFFFBEB),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFFEF3C7),
+                ),
+                child: const Icon(Icons.toll_rounded, color: Color(0xFFD97706), size: 20),
+              ),
+              title: Text(
+                'Ekspor Instan (1 Koin)',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF92400E),
+                ),
+              ),
+              subtitle: Text(
+                'Langsung simpan tanpa antre iklan.',
+                style: GoogleFonts.outfit(fontSize: 11.5, color: const Color(0xFFB45309)),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF92400E)),
+            ),
+            const SizedBox(height: 10),
+            // Opsi 2: Tonton Video Iklan
+            ListTile(
+              onTap: () => Navigator.of(ctx).pop('ad'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: AppColors.borderHairline),
+              ),
+              tileColor: AppColors.subtleSlateTint,
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                ),
+                child: const Icon(Icons.play_circle_outline_rounded, color: AppColors.midnightNavy, size: 20),
+              ),
+              title: Text(
+                'Tonton Iklan Singkat (Gratis)',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.midnightNavy,
+                ),
+              ),
+              subtitle: Text(
+                'Dukung pengembang dengan menonton video sponsor.',
+                style: GoogleFonts.outfit(fontSize: 11.5, color: AppColors.textSecondary),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.midnightNavy),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (choice == 'coin') {
+      if (!CoinService.instance.hasEnoughCoins(1)) {
+        if (mounted) CoinTopupSheet.show(context);
+        return false;
+      }
+      final spent = await CoinService.instance.spend(1, 'export_pdf', description: 'Bypass Iklan Ekspor PDF');
+      if (spent) {
+        if (mounted) setState(() => _hasUnlockedExport = true);
+        return true;
+      }
+    } else if (choice == 'ad') {
+      if (!mounted) return false;
+      bool rewarded = false;
+      await AdService.instance.showRewardedAd(
+        context: context,
+        prompt: 'Tonton video singkat untuk mengekspor CV PDF Anda.',
+        onRewarded: () {
+          rewarded = true;
+          if (mounted) setState(() => _hasUnlockedExport = true);
+        },
+      );
+      return rewarded;
+    }
+
+    return false;
+  }
+
   Future<void> _handleSave() async {
     if (_pdfBytes == null) return;
+    if (!await _ensureExportUnlocked()) return;
     setState(() => _isSaving = true);
 
     try {
@@ -445,6 +604,7 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
 
   Future<void> _handleShare() async {
     if (_pdfBytes == null) return;
+    if (!await _ensureExportUnlocked()) return;
 
     try {
       final file = await _writeTempFile();
@@ -470,6 +630,10 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
         title: 'pdf_preview.title'.tr,
         showBackButton: true,
         actions: [
+          const Padding(
+            padding: EdgeInsets.only(right: 4),
+            child: CoinBadge(),
+          ),
           if (_pdfBytes != null) ...[
             IconButton(
               onPressed: _handleShare,

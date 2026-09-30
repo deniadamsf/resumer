@@ -5,7 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/coin_service.dart';
 import '../../../core/services/signature_service.dart';
+import '../../../core/widgets/coin_badge.dart';
+import '../../../core/widgets/coin_topup_sheet.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../cover_letter/widgets/signature_pad_modal.dart';
@@ -367,6 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirmed == true) {
       await _apiService.clearAuth();
       await _profileMgr.clearAllLocalProfiles();
+      await CoinService.instance.reset();
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -396,6 +400,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: FrostedAppBar(
         title: 'tabs.profile'.tr,
         showBackButton: false,
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: CoinBadge(),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         // 24px bottom padding above bottom bar & banner ad per UI UX Pro Max
@@ -405,6 +415,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             // 1. Executive Account Card
             _buildAccountCard(userFullName, userEmail, initials),
+            const SizedBox(height: 18),
+
+            // 1b. Coin Wallet Card (Top-up & Balance)
+            _buildCoinWalletCard(),
             const SizedBox(height: 18),
 
             // 2. Language Selector Card (Indonesian / English)
@@ -586,6 +600,101 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCoinWalletCard() {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+
+    return ValueListenableBuilder<int>(
+      valueListenable: CoinService.instance.coinsNotifier,
+      builder: (context, coins, _) {
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFDF5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFD97706).withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.toll_rounded, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isEn ? 'Resumer Coin Wallet' : 'Dompet Koin Resumer',
+                          style: GoogleFonts.outfit(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.midnightNavy,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          isEn ? 'For Job Matcher & Instant Exports' : 'Untuk Cocok Loker & Ekspor Bebas Iklan',
+                          style: GoogleFonts.outfit(fontSize: 11.5, color: AppColors.textSecondary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$coins',
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () => CoinTopupSheet.show(context),
+                icon: const Icon(Icons.add_shopping_cart_rounded, size: 16, color: Colors.white),
+                label: Text(
+                  isEn ? 'Top-up Coins' : 'Top-up Koin Sekarang',
+                  style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF92400E),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 44),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

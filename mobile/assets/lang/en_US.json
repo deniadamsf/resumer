@@ -466,6 +466,14 @@
     "hero_subheadline": "Resumer transforms passive job descriptions into corporate-grade ATS resumes — engineered with AI precision.",
     "hero_pill_1": "Automatic Google XYZ Formula",
     "hero_pill_2": "ATS Score 90–98+ Guaranteed",
-    "hero_pill_3": "Enterprise-Grade AI Engine"
+    "hero_pill_3": "Enterprise-Grade AI Engine",
+    "lang_menu_label": "SELECT LANGUAGE / PILIH BAHASA",
+    "lang_menu_sub": "Set your interface & AI generation language",
+    "lang_id_title": "Bahasa Indonesia",
+    "lang_id_sub": "Indonesian HRD / ATS",
+    "lang_en_title": "English (US)",
+    "lang_en_sub": "Global Corporate Standard",
+    "lang_id_active": "ID Active",
+    "lang_en_active": "EN Active"
   }
 }

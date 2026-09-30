@@ -282,12 +282,11 @@ class CvProfileManager extends ChangeNotifier {
             final doc = CvDocument.fromJson(item['cv_data'] as Map<String, dynamic>);
 
             final localDoc = _profiles[idx];
-            final hasLocalData = localDoc != null &&
-                (localDoc.personalInfo.fullName.isNotEmpty ||
-                 localDoc.experiences.isNotEmpty ||
-                 localDoc.educations.isNotEmpty);
+            final hasLocalSubstantialData = localDoc != null &&
+                (localDoc.experiences.isNotEmpty || localDoc.educations.isNotEmpty) &&
+                localDoc.personalInfo.fullName.isNotEmpty;
 
-            if (hasLocalData && idx == _currentIndex) {
+            if (hasLocalSubstantialData && idx == _currentIndex) {
               // Update only ATS score & metadata from cloud, keep local edits intact
               final existingMeta = _metas[idx];
               _metas[idx] = CvProfileMeta(

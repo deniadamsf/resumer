@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\QuotaController;
 use App\Http\Controllers\Api\CvController;
+use App\Http\Controllers\Api\CoinController;
 
 Route::prefix('v1')->group(function () {
 
@@ -21,6 +22,15 @@ Route::prefix('v1')->group(function () {
         Route::put('/user/profile', [AuthController::class, 'updateProfile']);
         Route::delete('/user/account', [AuthController::class, 'deleteAccount']);
         Route::get('/user/quota', [QuotaController::class, 'getQuota']);
+
+        // Coin Wallet & In-App Purchase Management
+        Route::prefix('coins')->group(function () {
+            Route::get('/balance', [CoinController::class, 'getBalance']);
+            Route::post('/claim-welcome', [CoinController::class, 'claimWelcomeBonus']);
+            Route::post('/verify-purchase', [CoinController::class, 'verifyPurchase']);
+            Route::post('/spend', [CoinController::class, 'spendCoins']);
+            Route::post('/refund', [CoinController::class, 'refundCoins']);
+        });
 
         // Multi-Profile CV Management (Up to 3 variations, JSON ~2-5KB)
         Route::get('/cv/profiles', [CvController::class, 'getProfiles']);

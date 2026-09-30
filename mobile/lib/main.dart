@@ -7,6 +7,7 @@ import 'core/constants/colors.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/api_service.dart';
+import 'core/services/coin_service.dart';
 import 'core/services/iap_service.dart';
 import 'core/services/signature_service.dart';
 import 'core/widgets/responsive_wrapper.dart';
@@ -27,24 +28,28 @@ void main() async {
 
   try {
     debugPrint('1. Initializing localization...');
-    await AppLocalizations.instance.init('id_ID');
+    await AppLocalizations.instance.init();
     debugPrint('2. Localization initialized.');
 
     debugPrint('3. Initializing ApiService...');
     await ApiService.instance.init();
     debugPrint('4. ApiService initialized. Authenticated: ${ApiService.instance.isAuthenticated}');
 
-    debugPrint('5. Initializing SignatureService...');
+    debugPrint('5. Initializing CoinService (Wallet & Bonus)...');
+    await CoinService.instance.init();
+    debugPrint('6. CoinService initialized. Balance: ${CoinService.instance.currentCoins}');
+
+    debugPrint('7. Initializing SignatureService...');
     await SignatureService.instance.init();
-    debugPrint('6. SignatureService initialized. HasSignature: ${SignatureService.instance.hasSignature}');
+    debugPrint('8. SignatureService initialized. HasSignature: ${SignatureService.instance.hasSignature}');
 
-    debugPrint('7. Initializing AdService (AdMob SDK & Preload)...');
+    debugPrint('9. Initializing AdService (AdMob SDK & Preload)...');
     await AdService.instance.init();
-    debugPrint('8. AdService initialized.');
+    debugPrint('10. AdService initialized.');
 
-    debugPrint('9. Initializing IapService (Google Play Billing)...');
+    debugPrint('11. Initializing IapService (Google Play Billing)...');
     await IapService.instance.init();
-    debugPrint('10. IapService initialized.');
+    debugPrint('12. IapService initialized.');
   } catch (e, stack) {
     debugPrint('ERROR during main initialization: $e\n$stack');
   }

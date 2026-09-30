@@ -90,4 +90,52 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('has_seen_onboarding'), isTrue);
   });
+
+  testWidgets('Onboarding page awal allows instant language selection between Indonesian and English', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: OnboardingScreen(),
+      ),
+    );
+    await tester.pump();
+
+    // Verify initial Indonesian language on slide 0
+    expect(find.text('PILIH BAHASA / SELECT LANGUAGE'), findsOneWidget);
+    expect(find.text('Bahasa Indonesia'), findsOneWidget);
+    expect(find.text('English (US)'), findsOneWidget);
+    expect(find.text('ID Aktif'), findsOneWidget);
+    expect(find.text('Lewati'), findsOneWidget);
+    expect(find.text('Lanjutkan'), findsOneWidget);
+
+    // Tap English option on initial page menu with runAsync for asset bundle resolution
+    await tester.runAsync(() async {
+      await tester.tap(find.text('English (US)'));
+      await Future.delayed(const Duration(milliseconds: 150));
+    });
+    await tester.pumpAndSettle();
+
+    // Verify instantaneous transformation to English
+    expect(AppLocalizations.instance.currentLocale, 'en_US');
+    expect(find.text('EN Active'), findsOneWidget);
+    expect(find.text('Skip'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
+    expect(find.text('INTRODUCING'), findsOneWidget);
+
+    // Verify top bar toggle shows EN and allows toggle back to Indonesian
+    await tester.runAsync(() async {
+      await tester.tap(find.text('EN'));
+      await Future.delayed(const Duration(milliseconds: 150));
+    });
+    await tester.pumpAndSettle();
+
+    expect(AppLocalizations.instance.currentLocale, 'id_ID');
+    expect(find.text('ID Aktif'), findsOneWidget);
+    expect(find.text('Lewati'), findsOneWidget);
+    expect(find.text('Lanjutkan'), findsOneWidget);
+    expect(find.text('MEMPERKENALKAN'), findsOneWidget);
+  });
 }

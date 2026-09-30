@@ -466,6 +466,14 @@
     "hero_subheadline": "Resumer mengubah narasi kerja pasif menjadi CV berstandar ATS korporat global — dirancang presisi dengan kecerdasan AI.",
     "hero_pill_1": "Formula Google XYZ Otomatis",
     "hero_pill_2": "Skor ATS Otomatis 90–98+",
-    "hero_pill_3": "Mesin AI Kelas Enterprise"
+    "hero_pill_3": "Mesin AI Kelas Enterprise",
+    "lang_menu_label": "PILIH BAHASA / SELECT LANGUAGE",
+    "lang_menu_sub": "Sesuaikan bahasa tampilan & hasil AI",
+    "lang_id_title": "Bahasa Indonesia",
+    "lang_id_sub": "Baku HRD / ATS Indonesia",
+    "lang_en_title": "English (US)",
+    "lang_en_sub": "Standar Korporat Global",
+    "lang_id_active": "ID Aktif",
+    "lang_en_active": "EN Aktif"
   }
 }
