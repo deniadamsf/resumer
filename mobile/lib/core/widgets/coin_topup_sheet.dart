@@ -166,7 +166,7 @@ class _CoinTopupSheetState extends State<CoinTopupSheet> {
                     productId: IapService.coinTier30,
                     coins: 30,
                     title: 'Starter Pack',
-                    subtitle: isEn ? '7x Job Matcher or 30x PDF Export' : 'Cukup untuk 7x Job Matcher',
+                    subtitle: isEn ? '10x Job Matcher or 30x PDF Export' : 'Cukup untuk 10x Job Matcher',
                     fallbackPrice: 'Rp 10.000',
                     isPopular: false,
                     products: products,
@@ -214,7 +214,7 @@ class _CoinTopupSheetState extends State<CoinTopupSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildCostChip('4 Koin', isEn ? 'Job Matcher' : 'Cocok Loker'),
+                _buildCostChip('3 Koin', isEn ? 'Job Matcher' : 'Cocok Loker'),
                 Container(width: 1, height: 24, color: AppColors.borderHairline),
                 _buildCostChip('2 Koin', isEn ? 'Cover Letter' : 'Surat Lamaran'),
                 Container(width: 1, height: 24, color: AppColors.borderHairline),

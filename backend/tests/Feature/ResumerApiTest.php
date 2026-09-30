@@ -252,7 +252,7 @@ class ResumerApiTest extends TestCase
     }
 
     /**
-     * Test Job Matcher endpoint coin protection (requires 4 coins).
+     * Test Job Matcher endpoint coin protection (requires 3 coins).
      */
     public function test_job_match_analysis_with_text_and_image(): void
     {
@@ -273,7 +273,7 @@ class ResumerApiTest extends TestCase
         $responseFailed->assertStatus(402)
             ->assertJson([
                 'success' => false,
-                'required_coins' => 4,
+                'required_coins' => 3,
             ]);
 
         // Now grant 10 coins
@@ -290,7 +290,7 @@ class ResumerApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'coins' => 6, // 10 - 4 = 6 coins remaining!
+                'coins' => 7, // 10 - 3 = 7 coins remaining!
             ])
             ->assertJsonStructure([
                 'match_result' => [
@@ -305,7 +305,7 @@ class ResumerApiTest extends TestCase
         $this->assertIsInt($response->json('match_result.match_score'));
         $this->assertIsArray($response->json('match_result.matched_keywords'));
         $this->assertIsArray($response->json('match_result.missing_keywords'));
-        $this->assertEquals(6, $user->fresh()->coins);
+        $this->assertEquals(7, $user->fresh()->coins);
     }
 
     /**

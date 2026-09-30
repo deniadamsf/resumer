@@ -238,11 +238,11 @@ class CvController extends Controller
         }
 
         $user = $request->user();
-        if ($user && $user->coins < 4) {
+        if ($user && $user->coins < 3) {
             return response()->json([
                 'success' => false,
-                'message' => 'Saldo koin Anda tidak mencukupi untuk analisis Job Matcher (membutuhkan 4 koin). Silakan top-up koin terlebih dahulu.',
-                'required_coins' => 4,
+                'message' => 'Saldo koin Anda tidak mencukupi untuk analisis Job Matcher (membutuhkan 3 koin). Silakan top-up koin terlebih dahulu.',
+                'required_coins' => 3,
                 'current_coins' => (int) $user->coins,
             ], 402);
         }
@@ -255,15 +255,15 @@ class CvController extends Controller
                 $request->input('language', 'id_ID')
             );
 
-            // Deduct 4 coins upon successful job match
+            // Deduct 3 coins upon successful job match
             if ($user) {
-                $user->decrement('coins', 4);
+                $user->decrement('coins', 3);
                 $user->refresh();
                 \App\Models\CoinTransaction::create([
                     'user_id' => $user->id,
-                    'amount' => -4,
+                    'amount' => -3,
                     'action_type' => 'job_match_spent',
-                    'description' => 'Analisis Job Matcher & Penyesuaian Loker (4 Koin)',
+                    'description' => 'Analisis Job Matcher & Penyesuaian Loker (3 Koin)',
                     'balance_after' => $user->coins,
                 ]);
             }

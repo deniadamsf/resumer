@@ -100,17 +100,17 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       return;
     }
 
-    // Eksklusif Koin: Fitur Job Matcher memakan 4 Koin (tidak bisa pakai iklan)
-    if (!CoinService.instance.hasEnoughCoins(4)) {
+    // Eksklusif Koin: Fitur Job Matcher memakan 3 Koin (tidak bisa pakai iklan)
+    if (!CoinService.instance.hasEnoughCoins(3)) {
       if (mounted) CoinTopupSheet.show(context);
       return;
     }
 
     final confirmed = await CoinDialogs.showConfirm(
       context: context,
-      cost: 4,
+      cost: 3,
       featureName: 'Pencocok CV & Loker (Job Matcher)',
-      subtitle: 'Analisis kecocokan dan rekomendasi penyesuaian CV memakan 4 koin.',
+      subtitle: 'Analisis kecocokan dan rekomendasi penyesuaian CV memakan 3 koin.',
     );
     if (!confirmed || !mounted) return;
 
@@ -139,7 +139,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
           final serverCoins = (response['coins'] as num).toInt();
           await CoinService.instance.updateBalance(serverCoins);
         } else {
-          await CoinService.instance.deductLocally(4);
+          await CoinService.instance.deductLocally(3);
         }
 
         final rawResult = (response['match_result'] ?? response['ats_result'] ?? {}) as Map<String, dynamic>;
@@ -366,7 +366,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
                             const Icon(Icons.toll_rounded, size: 11, color: Colors.white),
                             const SizedBox(width: 3),
                             Text(
-                              '4 Koin',
+                              '3 Koin',
                               style: GoogleFonts.outfit(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
