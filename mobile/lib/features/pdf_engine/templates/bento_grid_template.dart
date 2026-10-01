@@ -89,18 +89,20 @@ class BentoGridTemplate extends CvTemplate {
                               _buildPill(PdfTextSanitizer.clean(info.phone)),
                             if (info.location.isNotEmpty)
                               _buildPill(PdfTextSanitizer.clean(info.location)),
-                            if (_buildSocialPill(SocialPlatform.linkedin, info.linkedin, accentColor) != null)
-                              _buildSocialPill(SocialPlatform.linkedin, info.linkedin, accentColor)!,
-                            if (_buildSocialPill(SocialPlatform.github, info.github, accentColor) != null)
-                              _buildSocialPill(SocialPlatform.github, info.github, accentColor)!,
-                            if (_buildSocialPill(SocialPlatform.website, info.website, accentColor) != null)
-                              _buildSocialPill(SocialPlatform.website, info.website, accentColor)!,
-                            if (_buildSocialPill(SocialPlatform.whatsapp, info.whatsapp, accentColor) != null)
-                              _buildSocialPill(SocialPlatform.whatsapp, info.whatsapp, accentColor)!,
-                            if (_buildSocialPill(SocialPlatform.instagram, info.instagram, accentColor) != null)
-                              _buildSocialPill(SocialPlatform.instagram, info.instagram, accentColor)!,
-                            if (_buildSocialPill(SocialPlatform.facebook, info.facebook, accentColor) != null)
-                              _buildSocialPill(SocialPlatform.facebook, info.facebook, accentColor)!,
+                            if (cv.showSocialLinks) ...[
+                              if (_buildSocialPill(SocialPlatform.linkedin, info.linkedin, accentColor) != null)
+                                _buildSocialPill(SocialPlatform.linkedin, info.linkedin, accentColor)!,
+                              if (_buildSocialPill(SocialPlatform.github, info.github, accentColor) != null)
+                                _buildSocialPill(SocialPlatform.github, info.github, accentColor)!,
+                              if (_buildSocialPill(SocialPlatform.website, info.website, accentColor) != null)
+                                _buildSocialPill(SocialPlatform.website, info.website, accentColor)!,
+                              if (_buildSocialPill(SocialPlatform.whatsapp, info.whatsapp, accentColor) != null)
+                                _buildSocialPill(SocialPlatform.whatsapp, info.whatsapp, accentColor)!,
+                              if (_buildSocialPill(SocialPlatform.instagram, info.instagram, accentColor) != null)
+                                _buildSocialPill(SocialPlatform.instagram, info.instagram, accentColor)!,
+                              if (_buildSocialPill(SocialPlatform.facebook, info.facebook, accentColor) != null)
+                                _buildSocialPill(SocialPlatform.facebook, info.facebook, accentColor)!,
+                            ],
                           ],
                         ),
                       ],
@@ -174,6 +176,28 @@ class BentoGridTemplate extends CvTemplate {
               pw.SizedBox(height: 12),
             ],
 
+            // Projects Bento Card
+            if (cv.showProjects && cv.projects.isNotEmpty) ...[
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.all(14),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.white,
+                  borderRadius: pw.BorderRadius.circular(8),
+                  border: pw.Border.all(color: PdfColors.grey300, width: 0.8),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    _buildCardTitle('PROJECTS & PORTFOLIO', accentColor),
+                    pw.SizedBox(height: 8),
+                    ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor, cv.showProjectDescription)),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 12),
+            ],
+
             // Bottom Bento Grid: Skills & Education
             pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -194,28 +218,57 @@ class BentoGridTemplate extends CvTemplate {
                         children: [
                           _buildCardTitle('SKILLS & TOOLS', accentColor),
                           pw.SizedBox(height: 6),
-                          pw.Wrap(
-                            spacing: 4,
-                            runSpacing: 5,
-                            children: cv.skills.map((s) {
-                              return pw.Container(
-                                padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-                                decoration: pw.BoxDecoration(
-                                  color: PdfColors.white,
-                                  borderRadius: pw.BorderRadius.circular(4),
-                                  border: pw.Border.all(color: borderCol, width: 0.6),
-                                ),
-                                child: pw.Text(
-                                  PdfTextSanitizer.clean(s.name),
-                                  style: pw.TextStyle(
-                                    fontSize: 8.5,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: accentColor,
+                          if (!cv.showSkillDescription)
+                            pw.Wrap(
+                              spacing: 4,
+                              runSpacing: 5,
+                              children: cv.skills.map((s) {
+                                return pw.Container(
+                                  padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                                  decoration: pw.BoxDecoration(
+                                    color: PdfColors.white,
+                                    borderRadius: pw.BorderRadius.circular(4),
+                                    border: pw.Border.all(color: borderCol, width: 0.6),
                                   ),
+                                  child: pw.Text(
+                                    PdfTextSanitizer.clean(s.name),
+                                    style: pw.TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: accentColor,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            )
+                          else
+                            ...cv.skills.map((s) {
+                              final cleanDesc = PdfTextSanitizer.clean(s.description);
+                              final hasDesc = cleanDesc.isNotEmpty;
+                              return pw.Padding(
+                                padding: const pw.EdgeInsets.only(bottom: 4),
+                                child: pw.Column(
+                                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                  children: [
+                                    pw.Text(
+                                      PdfTextSanitizer.clean(s.name),
+                                      style: pw.TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: pw.FontWeight.bold,
+                                        color: accentColor,
+                                      ),
+                                    ),
+                                    if (hasDesc) ...[
+                                      pw.SizedBox(height: 1),
+                                      pw.Text(
+                                        cleanDesc,
+                                        style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               );
-                            }).toList(),
-                          ),
+                            }),
                         ],
                       ),
                     ),
@@ -264,6 +317,123 @@ class BentoGridTemplate extends CvTemplate {
                   ),
               ],
             ),
+
+            // Certifications & Languages/Hobbies Bento Grid
+            if ((cv.showCertifications && cv.certifications.isNotEmpty) ||
+                (cv.showLanguages && cv.languages.isNotEmpty) ||
+                (cv.showHobbies && cv.hobbies.isNotEmpty)) ...[
+              pw.SizedBox(height: 12),
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // Certifications Bento
+                  if (cv.showCertifications && cv.certifications.isNotEmpty)
+                    pw.Expanded(
+                      flex: 1,
+                      child: pw.Container(
+                        padding: const pw.EdgeInsets.all(12),
+                        decoration: pw.BoxDecoration(
+                          color: PdfColors.white,
+                          borderRadius: pw.BorderRadius.circular(8),
+                          border: pw.Border.all(color: PdfColors.grey300, width: 0.8),
+                        ),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            _buildCardTitle('CERTIFICATIONS', accentColor),
+                            pw.SizedBox(height: 6),
+                            ...cv.certifications.map((c) {
+                              final hasDesc = cv.showCertificationDescription && c.description.trim().isNotEmpty;
+                              return pw.Padding(
+                                padding: const pw.EdgeInsets.only(bottom: 4),
+                                child: pw.Column(
+                                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                  children: [
+                                    pw.Row(
+                                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                      children: [
+                                        PdfTextSanitizer.buildBulletDot(accentColor, size: 3),
+                                        pw.Expanded(
+                                          child: pw.Text(
+                                            PdfTextSanitizer.clean(c.displayTitle),
+                                            style: const pw.TextStyle(fontSize: 8.5),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (hasDesc) ...[
+                                      pw.Padding(
+                                        padding: const pw.EdgeInsets.only(left: 8, top: 1),
+                                        child: pw.Text(
+                                          PdfTextSanitizer.clean(c.description),
+                                          style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (cv.showCertifications && cv.certifications.isNotEmpty &&
+                      ((cv.showLanguages && cv.languages.isNotEmpty) || (cv.showHobbies && cv.hobbies.isNotEmpty)))
+                    pw.SizedBox(width: 12),
+                  // Languages & Hobbies Bento
+                  if ((cv.showLanguages && cv.languages.isNotEmpty) || (cv.showHobbies && cv.hobbies.isNotEmpty))
+                    pw.Expanded(
+                      flex: 1,
+                      child: pw.Container(
+                        padding: const pw.EdgeInsets.all(12),
+                        decoration: pw.BoxDecoration(
+                          color: cardBg,
+                          borderRadius: pw.BorderRadius.circular(8),
+                          border: pw.Border.all(color: borderCol, width: 0.8),
+                        ),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            if (cv.showLanguages && cv.languages.isNotEmpty) ...[
+                              _buildCardTitle('LANGUAGES', accentColor),
+                              pw.SizedBox(height: 6),
+                              ...cv.languages.map((l) => pw.Padding(
+                                    padding: const pw.EdgeInsets.only(bottom: 2.5),
+                                    child: pw.Text(
+                                      '${PdfTextSanitizer.clean(l.name)} (${PdfTextSanitizer.clean(l.proficiency)})',
+                                      style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800),
+                                    ),
+                                  )),
+                              if (cv.showHobbies && cv.hobbies.isNotEmpty) pw.SizedBox(height: 8),
+                            ],
+                            if (cv.showHobbies && cv.hobbies.isNotEmpty) ...[
+                              _buildCardTitle('HOBBIES & INTERESTS', accentColor),
+                              pw.SizedBox(height: 6),
+                              pw.Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
+                                children: cv.hobbies.map((h) => pw.Container(
+                                  padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: pw.BoxDecoration(
+                                    color: PdfColors.white,
+                                    borderRadius: pw.BorderRadius.circular(3),
+                                    border: pw.Border.all(color: borderCol, width: 0.6),
+                                  ),
+                                  child: pw.Text(
+                                    PdfTextSanitizer.clean(h),
+                                    style: pw.TextStyle(fontSize: 8, color: accentColor),
+                                  ),
+                                )).toList(),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ];
         },
       ),
@@ -373,6 +543,61 @@ class BentoGridTemplate extends CvTemplate {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor, bool showDesc) {
+    final cleanName = PdfTextSanitizer.clean(proj.name);
+    final cleanRole = PdfTextSanitizer.clean(proj.role);
+    final period = PdfTextSanitizer.clean(proj.displayPeriod);
+    final cleanDesc = PdfTextSanitizer.clean(proj.description);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 7),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: cleanName,
+                        style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                      ),
+                      if (cleanRole.isNotEmpty)
+                        pw.TextSpan(
+                          text: ' | $cleanRole',
+                          style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: accentColor),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (period.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Text(
+                  period,
+                  style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ],
+            ],
+          ),
+          if (showDesc && cleanDesc.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              cleanDesc,
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800, lineSpacing: 1.3),
+              textAlign: pw.TextAlign.justify,
+            ),
+          ],
         ],
       ),
     );

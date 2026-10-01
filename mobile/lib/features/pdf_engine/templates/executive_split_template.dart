@@ -85,17 +85,19 @@ class ExecutiveSplitTemplate extends CvTemplate {
                           ].join('   |   '),
                           style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
                         ),
-                        pw.SizedBox(height: 4),
-                        SocialIconPdfWidget.buildWrapList(
-                          info: info,
-                          isAtsMode: false,
-                          accentColor: accentColor,
-                          textColor: PdfColors.grey700,
-                          fontSize: 8.5,
-                          iconSize: 8.5,
-                          spacing: 8.0,
-                          runSpacing: 3.0,
-                        ),
+                        if (cv.showSocialLinks) ...[
+                          pw.SizedBox(height: 4),
+                          SocialIconPdfWidget.buildWrapList(
+                            info: info,
+                            isAtsMode: false,
+                            accentColor: accentColor,
+                            textColor: PdfColors.grey700,
+                            fontSize: 8.5,
+                            iconSize: 8.5,
+                            spacing: 8.0,
+                            runSpacing: 3.0,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -140,6 +142,14 @@ class ExecutiveSplitTemplate extends CvTemplate {
               pw.SizedBox(height: 8),
             ],
 
+            // Key Initiatives & Projects
+            if (cv.showProjects && cv.projects.isNotEmpty) ...[
+              _buildSectionTitle('KEY INITIATIVES & PROJECTS', accentColor),
+              pw.SizedBox(height: 5),
+              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor, cv.showProjectDescription)),
+              pw.SizedBox(height: 8),
+            ],
+
             // Education
             if (cv.showEducation && cv.educations.isNotEmpty) ...[
               _buildSectionTitle('ACADEMIC BACKGROUND', accentColor),
@@ -156,7 +166,7 @@ class ExecutiveSplitTemplate extends CvTemplate {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: cv.skills.map((skill) {
                   final cleanName = PdfTextSanitizer.clean(skill.name);
-                  final hasDesc = skill.description.trim().isNotEmpty;
+                  final hasDesc = cv.showSkillDescription && skill.description.trim().isNotEmpty;
                   final cleanDesc = PdfTextSanitizer.clean(skill.description);
                   return pw.Padding(
                     padding: const pw.EdgeInsets.only(bottom: 2.5),
@@ -200,7 +210,7 @@ class ExecutiveSplitTemplate extends CvTemplate {
               pw.SizedBox(height: 5),
               ...cv.certifications.map((c) {
                 final title = PdfTextSanitizer.clean(c.displayTitle);
-                final hasDesc = c.description.trim().isNotEmpty;
+                final hasDesc = cv.showCertificationDescription && c.description.trim().isNotEmpty;
                 return pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 2.5),
                   child: pw.Row(
@@ -353,6 +363,69 @@ class ExecutiveSplitTemplate extends CvTemplate {
             style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
             textAlign: pw.TextAlign.right,
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor, bool showDesc) {
+    final cleanName = PdfTextSanitizer.clean(proj.name);
+    final cleanRole = PdfTextSanitizer.clean(proj.role);
+    final period = PdfTextSanitizer.clean(proj.displayPeriod);
+    final cleanDesc = PdfTextSanitizer.clean(proj.description);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 6),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: cleanName,
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                          color: accentColor,
+                        ),
+                      ),
+                      if (cleanRole.isNotEmpty)
+                        pw.TextSpan(
+                          text: ' | $cleanRole',
+                          style: pw.TextStyle(
+                            fontSize: 9,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.grey800,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (period.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Text(
+                  period,
+                  style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ],
+            ],
+          ),
+          if (showDesc && cleanDesc.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              cleanDesc,
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800),
+              textAlign: pw.TextAlign.justify,
+            ),
+          ],
         ],
       ),
     );

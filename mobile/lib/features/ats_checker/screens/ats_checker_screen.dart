@@ -5,9 +5,12 @@ import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/ad_service.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/coin_service.dart';
+import '../../../core/services/quota_service.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../cv_editor/models/cv_model.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
+import '../../cv_editor/widgets/daily_quota_banner.dart';
 import '../../cv_editor/widgets/profile_switcher_bar.dart';
 import '../../pdf_engine/templates/template_registry.dart';
 import '../widgets/ats_breakdown_section.dart';
@@ -38,6 +41,8 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
     super.initState();
     _loadCurrentProfileAts();
     _profileMgr.addListener(_onProfileUpdate);
+    QuotaService.instance.fetchQuota();
+    CoinService.instance.refreshBalance();
   }
 
   void _loadCurrentProfileAts() {
@@ -83,6 +88,9 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
     await AdService.instance.showRewardedAd(
       context: context,
       prompt: 'ad.reward_prompt_check'.tr,
+      actionType: 'ats_check',
+      actionDescription: 'Cek Skor ATS',
+      coinCost: 1,
       onRewarded: _executeCheck,
     );
   }
@@ -163,14 +171,22 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
       return;
     }
 
+    final hasQuota = QuotaService.instance.hasRemainingQuota;
+
     await AdService.instance.showRewardedAd(
       context: context,
-      prompt: 'ad.reward_prompt_autofix'.tr,
-      onRewarded: _executeAutoFix,
+      prompt: hasQuota
+          ? 'ad.reward_prompt_autofix'.tr
+          : 'ad.quota_exhausted_prompt'.tr,
+      actionType: 'ats_autofix',
+      actionDescription: hasQuota ? '1-Click ATS Auto-Fix' : 'Bypass Kuota ATS Auto-Fix',
+      coinCost: 1,
+      allowWatchAd: hasQuota,
+      onRewarded: () => _executeAutoFix(bypassQuota: !hasQuota),
     );
   }
 
-  Future<void> _executeAutoFix() async {
+  Future<void> _executeAutoFix({bool bypassQuota = false}) async {
     setState(() => _isLoading = true);
     try {
       final cv = _profileMgr.currentCv.clone();
@@ -187,9 +203,19 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
       final preservedShowCertifications = cv.showCertifications;
       final preservedShowProjects = cv.showProjects;
 
-      final response = await ApiService.instance.autoFixAts(cv.toPlainText());
+      final response = await ApiService.instance.autoFixAts(
+        cv.toPlainText(),
+        bypassQuota: bypassQuota,
+      );
 
       if (response['success'] == true && mounted) {
+        if (!bypassQuota) {
+          if (response['quota'] != null && response['quota']['remaining'] != null) {
+            QuotaService.instance.updateQuota((response['quota']['remaining'] as num).toInt());
+          } else {
+            QuotaService.instance.consumeLocally();
+          }
+        }
         final improved = response['improved_cv'];
         final improvedData = improved?['improved_cv_data'];
 
@@ -420,6 +446,23 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             if (!_profileMgr.currentCv.isEligibleForAi)
               _buildIncompleteProfileCard(),
 
+            // Daily AI Quota Banner (Auto-Fix AI)
+            ValueListenableBuilder<int>(
+              valueListenable: QuotaService.instance.remainingQuotaNotifier,
+              builder: (context, remainingQuota, _) {
+                return DailyQuotaBanner(
+                  remainingQuota: remainingQuota,
+                  customTitle: remainingQuota > 0
+                      ? 'Jatah Auto-Fix AI: $remainingQuota/5 Hari Ini'
+                      : 'Jatah Auto-Fix AI Habis (0/5)',
+                  customSubtitle: remainingQuota > 0
+                      ? 'Untuk perbaikan CV dengan AI. Bisa di-bypass dengan koin.'
+                      : 'Jatah harian habis. Gunakan 1 koin untuk perbaikan CV AI.',
+                );
+              },
+            ),
+            const SizedBox(height: 14),
+
             // Hero Score Gauge Card
             Container(
               width: double.infinity,
@@ -521,23 +564,33 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                       const SizedBox(width: 10),
                       // 1-Click Auto-Fix button
                       Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _handleAutoFix,
-                          icon: const Icon(Icons.auto_fix_high_rounded, size: 18, color: Colors.white),
-                          label: Text(
-                            'ats.auto_fix_btn'.tr,
-                            style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w700),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.forestPine,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(0, 48),
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            elevation: 0,
-                          ),
+                        child: ValueListenableBuilder<int>(
+                          valueListenable: QuotaService.instance.remainingQuotaNotifier,
+                          builder: (context, remainingQuota, _) {
+                            final hasQuota = remainingQuota > 0;
+                            return ElevatedButton.icon(
+                              onPressed: _isLoading ? null : _handleAutoFix,
+                              icon: Icon(
+                                hasQuota ? Icons.auto_fix_high_rounded : Icons.toll_rounded,
+                                size: 18,
+                                color: hasQuota ? Colors.white : const Color(0xFFFEF3C7),
+                              ),
+                              label: Text(
+                                hasQuota ? 'ats.auto_fix_btn'.tr : 'Auto-Fix (1 Koin)',
+                                style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w700),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: hasQuota ? AppColors.forestPine : const Color(0xFFD97706),
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(0, 48),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 0,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],

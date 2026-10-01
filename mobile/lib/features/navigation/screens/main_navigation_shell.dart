@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/services/coin_service.dart';
 import '../../../core/widgets/admob_banner_widget.dart';
 import '../../ats_checker/screens/ats_checker_screen.dart';
 import '../../cover_letter/screens/cover_letter_screen.dart';
@@ -60,6 +61,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     HapticFeedback.lightImpact();
     // Flush any pending editor drafts to local storage immediately
     CvProfileManager.instance.persistDraftLocally();
+    // Keep coin wallet balance fresh across tabs
+    CoinService.instance.refreshBalance();
     setState(() {
       _currentIndex = index;
     });

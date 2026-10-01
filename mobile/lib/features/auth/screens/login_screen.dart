@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/coin_service.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
 import '../../navigation/screens/main_navigation_shell.dart';
@@ -18,17 +18,12 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: '1047047792857-idood18l4f3m7lpr4klqedl0rid9dm6c.apps.googleusercontent.com',
-    scopes: ['email', 'profile'],
-  );
-
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
 
     try {
-      final googleAccount = await _googleSignIn.signIn();
+      final googleAccount = await AuthService.instance.signInWithGoogle();
       if (googleAccount == null) {
         // User cancelled account picker dialog — exit gracefully without error
         if (mounted) setState(() => _isLoading = false);
@@ -52,6 +47,12 @@ class _LoginScreenState extends State<LoginScreen> {
           email: candidateEmail,
           avatar: candidateAvatar,
         );
+
+        // Instantly populate user's coin balance from login response
+        if (userObj != null && userObj['coins'] != null) {
+          final serverCoins = (userObj['coins'] as num).toInt();
+          await CoinService.instance.updateBalance(serverCoins);
+        }
 
         // Sync live coins balance from backend for this user
         await CoinService.instance.refreshBalance();

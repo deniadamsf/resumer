@@ -76,15 +76,17 @@ class WesternStrictTemplate extends CvTemplate {
                     ].join('   |   '),
                     style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
                   ),
-                  pw.SizedBox(height: 3),
-                  SocialIconPdfWidget.buildWrapList(
-                    info: info,
-                    isAtsMode: true,
-                    textColor: PdfColors.blue800,
-                    fontSize: 8.5,
-                    spacing: 8.0,
-                    runSpacing: 2.0,
-                  ),
+                  if (cv.showSocialLinks) ...[
+                    pw.SizedBox(height: 3),
+                    SocialIconPdfWidget.buildWrapList(
+                      info: info,
+                      isAtsMode: true,
+                      textColor: PdfColors.blue800,
+                      fontSize: 8.5,
+                      spacing: 8.0,
+                      runSpacing: 2.0,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -127,7 +129,7 @@ class WesternStrictTemplate extends CvTemplate {
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: cv.skills.map((skill) {
-                  final hasDesc = skill.description.trim().isNotEmpty;
+                  final hasDesc = cv.showSkillDescription && skill.description.trim().isNotEmpty;
                   final cleanName = PdfTextSanitizer.clean(skill.name);
                   final cleanDesc = PdfTextSanitizer.clean(skill.description);
                   return pw.Padding(
@@ -172,7 +174,7 @@ class WesternStrictTemplate extends CvTemplate {
               pw.SizedBox(height: 4),
               ...cv.certifications.map((cert) {
                 final title = PdfTextSanitizer.clean(cert.displayTitle);
-                final hasDesc = cert.description.trim().isNotEmpty;
+                final hasDesc = cv.showCertificationDescription && cert.description.trim().isNotEmpty;
                 return pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 2.5),
                   child: pw.Row(
@@ -212,7 +214,7 @@ class WesternStrictTemplate extends CvTemplate {
             if (cv.showProjects && cv.projects.isNotEmpty) ...[
               _buildSectionTitle('PROJECTS & PORTFOLIO', accentColor),
               pw.SizedBox(height: 4),
-              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor)),
+              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor, cv.showProjectDescription)),
               pw.SizedBox(height: 8),
             ],
 
@@ -371,7 +373,7 @@ class WesternStrictTemplate extends CvTemplate {
     );
   }
 
-  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor) {
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor, bool showDesc) {
     final cleanName = PdfTextSanitizer.clean(proj.name);
     final cleanRole = PdfTextSanitizer.clean(proj.role);
     final period = PdfTextSanitizer.clean(proj.displayPeriod);
@@ -421,7 +423,7 @@ class WesternStrictTemplate extends CvTemplate {
               ],
             ],
           ),
-          if (cleanDesc.isNotEmpty) ...[
+          if (showDesc && cleanDesc.isNotEmpty) ...[
             pw.SizedBox(height: 2),
             pw.Text(
               cleanDesc,

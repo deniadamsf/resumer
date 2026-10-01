@@ -100,7 +100,7 @@ class ModernAtsTemplate extends CvTemplate {
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: cv.skills.map((skill) {
-                  final hasDesc = skill.description.trim().isNotEmpty;
+                  final hasDesc = cv.showSkillDescription && skill.description.trim().isNotEmpty;
                   final cleanName = PdfTextSanitizer.clean(skill.name);
                   final cleanDesc = PdfTextSanitizer.clean(skill.description);
                   return pw.Padding(
@@ -145,7 +145,7 @@ class ModernAtsTemplate extends CvTemplate {
               pw.SizedBox(height: 6),
               ...cv.certifications.map((cert) {
                 final title = PdfTextSanitizer.clean(cert.displayTitle);
-                final hasDesc = cert.description.trim().isNotEmpty;
+                final hasDesc = cv.showCertificationDescription && cert.description.trim().isNotEmpty;
                 return pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 3),
                   child: pw.Row(
@@ -185,7 +185,7 @@ class ModernAtsTemplate extends CvTemplate {
             if (cv.showProjects && cv.projects.isNotEmpty) ...[
               _buildModernSectionTitle('PROJECTS & PORTFOLIO', accentColor),
               pw.SizedBox(height: 6),
-              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor)),
+              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor, cv.showProjectDescription)),
               pw.SizedBox(height: 8),
             ],
 
@@ -266,12 +266,13 @@ class ModernAtsTemplate extends CvTemplate {
                     pw.Text(PdfTextSanitizer.clean(info.phone), style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700)),
                   if (info.location.isNotEmpty)
                     pw.Text(PdfTextSanitizer.clean(info.location), style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700)),
-                  ...SocialIconPdfWidget.buildAllItems(
-                    info: info,
-                    isAtsMode: true,
-                    textColor: PdfColors.blue800,
-                    fontSize: 8.5,
-                  ),
+                  if (cv.showSocialLinks)
+                    ...SocialIconPdfWidget.buildAllItems(
+                      info: info,
+                      isAtsMode: true,
+                      textColor: PdfColors.blue800,
+                      fontSize: 8.5,
+                    ),
                 ],
               ),
             ],
@@ -432,7 +433,7 @@ class ModernAtsTemplate extends CvTemplate {
     );
   }
 
-  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor) {
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor, bool showDesc) {
     final cleanName = PdfTextSanitizer.clean(proj.name);
     final cleanRole = PdfTextSanitizer.clean(proj.role);
     final period = PdfTextSanitizer.clean(proj.displayPeriod);
@@ -482,7 +483,7 @@ class ModernAtsTemplate extends CvTemplate {
               ],
             ],
           ),
-          if (cleanDesc.isNotEmpty) ...[
+          if (showDesc && cleanDesc.isNotEmpty) ...[
             pw.SizedBox(height: 2),
             pw.Text(
               cleanDesc,

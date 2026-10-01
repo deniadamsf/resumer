@@ -320,7 +320,21 @@
     "reward_prompt_download": "Tonton 1 iklan singkat untuk mengunduh PDF resolusi tinggi.",
     "reward_prompt_job_match": "Tonton 1 iklan singkat untuk mencocokkan CV dengan syarat lowongan kerja.",
     "reward_prompt_cover_letter": "Tonton 1 iklan singkat untuk meracik Surat Lamaran AI.",
-    "loading": "Menyiapkan iklan..."
+    "loading": "Menyiapkan iklan...",
+    "choose_access": "Pilih Akses Fitur",
+    "choose_access_subtitle": "Pilih metode untuk melanjutkan proses dokumen Anda.",
+    "skip_with_coin": "Lewati Iklan (1 Koin)",
+    "skip_with_coin_desc": "Langsung proses instan tanpa antre iklan.",
+    "watch_free_ad": "Tonton Iklan Singkat (Gratis)",
+    "watch_free_ad_desc": "Dukung pengembang dengan menonton video sponsor.",
+    "your_balance": "Saldo Koin Anda:",
+    "insufficient_coins": "Koin Belum Cukup",
+    "tap_to_topup": "Ketuk untuk Top-up",
+    "ad_not_ready": "Iklan belum siap atau koneksi lambat. Gunakan 1 koin untuk langsung lewati atau coba beberapa saat lagi.",
+    "quota_exhausted_title": "Jatah AI Harian Habis",
+    "quota_exhausted_prompt": "Jatah gratis harian (5x) untuk perbaikan CV AI telah habis hari ini. Gunakan 1 koin untuk bypass kuota dan proses instan.",
+    "bypass_with_coin": "Gunakan 1 Koin",
+    "bypass_with_coin_desc": "Bypass kuota harian & proses instan tanpa iklan."
   },
   "cover_letter": {
     "title": "Surat Lamaran AI",
@@ -412,7 +426,13 @@
     "error": "Gagal membuat PDF",
     "cat_ats": "Kategori ATS (Skor 90-100)",
     "cat_creative": "Kategori Kreatif Non-ATS",
-    "change_design": "Ganti Desain"
+    "change_design": "Ganti Desain",
+    "compact_options_title": "Ringkas & Sesuaikan Tampilan CV",
+    "toggle_skill_desc": "Deskripsi Skill",
+    "toggle_cert_desc": "Deskripsi Sertifikasi",
+    "toggle_project_desc": "Deskripsi Proyek",
+    "toggle_social_links": "Media Sosial",
+    "toggle_hobbies": "Hobi & Minat"
   },
   "tabs": {
     "editor": "Editor",

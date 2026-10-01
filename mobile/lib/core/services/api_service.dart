@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../localization/app_localizations.dart';
+import 'auth_service.dart';
 
 class ApiService {
   static final ApiService instance = ApiService._internal();
@@ -126,6 +127,7 @@ class ApiService {
     await prefs.remove('user_name');
     await prefs.remove('user_email');
     await prefs.remove('user_avatar');
+    await AuthService.instance.signOut();
   }
 
   Map<String, String> _buildHeaders(String body) {
@@ -341,7 +343,11 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> autoFixAts(String cvText, {List<dynamic> suggestions = const []}) async {
+  Future<Map<String, dynamic>> autoFixAts(
+    String cvText, {
+    List<dynamic> suggestions = const [],
+    bool bypassQuota = false,
+  }) async {
     final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
 
     if (cvText.trim().length < 50) {
@@ -358,9 +364,14 @@ class ApiService {
       'cv_text': cvText,
       'suggestions': suggestions,
       'language': AppLocalizations.instance.currentLocale,
+      'bypass_quota': bypassQuota,
     });
     try {
-      final response = await http.post(url, headers: _buildHeaders(body), body: body);
+      final headers = _buildHeaders(body);
+      if (bypassQuota) {
+        headers['X-Bypass-Quota'] = 'true';
+      }
+      final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
       } else {

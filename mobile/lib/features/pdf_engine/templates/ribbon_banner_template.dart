@@ -90,14 +90,15 @@ class RibbonBannerTemplate extends CvTemplate {
                               _buildBannerContact(info.phone),
                             if (info.location.isNotEmpty)
                               _buildBannerContact(info.location),
-                            ...SocialIconPdfWidget.buildAllItems(
-                              info: info,
-                              isAtsMode: false,
-                              accentColor: PdfColors.white,
-                              textColor: PdfColors.white,
-                              fontSize: 8.0,
-                              iconSize: 8.0,
-                            ),
+                            if (cv.showSocialLinks)
+                              ...SocialIconPdfWidget.buildAllItems(
+                                info: info,
+                                isAtsMode: false,
+                                accentColor: PdfColors.white,
+                                textColor: PdfColors.white,
+                                fontSize: 8.0,
+                                iconSize: 8.0,
+                              ),
                           ],
                         ),
                       ],
@@ -144,7 +145,7 @@ class RibbonBannerTemplate extends CvTemplate {
             // 2-Column Split: Experience + Education on Left (64%), Skills + Languages on Right (36%)
             pw.Partitions(
               children: [
-                // Left Column: Experience & Education
+                // Left Column: Experience, Projects & Education
                 pw.Partition(
                   width: 325,
                   child: pw.Column(
@@ -155,6 +156,14 @@ class RibbonBannerTemplate extends CvTemplate {
                         _buildRibbonHeader('EXPERIENCE', accentColor),
                         pw.SizedBox(height: 8),
                         ...cv.experiences.map((exp) => _buildExperienceItem(exp, accentColor, mediumTint)),
+                        pw.SizedBox(height: 10),
+                      ],
+
+                      // Projects
+                      if (cv.showProjects && cv.projects.isNotEmpty) ...[
+                        _buildRibbonHeader('PROJECTS & PORTFOLIO', accentColor),
+                        pw.SizedBox(height: 8),
+                        ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor, cv.showProjectDescription)),
                         pw.SizedBox(height: 10),
                       ],
 
@@ -179,28 +188,57 @@ class RibbonBannerTemplate extends CvTemplate {
                       if (cv.showSkills && cv.skills.isNotEmpty) ...[
                         _buildRibbonHeader('CORE SKILLS', accentColor),
                         pw.SizedBox(height: 8),
-                        pw.Wrap(
-                          spacing: 4,
-                          runSpacing: 5,
-                          children: cv.skills.map((s) {
-                            return pw.Container(
-                              padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-                              decoration: pw.BoxDecoration(
-                                color: softTint,
-                                borderRadius: pw.BorderRadius.circular(4),
-                                border: pw.Border.all(color: tintColor(accentColor, 0.25), width: 0.8),
-                              ),
-                              child: pw.Text(
-                                PdfTextSanitizer.clean(s.name),
-                                style: pw.TextStyle(
-                                  fontSize: 8.5,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: accentColor,
+                        if (!cv.showSkillDescription)
+                          pw.Wrap(
+                            spacing: 4,
+                            runSpacing: 5,
+                            children: cv.skills.map((s) {
+                              return pw.Container(
+                                padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                                decoration: pw.BoxDecoration(
+                                  color: softTint,
+                                  borderRadius: pw.BorderRadius.circular(4),
+                                  border: pw.Border.all(color: tintColor(accentColor, 0.25), width: 0.8),
                                 ),
+                                child: pw.Text(
+                                  PdfTextSanitizer.clean(s.name),
+                                  style: pw.TextStyle(
+                                    fontSize: 8.5,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: accentColor,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          )
+                        else
+                          ...cv.skills.map((s) {
+                            final cleanDesc = PdfTextSanitizer.clean(s.description);
+                            final hasDesc = cleanDesc.isNotEmpty;
+                            return pw.Padding(
+                              padding: const pw.EdgeInsets.only(bottom: 4),
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text(
+                                    PdfTextSanitizer.clean(s.name),
+                                    style: pw.TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: accentColor,
+                                    ),
+                                  ),
+                                  if (hasDesc) ...[
+                                    pw.SizedBox(height: 1),
+                                    pw.Text(
+                                      cleanDesc,
+                                      style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
+                                    ),
+                                  ],
+                                ],
                               ),
                             );
-                          }).toList(),
-                        ),
+                          }),
                         pw.SizedBox(height: 12),
                       ],
 
@@ -210,18 +248,33 @@ class RibbonBannerTemplate extends CvTemplate {
                         pw.SizedBox(height: 8),
                         ...cv.certifications.map((cert) {
                           final title = PdfTextSanitizer.clean(cert.displayTitle);
+                          final hasDesc = cv.showCertificationDescription && cert.description.trim().isNotEmpty;
                           return pw.Padding(
                             padding: const pw.EdgeInsets.only(bottom: 4),
-                            child: pw.Row(
+                            child: pw.Column(
                               crossAxisAlignment: pw.CrossAxisAlignment.start,
                               children: [
-                                PdfTextSanitizer.buildBulletDot(accentColor, size: 3.5),
-                                pw.Expanded(
-                                  child: pw.Text(
-                                    title,
-                                    style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800),
-                                  ),
+                                pw.Row(
+                                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                  children: [
+                                    PdfTextSanitizer.buildBulletDot(accentColor, size: 3.5),
+                                    pw.Expanded(
+                                      child: pw.Text(
+                                        title,
+                                        style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                if (hasDesc) ...[
+                                  pw.Padding(
+                                    padding: const pw.EdgeInsets.only(left: 8, top: 1),
+                                    child: pw.Text(
+                                      PdfTextSanitizer.clean(cert.description),
+                                      style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           );
@@ -420,6 +473,61 @@ class RibbonBannerTemplate extends CvTemplate {
                 ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor, bool showDesc) {
+    final cleanName = PdfTextSanitizer.clean(proj.name);
+    final cleanRole = PdfTextSanitizer.clean(proj.role);
+    final period = PdfTextSanitizer.clean(proj.displayPeriod);
+    final cleanDesc = PdfTextSanitizer.clean(proj.description);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 7),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: cleanName,
+                        style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                      ),
+                      if (cleanRole.isNotEmpty)
+                        pw.TextSpan(
+                          text: ' | $cleanRole',
+                          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: accentColor),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (period.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Text(
+                  period,
+                  style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ],
+            ],
+          ),
+          if (showDesc && cleanDesc.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              cleanDesc,
+              style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800, lineSpacing: 1.3),
+              textAlign: pw.TextAlign.justify,
+            ),
+          ],
         ],
       ),
     );

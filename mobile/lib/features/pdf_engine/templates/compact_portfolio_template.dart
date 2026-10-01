@@ -86,14 +86,15 @@ class CompactPortfolioTemplate extends CvTemplate {
                               pw.Text(PdfTextSanitizer.clean(info.phone), style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.white)),
                             if (info.location.isNotEmpty)
                               pw.Text(PdfTextSanitizer.clean(info.location), style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey300)),
-                            ...SocialIconPdfWidget.buildAllItems(
-                              info: info,
-                              isAtsMode: false,
-                              accentColor: PdfColors.white,
-                              textColor: PdfColors.grey300,
-                              fontSize: 8.5,
-                              iconSize: 8.5,
-                            ),
+                            if (cv.showSocialLinks)
+                              ...SocialIconPdfWidget.buildAllItems(
+                                info: info,
+                                isAtsMode: false,
+                                accentColor: PdfColors.white,
+                                textColor: PdfColors.grey300,
+                                fontSize: 8.5,
+                                iconSize: 8.5,
+                              ),
                           ],
                         ),
                       ],
@@ -156,10 +157,10 @@ class CompactPortfolioTemplate extends CvTemplate {
                 runSpacing: 6,
                 children: cv.skills.map((skill) {
                   final cleanName = PdfTextSanitizer.clean(skill.name);
-                  final hasDesc = skill.description.trim().isNotEmpty;
+                  final hasDesc = cv.showSkillDescription && skill.description.trim().isNotEmpty;
                   final cleanDesc = PdfTextSanitizer.clean(skill.description);
                   return pw.Container(
-                    width: 245,
+                    width: hasDesc ? 245 : null,
                     padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: pw.BoxDecoration(
                       color: cardBg,
@@ -168,6 +169,7 @@ class CompactPortfolioTemplate extends CvTemplate {
                     ),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      mainAxisSize: pw.MainAxisSize.min,
                       children: [
                         pw.Text(
                           cleanName,
@@ -195,7 +197,7 @@ class CompactPortfolioTemplate extends CvTemplate {
               pw.SizedBox(height: 4),
               ...cv.certifications.map((c) {
                 final title = PdfTextSanitizer.clean(c.displayTitle);
-                final hasDesc = c.description.trim().isNotEmpty;
+                final hasDesc = cv.showCertificationDescription && c.description.trim().isNotEmpty;
                 return pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 2.5),
                   child: pw.Row(
@@ -218,7 +220,7 @@ class CompactPortfolioTemplate extends CvTemplate {
             if (cv.showProjects && cv.projects.isNotEmpty) ...[
               _buildSectionBar('PROJECTS & PORTFOLIO', accentColor),
               pw.SizedBox(height: 4),
-              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor)),
+              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor, cv.showProjectDescription)),
               pw.SizedBox(height: 8),
             ],
 
@@ -396,7 +398,7 @@ class CompactPortfolioTemplate extends CvTemplate {
     );
   }
 
-  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor) {
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor, bool showDesc) {
     final cleanName = PdfTextSanitizer.clean(proj.name);
     final cleanRole = PdfTextSanitizer.clean(proj.role);
     final period = PdfTextSanitizer.clean(proj.displayPeriod);
@@ -446,7 +448,7 @@ class CompactPortfolioTemplate extends CvTemplate {
               ],
             ],
           ),
-          if (cleanDesc.isNotEmpty) ...[
+          if (showDesc && cleanDesc.isNotEmpty) ...[
             pw.SizedBox(height: 2),
             pw.Text(
               cleanDesc,

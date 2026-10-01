@@ -5,7 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/coin_service.dart';
+import '../../../core/services/quota_service.dart';
 import '../../../core/services/signature_service.dart';
 import '../../../core/widgets/coin_badge.dart';
 import '../../../core/widgets/coin_topup_sheet.dart';
@@ -33,6 +35,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _profileMgr.addListener(_onStateChanged);
     _sigService.addListener(_onStateChanged);
+    CoinService.instance.refreshBalance();
+    QuotaService.instance.fetchQuota();
   }
 
   @override
@@ -368,6 +372,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (confirmed == true) {
+      await AuthService.instance.signOut();
       await _apiService.clearAuth();
       await _profileMgr.clearAllLocalProfiles();
       await CoinService.instance.reset();
@@ -856,98 +861,123 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildQuotaCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.cardSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderHairline, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.midnightNavy.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.donut_large_rounded,
-                  size: 18,
-                  color: AppColors.midnightNavy,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'profile.quota_title'.tr,
-                      style: GoogleFonts.outfit(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.midnightNavy,
-                      ),
-                    ),
-                    Text(
-                      'profile.quota_desc'.tr,
-                      style: GoogleFonts.outfit(
-                        fontSize: 11.5,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.forestPine.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '4 / 5',
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.forestPine,
-                  ),
-                ),
+    return ValueListenableBuilder<int>(
+      valueListenable: QuotaService.instance.remainingQuotaNotifier,
+      builder: (context, remaining, _) {
+        final ratio = (remaining / 5.0).clamp(0.0, 1.0);
+        final isExhausted = remaining <= 0;
+        final badgeColor = isExhausted ? AppColors.crimsonBordeaux : AppColors.forestPine;
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.cardSurface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.borderHairline, width: 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 10,
+                offset: Offset(0, 2),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: 4 / 5,
-              backgroundColor: AppColors.borderHairline,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.midnightNavy),
-              minHeight: 6,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.midnightNavy.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.donut_large_rounded,
+                      size: 18,
+                      color: AppColors.midnightNavy,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'profile.quota_title'.tr,
+                          style: GoogleFonts.outfit(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.midnightNavy,
+                          ),
+                        ),
+                        Text(
+                          'profile.quota_desc'.tr,
+                          style: GoogleFonts.outfit(
+                            fontSize: 11.5,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: badgeColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$remaining / 5',
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: badgeColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: ratio,
+                  backgroundColor: AppColors.borderHairline,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isExhausted ? AppColors.crimsonBordeaux : AppColors.midnightNavy,
+                  ),
+                  minHeight: 6,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'quota.resets_info'.tr,
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  if (isExhausted)
+                    Text(
+                      'Bisa bypass dengan 1 koin',
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFFD97706),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'quota.resets_info'.tr,
-            style: GoogleFonts.outfit(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

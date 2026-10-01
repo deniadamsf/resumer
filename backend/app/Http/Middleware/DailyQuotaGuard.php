@@ -27,6 +27,17 @@ class DailyQuotaGuard
         }
 
         $effectiveDeviceUuid = $deviceUuid ?? ($user->device_uuid ?? 'unknown-device');
+
+        // Allow bypassing daily quota if paid with coins
+        $isBypassing = $request->header('X-Bypass-Quota') === 'true'
+            || $request->header('X-Bypass-Quota') === '1'
+            || $request->boolean('bypass_quota');
+
+        if ($isBypassing) {
+            $request->attributes->set('daily_quota', null);
+            return $next($request);
+        }
+
         $dailyQuota = DailyQuota::getTodayQuota($user?->id, $effectiveDeviceUuid);
 
         if (!$dailyQuota->hasRemainingQuota()) {

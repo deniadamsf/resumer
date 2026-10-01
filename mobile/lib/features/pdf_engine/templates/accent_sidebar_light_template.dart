@@ -99,46 +99,77 @@ class AccentSidebarLightTemplate extends CvTemplate {
                           _buildContactRow('Phone', PdfTextSanitizer.clean(info.phone)),
                         if (info.location.isNotEmpty)
                           _buildContactRow('Location', PdfTextSanitizer.clean(info.location)),
-                        if (_buildSocialContactRow(SocialPlatform.linkedin, info.linkedin, accentColor) != null)
-                          _buildSocialContactRow(SocialPlatform.linkedin, info.linkedin, accentColor)!,
-                        if (_buildSocialContactRow(SocialPlatform.github, info.github, accentColor) != null)
-                          _buildSocialContactRow(SocialPlatform.github, info.github, accentColor)!,
-                        if (_buildSocialContactRow(SocialPlatform.website, info.website, accentColor) != null)
-                          _buildSocialContactRow(SocialPlatform.website, info.website, accentColor)!,
-                        if (_buildSocialContactRow(SocialPlatform.whatsapp, info.whatsapp, accentColor) != null)
-                          _buildSocialContactRow(SocialPlatform.whatsapp, info.whatsapp, accentColor)!,
-                        if (_buildSocialContactRow(SocialPlatform.instagram, info.instagram, accentColor) != null)
-                          _buildSocialContactRow(SocialPlatform.instagram, info.instagram, accentColor)!,
-                        if (_buildSocialContactRow(SocialPlatform.facebook, info.facebook, accentColor) != null)
-                          _buildSocialContactRow(SocialPlatform.facebook, info.facebook, accentColor)!,
+                        if (cv.showSocialLinks) ...[
+                          if (_buildSocialContactRow(SocialPlatform.linkedin, info.linkedin, accentColor) != null)
+                            _buildSocialContactRow(SocialPlatform.linkedin, info.linkedin, accentColor)!,
+                          if (_buildSocialContactRow(SocialPlatform.github, info.github, accentColor) != null)
+                            _buildSocialContactRow(SocialPlatform.github, info.github, accentColor)!,
+                          if (_buildSocialContactRow(SocialPlatform.website, info.website, accentColor) != null)
+                            _buildSocialContactRow(SocialPlatform.website, info.website, accentColor)!,
+                          if (_buildSocialContactRow(SocialPlatform.whatsapp, info.whatsapp, accentColor) != null)
+                            _buildSocialContactRow(SocialPlatform.whatsapp, info.whatsapp, accentColor)!,
+                          if (_buildSocialContactRow(SocialPlatform.instagram, info.instagram, accentColor) != null)
+                            _buildSocialContactRow(SocialPlatform.instagram, info.instagram, accentColor)!,
+                          if (_buildSocialContactRow(SocialPlatform.facebook, info.facebook, accentColor) != null)
+                            _buildSocialContactRow(SocialPlatform.facebook, info.facebook, accentColor)!,
+                        ],
                         pw.SizedBox(height: 16),
 
                         // Skills
                         if (cv.showSkills && cv.skills.isNotEmpty) ...[
                           _buildSectionLabel('EXPERTISE', accentColor),
                           pw.SizedBox(height: 6),
-                          pw.Wrap(
-                            spacing: 4,
-                            runSpacing: 5,
-                            children: cv.skills.map((s) {
-                              return pw.Container(
-                                padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-                                decoration: pw.BoxDecoration(
-                                  color: PdfColors.white,
-                                  borderRadius: pw.BorderRadius.circular(4),
-                                  border: pw.Border.all(color: PdfColor.fromHex('#CBD5E1'), width: 0.8),
-                                ),
-                                child: pw.Text(
-                                  PdfTextSanitizer.clean(s.name),
-                                  style: pw.TextStyle(
-                                    fontSize: 8.5,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: PdfColors.grey900,
+                          if (!cv.showSkillDescription)
+                            pw.Wrap(
+                              spacing: 4,
+                              runSpacing: 5,
+                              children: cv.skills.map((s) {
+                                return pw.Container(
+                                  padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                                  decoration: pw.BoxDecoration(
+                                    color: PdfColors.white,
+                                    borderRadius: pw.BorderRadius.circular(4),
+                                    border: pw.Border.all(color: PdfColor.fromHex('#CBD5E1'), width: 0.8),
                                   ),
+                                  child: pw.Text(
+                                    PdfTextSanitizer.clean(s.name),
+                                    style: pw.TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: PdfColors.grey900,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            )
+                          else
+                            ...cv.skills.map((s) {
+                              final cleanDesc = PdfTextSanitizer.clean(s.description);
+                              final hasDesc = cleanDesc.isNotEmpty;
+                              return pw.Padding(
+                                padding: const pw.EdgeInsets.only(bottom: 5),
+                                child: pw.Column(
+                                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                  children: [
+                                    pw.Text(
+                                      PdfTextSanitizer.clean(s.name),
+                                      style: pw.TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: pw.FontWeight.bold,
+                                        color: PdfColors.grey900,
+                                      ),
+                                    ),
+                                    if (hasDesc) ...[
+                                      pw.SizedBox(height: 1),
+                                      pw.Text(
+                                        cleanDesc,
+                                        style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               );
-                            }).toList(),
-                          ),
+                            }),
                           pw.SizedBox(height: 16),
                         ],
 
@@ -179,7 +210,7 @@ class AccentSidebarLightTemplate extends CvTemplate {
                   ),
                 ),
 
-                // Right Column: Main Body (Header, Summary, Experience, Education)
+                // Right Column: Main Body (Header, Summary, Experience, Projects, Education, Certifications)
                 pw.Partition(
                   child: pw.Padding(
                     padding: const pw.EdgeInsets.symmetric(horizontal: 24, vertical: 28),
@@ -229,6 +260,14 @@ class AccentSidebarLightTemplate extends CvTemplate {
                           pw.SizedBox(height: 10),
                         ],
 
+                        // Projects
+                        if (cv.showProjects && cv.projects.isNotEmpty) ...[
+                          _buildMainHeading('PROJECTS & PORTFOLIO', accentColor),
+                          pw.SizedBox(height: 6),
+                          ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor, cv.showProjectDescription)),
+                          pw.SizedBox(height: 10),
+                        ],
+
                         // Education
                         if (cv.showEducation && cv.educations.isNotEmpty) ...[
                           _buildMainHeading('EDUCATION', accentColor),
@@ -243,7 +282,7 @@ class AccentSidebarLightTemplate extends CvTemplate {
                           pw.SizedBox(height: 6),
                           ...cv.certifications.map((c) {
                             final title = PdfTextSanitizer.clean(c.displayTitle);
-                            final hasDesc = c.description.trim().isNotEmpty;
+                            final hasDesc = cv.showCertificationDescription && c.description.trim().isNotEmpty;
                             return pw.Padding(
                               padding: const pw.EdgeInsets.only(bottom: 3),
                               child: pw.Row(
@@ -443,6 +482,61 @@ class AccentSidebarLightTemplate extends CvTemplate {
             style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
             textAlign: pw.TextAlign.right,
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor, bool showDesc) {
+    final cleanName = PdfTextSanitizer.clean(proj.name);
+    final cleanRole = PdfTextSanitizer.clean(proj.role);
+    final period = PdfTextSanitizer.clean(proj.displayPeriod);
+    final cleanDesc = PdfTextSanitizer.clean(proj.description);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 7),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: cleanName,
+                        style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                      ),
+                      if (cleanRole.isNotEmpty)
+                        pw.TextSpan(
+                          text: ' | $cleanRole',
+                          style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: accentColor),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (period.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Text(
+                  period,
+                  style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ],
+            ],
+          ),
+          if (showDesc && cleanDesc.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              cleanDesc,
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800, lineSpacing: 1.3),
+              textAlign: pw.TextAlign.justify,
+            ),
+          ],
         ],
       ),
     );

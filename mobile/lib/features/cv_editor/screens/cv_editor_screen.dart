@@ -6,6 +6,7 @@ import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/ad_service.dart';
+import '../../../core/services/quota_service.dart';
 import '../../../core/widgets/coin_badge.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../job_matcher/screens/job_matcher_screen.dart';
@@ -224,12 +225,10 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
   }
 
   Future<void> _fetchQuota() async {
-    try {
-      final quotaData = await ApiService.instance.getQuota();
-      if (quotaData['success'] == true && mounted) {
-        setState(() => _remainingQuota = quotaData['quota']['remaining'] ?? 5);
-      }
-    } catch (_) {}
+    await QuotaService.instance.fetchQuota();
+    if (mounted) {
+      setState(() => _remainingQuota = QuotaService.instance.remainingQuota);
+    }
   }
 
   Future<void> _handleProfileSwitch(int newIndex) async {
@@ -272,6 +271,9 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     await AdService.instance.showRewardedAd(
       context: context,
       prompt: 'ad.reward_prompt_generate'.tr,
+      actionType: 'ai_generate',
+      actionDescription: 'Generate Deskripsi AI',
+      coinCost: 1,
       onRewarded: _executeGenerateAi,
     );
   }
@@ -409,7 +411,11 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
 
         // Update quota
         if (response['quota']?['remaining'] != null) {
-          _remainingQuota = response['quota']['remaining'];
+          final q = (response['quota']['remaining'] as num).toInt();
+          _remainingQuota = q;
+          QuotaService.instance.updateQuota(q);
+        } else {
+          QuotaService.instance.consumeLocally();
         }
 
         await _profileMgr.saveCurrentProfile(_cv);
@@ -447,6 +453,9 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
     await AdService.instance.showRewardedAd(
       context: context,
       prompt: 'ad.reward_prompt_download'.tr,
+      actionType: 'export_pdf',
+      actionDescription: 'Ekspor Dokumen PDF',
+      coinCost: 1,
       onRewarded: _executeExportPdf,
     );
   }
@@ -542,7 +551,10 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
               onRenameProfile: _handleRenameProfile,
             ),
             const SizedBox(height: 14),
-            DailyQuotaBanner(remainingQuota: _remainingQuota),
+            ValueListenableBuilder<int>(
+              valueListenable: QuotaService.instance.remainingQuotaNotifier,
+              builder: (context, quota, _) => DailyQuotaBanner(remainingQuota: quota),
+            ),
             const SizedBox(height: 14),
             JobMatcherBanner(onTap: _openJobMatcher),
             const SizedBox(height: 14),

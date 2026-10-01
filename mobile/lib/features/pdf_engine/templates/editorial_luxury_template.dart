@@ -91,14 +91,15 @@ class EditorialLuxuryTemplate extends CvTemplate {
                               _buildHeaderContact(PdfTextSanitizer.clean(info.phone)),
                             if (info.location.isNotEmpty)
                               _buildHeaderContact(PdfTextSanitizer.clean(info.location)),
-                            ...SocialIconPdfWidget.buildAllItems(
-                              info: info,
-                              isAtsMode: false,
-                              accentColor: accentColor,
-                              textColor: PdfColors.grey700,
-                              fontSize: 8.5,
-                              iconSize: 8.5,
-                            ),
+                            if (cv.showSocialLinks)
+                              ...SocialIconPdfWidget.buildAllItems(
+                                info: info,
+                                isAtsMode: false,
+                                accentColor: accentColor,
+                                textColor: PdfColors.grey700,
+                                fontSize: 8.5,
+                                iconSize: 8.5,
+                              ),
                           ],
                         ),
                       ],
@@ -153,6 +154,14 @@ class EditorialLuxuryTemplate extends CvTemplate {
               pw.SizedBox(height: 10),
             ],
 
+            // Projects Section
+            if (cv.showProjects && cv.projects.isNotEmpty) ...[
+              _buildSectionTitle('PROJECTS & PORTFOLIO', accentColor),
+              pw.SizedBox(height: 8),
+              ...cv.projects.map((proj) => _buildProjectItem(proj, accentColor, cv.showProjectDescription)),
+              pw.SizedBox(height: 10),
+            ],
+
             // Education & Skills in 2 Column Partition
             pw.Partitions(
               children: [
@@ -173,20 +182,39 @@ class EditorialLuxuryTemplate extends CvTemplate {
                         if (cv.showCertifications && cv.certifications.isNotEmpty) ...[
                           _buildSectionTitle('CREDENTIALS', accentColor),
                           pw.SizedBox(height: 6),
-                          ...cv.certifications.map((c) => pw.Padding(
-                                padding: const pw.EdgeInsets.only(bottom: 3),
-                                child: pw.Row(
-                                  children: [
-                                    PdfTextSanitizer.buildBulletDot(accentColor, size: 3),
-                                    pw.Expanded(
+                          ...cv.certifications.map((c) {
+                            final hasDesc = cv.showCertificationDescription && c.description.trim().isNotEmpty;
+                            return pw.Padding(
+                              padding: const pw.EdgeInsets.only(bottom: 3),
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Row(
+                                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                    children: [
+                                      PdfTextSanitizer.buildBulletDot(accentColor, size: 3),
+                                      pw.Expanded(
+                                        child: pw.Text(
+                                          PdfTextSanitizer.clean(c.displayTitle),
+                                          style: const pw.TextStyle(fontSize: 8.5),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (hasDesc) ...[
+                                    pw.Padding(
+                                      padding: const pw.EdgeInsets.only(left: 8, top: 1),
                                       child: pw.Text(
-                                        PdfTextSanitizer.clean(c.displayTitle),
-                                        style: const pw.TextStyle(fontSize: 8.5),
+                                        PdfTextSanitizer.clean(c.description),
+                                        style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
                                       ),
                                     ),
                                   ],
-                                ),
-                              )),
+                                ],
+                              ),
+                            );
+                          }),
+                          pw.SizedBox(height: 10),
                         ],
                       ],
                     ),
@@ -203,28 +231,57 @@ class EditorialLuxuryTemplate extends CvTemplate {
                         if (cv.showSkills && cv.skills.isNotEmpty) ...[
                           _buildSectionTitle('AREAS OF EXPERTISE', accentColor),
                           pw.SizedBox(height: 6),
-                          pw.Wrap(
-                            spacing: 5,
-                            runSpacing: 5,
-                            children: cv.skills.map((s) {
-                              return pw.Container(
-                                padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                decoration: pw.BoxDecoration(
-                                  color: luxuryTint,
-                                  borderRadius: pw.BorderRadius.circular(3),
-                                  border: pw.Border.all(color: borderTint, width: 0.6),
-                                ),
-                                child: pw.Text(
-                                  PdfTextSanitizer.clean(s.name),
-                                  style: pw.TextStyle(
-                                    fontSize: 8.5,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: accentColor,
+                          if (!cv.showSkillDescription)
+                            pw.Wrap(
+                              spacing: 5,
+                              runSpacing: 5,
+                              children: cv.skills.map((s) {
+                                return pw.Container(
+                                  padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: pw.BoxDecoration(
+                                    color: luxuryTint,
+                                    borderRadius: pw.BorderRadius.circular(3),
+                                    border: pw.Border.all(color: borderTint, width: 0.6),
                                   ),
+                                  child: pw.Text(
+                                    PdfTextSanitizer.clean(s.name),
+                                    style: pw.TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: accentColor,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            )
+                          else
+                            ...cv.skills.map((s) {
+                              final cleanDesc = PdfTextSanitizer.clean(s.description);
+                              final hasDesc = cleanDesc.isNotEmpty;
+                              return pw.Padding(
+                                padding: const pw.EdgeInsets.only(bottom: 4),
+                                child: pw.Column(
+                                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                  children: [
+                                    pw.Text(
+                                      PdfTextSanitizer.clean(s.name),
+                                      style: pw.TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: pw.FontWeight.bold,
+                                        color: accentColor,
+                                      ),
+                                    ),
+                                    if (hasDesc) ...[
+                                      pw.SizedBox(height: 1),
+                                      pw.Text(
+                                        cleanDesc,
+                                        style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               );
-                            }).toList(),
-                          ),
+                            }),
                           pw.SizedBox(height: 10),
                         ],
                         if (cv.showLanguages && cv.languages.isNotEmpty) ...[
@@ -237,6 +294,28 @@ class EditorialLuxuryTemplate extends CvTemplate {
                                   style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800),
                                 ),
                               )),
+                          pw.SizedBox(height: 10),
+                        ],
+                        if (cv.showHobbies && cv.hobbies.isNotEmpty) ...[
+                          _buildSectionTitle('HOBBIES & INTERESTS', accentColor),
+                          pw.SizedBox(height: 6),
+                          pw.Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children: cv.hobbies.map((h) => pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: pw.BoxDecoration(
+                                color: luxuryTint,
+                                borderRadius: pw.BorderRadius.circular(3),
+                                border: pw.Border.all(color: borderTint, width: 0.5),
+                              ),
+                              child: pw.Text(
+                                PdfTextSanitizer.clean(h),
+                                style: pw.TextStyle(fontSize: 8, color: accentColor),
+                              ),
+                            )).toList(),
+                          ),
+                          pw.SizedBox(height: 10),
                         ],
                       ],
                     ),
@@ -361,6 +440,69 @@ class EditorialLuxuryTemplate extends CvTemplate {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor, bool showDesc) {
+    final cleanName = PdfTextSanitizer.clean(proj.name);
+    final cleanRole = PdfTextSanitizer.clean(proj.role);
+    final period = PdfTextSanitizer.clean(proj.displayPeriod);
+    final cleanDesc = PdfTextSanitizer.clean(proj.description);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 7),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: cleanName,
+                        style: pw.TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.grey900,
+                        ),
+                      ),
+                      if (cleanRole.isNotEmpty)
+                        pw.TextSpan(
+                          text: ' | $cleanRole',
+                          style: pw.TextStyle(
+                            fontSize: 8.5,
+                            fontWeight: pw.FontWeight.bold,
+                            color: accentColor,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (period.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Text(
+                  period,
+                  style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ],
+            ],
+          ),
+          if (showDesc && cleanDesc.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              cleanDesc,
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800, lineSpacing: 1.3),
+              textAlign: pw.TextAlign.justify,
+            ),
+          ],
         ],
       ),
     );

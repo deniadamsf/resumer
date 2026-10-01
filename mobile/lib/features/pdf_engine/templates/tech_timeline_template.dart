@@ -97,14 +97,15 @@ class TechTimelineTemplate extends CvTemplate {
                             _buildIconText(PdfTextSanitizer.clean(info.phone)),
                           if (info.location.isNotEmpty)
                             _buildIconText(PdfTextSanitizer.clean(info.location)),
-                          ...SocialIconPdfWidget.buildAllItems(
-                            info: info,
-                            isAtsMode: false,
-                            accentColor: accentColor,
-                            textColor: PdfColors.grey700,
-                            fontSize: 9.0,
-                            iconSize: 8.5,
-                          ),
+                          if (cv.showSocialLinks)
+                            ...SocialIconPdfWidget.buildAllItems(
+                              info: info,
+                              isAtsMode: false,
+                              accentColor: accentColor,
+                              textColor: PdfColors.grey700,
+                              fontSize: 9.0,
+                              iconSize: 8.5,
+                            ),
                         ],
                       ),
                     ],
@@ -136,21 +137,43 @@ class TechTimelineTemplate extends CvTemplate {
                             runSpacing: 5,
                             children: cv.skills.map((s) {
                               final cleanName = PdfTextSanitizer.clean(s.name);
+                              final cleanDesc = PdfTextSanitizer.clean(s.description);
+                              final hasDesc = cv.showSkillDescription && cleanDesc.isNotEmpty;
                               return pw.Container(
+                                width: hasDesc ? double.infinity : null,
                                 padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
                                 decoration: pw.BoxDecoration(
                                   color: softTint,
                                   borderRadius: pw.BorderRadius.circular(4),
                                   border: pw.Border.all(color: borderTint, width: 0.8),
                                 ),
-                                child: pw.Text(
-                                  cleanName,
-                                  style: pw.TextStyle(
-                                    fontSize: 8.5,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: accentColor,
-                                  ),
-                                ),
+                                child: hasDesc
+                                    ? pw.Column(
+                                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                        children: [
+                                          pw.Text(
+                                            cleanName,
+                                            style: pw.TextStyle(
+                                              fontSize: 8.5,
+                                              fontWeight: pw.FontWeight.bold,
+                                              color: accentColor,
+                                            ),
+                                          ),
+                                          pw.SizedBox(height: 1),
+                                          pw.Text(
+                                            cleanDesc,
+                                            style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
+                                          ),
+                                        ],
+                                      )
+                                    : pw.Text(
+                                        cleanName,
+                                        style: pw.TextStyle(
+                                          fontSize: 8.5,
+                                          fontWeight: pw.FontWeight.bold,
+                                          color: accentColor,
+                                        ),
+                                      ),
                               );
                             }).toList(),
                           ),
@@ -201,6 +224,7 @@ class TechTimelineTemplate extends CvTemplate {
                           pw.SizedBox(height: 6),
                           ...cv.certifications.map((c) {
                             final title = PdfTextSanitizer.clean(c.displayTitle);
+                            final hasDesc = cv.showCertificationDescription && c.description.trim().isNotEmpty;
                             return pw.Padding(
                               padding: const pw.EdgeInsets.only(bottom: 4),
                               child: pw.Row(
@@ -208,7 +232,10 @@ class TechTimelineTemplate extends CvTemplate {
                                 children: [
                                   PdfTextSanitizer.buildBulletDot(accentColor, size: 3),
                                   pw.Expanded(
-                                    child: pw.Text(title, style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800)),
+                                    child: pw.Text(
+                                      hasDesc ? '$title: ${PdfTextSanitizer.clean(c.description)}' : title,
+                                      style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -228,6 +255,18 @@ class TechTimelineTemplate extends CvTemplate {
                                   style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800),
                                 ),
                               )),
+                          pw.SizedBox(height: 10),
+                        ],
+
+                        // Hobbies
+                        if (cv.showHobbies && cv.hobbies.isNotEmpty) ...[
+                          _buildLeftTitle('INTERESTS', accentColor),
+                          pw.SizedBox(height: 6),
+                          pw.Text(
+                            cv.hobbies.map((h) => '- ${PdfTextSanitizer.clean(h)}').join('\n'),
+                            style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800, lineSpacing: 1.5),
+                          ),
+                          pw.SizedBox(height: 10),
                         ],
                       ],
                     ),
@@ -263,7 +302,7 @@ class TechTimelineTemplate extends CvTemplate {
                         pw.SizedBox(height: 12),
                         _buildRightTitle('PROJECTS & PORTFOLIO', accentColor),
                         pw.SizedBox(height: 8),
-                        ...cv.projects.map((proj) => _buildProjectTimelineItem(proj, accentColor, borderTint)),
+                        ...cv.projects.map((proj) => _buildProjectTimelineItem(proj, accentColor, borderTint, cv.showProjectDescription)),
                       ],
                     ],
                   ),
@@ -401,7 +440,7 @@ class TechTimelineTemplate extends CvTemplate {
     );
   }
 
-  pw.Widget _buildProjectTimelineItem(ProjectItem proj, PdfColor accentColor, PdfColor timelineLineColor) {
+  pw.Widget _buildProjectTimelineItem(ProjectItem proj, PdfColor accentColor, PdfColor timelineLineColor, bool showDesc) {
     final cleanName = PdfTextSanitizer.clean(proj.name);
     final cleanRole = PdfTextSanitizer.clean(proj.role);
     final period = PdfTextSanitizer.clean(proj.displayPeriod);
@@ -452,7 +491,7 @@ class TechTimelineTemplate extends CvTemplate {
                     style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: accentColor),
                   ),
                 ],
-                if (cleanDesc.isNotEmpty) ...[
+                if (showDesc && cleanDesc.isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
                     cleanDesc,

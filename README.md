@@ -70,7 +70,7 @@ php artisan serve
 
 ## Versi
 
-Mobile: **1.0.6+7**
+Mobile: **1.0.7+8**
 
 ## Lisensi
 

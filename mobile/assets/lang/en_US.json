@@ -320,7 +320,21 @@
     "reward_prompt_download": "Watch a quick sponsored ad to download high-resolution PDF.",
     "reward_prompt_job_match": "Watch a quick sponsored ad to match your CV with job requirements.",
     "reward_prompt_cover_letter": "Watch a quick sponsored ad to generate an executive AI Cover Letter.",
-    "loading": "Preparing advertisement..."
+    "loading": "Preparing advertisement...",
+    "choose_access": "Choose Access Method",
+    "choose_access_subtitle": "Select a method to proceed with your document.",
+    "skip_with_coin": "Skip Ad (1 Coin)",
+    "skip_with_coin_desc": "Instant processing without waiting for ads.",
+    "watch_free_ad": "Watch Short Ad (Free)",
+    "watch_free_ad_desc": "Support development by watching a sponsored video.",
+    "your_balance": "Your Coin Balance:",
+    "insufficient_coins": "Insufficient Coins",
+    "tap_to_topup": "Tap to Top-up",
+    "ad_not_ready": "Advertisement not ready or slow connection. Use 1 coin to skip instantly or try again shortly.",
+    "quota_exhausted_title": "Daily AI Quota Reached",
+    "quota_exhausted_prompt": "Your daily free quota (5x) for AI CV improvement has been reached. Use 1 coin to bypass quota and proceed instantly.",
+    "bypass_with_coin": "Use 1 Coin",
+    "bypass_with_coin_desc": "Bypass daily quota & process instantly without ads."
   },
   "cover_letter": {
     "title": "AI Cover Letter",
@@ -412,7 +426,13 @@
     "error": "Failed to generate PDF",
     "cat_ats": "ATS Category (Score 90-100)",
     "cat_creative": "Creative Non-ATS Category",
-    "change_design": "Change Design"
+    "change_design": "Change Design",
+    "compact_options_title": "Compact & Customize CV Layout",
+    "toggle_skill_desc": "Skill Details",
+    "toggle_cert_desc": "Cert Details",
+    "toggle_project_desc": "Project Details",
+    "toggle_social_links": "Social Media",
+    "toggle_hobbies": "Hobbies & Interests"
   },
   "tabs": {
     "editor": "Editor",

@@ -92,18 +92,20 @@ class ColorBlockTemplate extends CvTemplate {
                               _buildContactPill(info.phone, mediumTint, accentColor),
                             if (info.location.isNotEmpty)
                               _buildContactPill(info.location, mediumTint, accentColor),
-                            if (_buildSocialContactPill(SocialPlatform.linkedin, info.linkedin, mediumTint, accentColor) != null)
-                              _buildSocialContactPill(SocialPlatform.linkedin, info.linkedin, mediumTint, accentColor)!,
-                            if (_buildSocialContactPill(SocialPlatform.github, info.github, mediumTint, accentColor) != null)
-                              _buildSocialContactPill(SocialPlatform.github, info.github, mediumTint, accentColor)!,
-                            if (_buildSocialContactPill(SocialPlatform.website, info.website, mediumTint, accentColor) != null)
-                              _buildSocialContactPill(SocialPlatform.website, info.website, mediumTint, accentColor)!,
-                            if (_buildSocialContactPill(SocialPlatform.whatsapp, info.whatsapp, mediumTint, accentColor) != null)
-                              _buildSocialContactPill(SocialPlatform.whatsapp, info.whatsapp, mediumTint, accentColor)!,
-                            if (_buildSocialContactPill(SocialPlatform.instagram, info.instagram, mediumTint, accentColor) != null)
-                              _buildSocialContactPill(SocialPlatform.instagram, info.instagram, mediumTint, accentColor)!,
-                            if (_buildSocialContactPill(SocialPlatform.facebook, info.facebook, mediumTint, accentColor) != null)
-                              _buildSocialContactPill(SocialPlatform.facebook, info.facebook, mediumTint, accentColor)!,
+                            if (cv.showSocialLinks) ...[
+                              if (_buildSocialContactPill(SocialPlatform.linkedin, info.linkedin, mediumTint, accentColor) != null)
+                                _buildSocialContactPill(SocialPlatform.linkedin, info.linkedin, mediumTint, accentColor)!,
+                              if (_buildSocialContactPill(SocialPlatform.github, info.github, mediumTint, accentColor) != null)
+                                _buildSocialContactPill(SocialPlatform.github, info.github, mediumTint, accentColor)!,
+                              if (_buildSocialContactPill(SocialPlatform.website, info.website, mediumTint, accentColor) != null)
+                                _buildSocialContactPill(SocialPlatform.website, info.website, mediumTint, accentColor)!,
+                              if (_buildSocialContactPill(SocialPlatform.whatsapp, info.whatsapp, mediumTint, accentColor) != null)
+                                _buildSocialContactPill(SocialPlatform.whatsapp, info.whatsapp, mediumTint, accentColor)!,
+                              if (_buildSocialContactPill(SocialPlatform.instagram, info.instagram, mediumTint, accentColor) != null)
+                                _buildSocialContactPill(SocialPlatform.instagram, info.instagram, mediumTint, accentColor)!,
+                              if (_buildSocialContactPill(SocialPlatform.facebook, info.facebook, mediumTint, accentColor) != null)
+                                _buildSocialContactPill(SocialPlatform.facebook, info.facebook, mediumTint, accentColor)!,
+                            ],
                           ],
                         ),
                       ],
@@ -155,6 +157,21 @@ class ColorBlockTemplate extends CvTemplate {
               pw.SizedBox(height: 12),
             ],
 
+            // Projects Block
+            if (cv.showProjects && cv.projects.isNotEmpty) ...[
+              _buildBlockContainer(
+                title: 'PROJECTS & PORTFOLIO',
+                accentColor: accentColor,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: cv.projects
+                      .map((proj) => _buildProjectItem(proj, accentColor, cv.showProjectDescription))
+                      .toList(),
+                ),
+              ),
+              pw.SizedBox(height: 12),
+            ],
+
             // Education Block
             if (cv.showEducation && cv.educations.isNotEmpty) ...[
               _buildBlockContainer(
@@ -178,28 +195,59 @@ class ColorBlockTemplate extends CvTemplate {
                       ? _buildBlockContainer(
                           title: 'SKILLS & COMPETENCIES',
                           accentColor: accentColor,
-                          child: pw.Wrap(
-                            spacing: 5,
-                            runSpacing: 5,
-                            children: cv.skills.map((s) {
-                              return pw.Container(
-                                padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-                                decoration: pw.BoxDecoration(
-                                  color: softTint,
-                                  borderRadius: pw.BorderRadius.circular(4),
-                                  border: pw.Border.all(color: borderTint, width: 0.8),
+                          child: !cv.showSkillDescription
+                              ? pw.Wrap(
+                                  spacing: 5,
+                                  runSpacing: 5,
+                                  children: cv.skills.map((s) {
+                                    return pw.Container(
+                                      padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                                      decoration: pw.BoxDecoration(
+                                        color: softTint,
+                                        borderRadius: pw.BorderRadius.circular(4),
+                                        border: pw.Border.all(color: borderTint, width: 0.8),
+                                      ),
+                                      child: pw.Text(
+                                        PdfTextSanitizer.clean(s.name),
+                                        style: pw.TextStyle(
+                                          fontSize: 8.5,
+                                          fontWeight: pw.FontWeight.bold,
+                                          color: accentColor,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                )
+                              : pw.Column(
+                                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                  children: cv.skills.map((s) {
+                                    final cleanDesc = PdfTextSanitizer.clean(s.description);
+                                    final hasDesc = cleanDesc.isNotEmpty;
+                                    return pw.Padding(
+                                      padding: const pw.EdgeInsets.only(bottom: 4),
+                                      child: pw.Column(
+                                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                        children: [
+                                          pw.Text(
+                                            PdfTextSanitizer.clean(s.name),
+                                            style: pw.TextStyle(
+                                              fontSize: 8.5,
+                                              fontWeight: pw.FontWeight.bold,
+                                              color: accentColor,
+                                            ),
+                                          ),
+                                          if (hasDesc) ...[
+                                            pw.SizedBox(height: 1),
+                                            pw.Text(
+                                              cleanDesc,
+                                              style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
                                 ),
-                                child: pw.Text(
-                                  PdfTextSanitizer.clean(s.name),
-                                  style: pw.TextStyle(
-                                    fontSize: 8.5,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: accentColor,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
                         )
                       : pw.SizedBox(),
                 ),
@@ -247,18 +295,33 @@ class ColorBlockTemplate extends CvTemplate {
                           child: pw.Column(
                             crossAxisAlignment: pw.CrossAxisAlignment.start,
                             children: cv.certifications.map((c) {
+                              final hasDesc = cv.showCertificationDescription && c.description.trim().isNotEmpty;
                               return pw.Padding(
                                 padding: const pw.EdgeInsets.only(bottom: 3),
-                                child: pw.Row(
+                                child: pw.Column(
                                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                                   children: [
-                                    PdfTextSanitizer.buildBulletDot(accentColor, size: 3),
-                                    pw.Expanded(
-                                      child: pw.Text(
-                                        PdfTextSanitizer.clean(c.displayTitle),
-                                        style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey800),
-                                      ),
+                                    pw.Row(
+                                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                      children: [
+                                        PdfTextSanitizer.buildBulletDot(accentColor, size: 3),
+                                        pw.Expanded(
+                                          child: pw.Text(
+                                            PdfTextSanitizer.clean(c.displayTitle),
+                                            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey800),
+                                          ),
+                                        ),
+                                      ],
                                     ),
+                                    if (hasDesc) ...[
+                                      pw.Padding(
+                                        padding: const pw.EdgeInsets.only(left: 8, top: 1),
+                                        child: pw.Text(
+                                          PdfTextSanitizer.clean(c.description),
+                                          style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               );
@@ -482,6 +545,61 @@ class ColorBlockTemplate extends CvTemplate {
                 ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildProjectItem(ProjectItem proj, PdfColor accentColor, bool showDesc) {
+    final cleanName = PdfTextSanitizer.clean(proj.name);
+    final cleanRole = PdfTextSanitizer.clean(proj.role);
+    final period = PdfTextSanitizer.clean(proj.displayPeriod);
+    final cleanDesc = PdfTextSanitizer.clean(proj.description);
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 7),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: cleanName,
+                        style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.grey900),
+                      ),
+                      if (cleanRole.isNotEmpty)
+                        pw.TextSpan(
+                          text: ' | $cleanRole',
+                          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: accentColor),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (period.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Text(
+                  period,
+                  style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ],
+            ],
+          ),
+          if (showDesc && cleanDesc.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              cleanDesc,
+              style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey800, lineSpacing: 1.3),
+              textAlign: pw.TextAlign.justify,
+            ),
+          ],
         ],
       ),
     );

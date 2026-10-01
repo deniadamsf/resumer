@@ -108,6 +108,9 @@ class _CoverLetterModalState extends State<CoverLetterModal> {
     await AdService.instance.showRewardedAd(
       context: context,
       prompt: 'ad.reward_prompt_cover_letter'.tr,
+      actionType: 'cover_letter',
+      actionDescription: 'Generate Surat Lamaran AI',
+      coinCost: 1,
       onRewarded: () => _executeGenerate(company, role),
     );
   }

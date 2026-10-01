@@ -22,6 +22,10 @@ class CvDocument {
   bool showLanguages;
   List<String> hobbies;
   bool showHobbies;
+  bool showSkillDescription;
+  bool showCertificationDescription;
+  bool showProjectDescription;
+  bool showSocialLinks;
 
   CvDocument({
     this.templateId = 'asian_ats',
@@ -44,6 +48,10 @@ class CvDocument {
     this.showLanguages = false,
     this.hobbies = const [],
     this.showHobbies = false,
+    this.showSkillDescription = true,
+    this.showCertificationDescription = true,
+    this.showProjectDescription = true,
+    this.showSocialLinks = true,
   });
 
   factory CvDocument.empty() {
@@ -59,6 +67,10 @@ class CvDocument {
       showLanguages: false,
       hobbies: [],
       showHobbies: false,
+      showSkillDescription: true,
+      showCertificationDescription: true,
+      showProjectDescription: true,
+      showSocialLinks: true,
     );
   }
 
@@ -113,6 +125,10 @@ class CvDocument {
       'show_languages': showLanguages,
       'hobbies': hobbies,
       'show_hobbies': showHobbies,
+      'show_skill_description': showSkillDescription,
+      'show_certification_description': showCertificationDescription,
+      'show_project_description': showProjectDescription,
+      'show_social_links': showSocialLinks,
     };
   }
 
@@ -237,6 +253,10 @@ class CvDocument {
               .toList() ??
           [],
       showHobbies: json['show_hobbies'] as bool? ?? false,
+      showSkillDescription: json['show_skill_description'] as bool? ?? true,
+      showCertificationDescription: json['show_certification_description'] as bool? ?? true,
+      showProjectDescription: json['show_project_description'] as bool? ?? true,
+      showSocialLinks: json['show_social_links'] as bool? ?? true,
     );
     doc.ensureMonthIntegrity();
     return doc;
@@ -248,27 +268,29 @@ class CvDocument {
     buffer.writeln(personalInfo.fullName.toUpperCase());
     buffer.writeln(personalInfo.professionalTitle);
     buffer.writeln('${personalInfo.email} | ${personalInfo.phone} | ${personalInfo.location}');
-    final socialEntries = <String>[];
-    if (personalInfo.linkedin.isNotEmpty) {
-      socialEntries.add('LinkedIn: ${SocialLinkHelper.buildDisplayText(SocialPlatform.linkedin, personalInfo.linkedin)}');
-    }
-    if (personalInfo.github.isNotEmpty) {
-      socialEntries.add('GitHub: ${SocialLinkHelper.buildDisplayText(SocialPlatform.github, personalInfo.github)}');
-    }
-    if (personalInfo.website.isNotEmpty) {
-      socialEntries.add('Portfolio: ${SocialLinkHelper.buildDisplayText(SocialPlatform.website, personalInfo.website)}');
-    }
-    if (personalInfo.whatsapp.isNotEmpty) {
-      socialEntries.add('WhatsApp: ${SocialLinkHelper.buildDisplayText(SocialPlatform.whatsapp, personalInfo.whatsapp)}');
-    }
-    if (personalInfo.instagram.isNotEmpty) {
-      socialEntries.add('Instagram: ${SocialLinkHelper.buildDisplayText(SocialPlatform.instagram, personalInfo.instagram)}');
-    }
-    if (personalInfo.facebook.isNotEmpty) {
-      socialEntries.add('Facebook: ${SocialLinkHelper.buildDisplayText(SocialPlatform.facebook, personalInfo.facebook)}');
-    }
-    if (socialEntries.isNotEmpty) {
-      buffer.writeln(socialEntries.join(' | '));
+    if (showSocialLinks) {
+      final socialEntries = <String>[];
+      if (personalInfo.linkedin.isNotEmpty) {
+        socialEntries.add('LinkedIn: ${SocialLinkHelper.buildDisplayText(SocialPlatform.linkedin, personalInfo.linkedin)}');
+      }
+      if (personalInfo.github.isNotEmpty) {
+        socialEntries.add('GitHub: ${SocialLinkHelper.buildDisplayText(SocialPlatform.github, personalInfo.github)}');
+      }
+      if (personalInfo.website.isNotEmpty) {
+        socialEntries.add('Portfolio: ${SocialLinkHelper.buildDisplayText(SocialPlatform.website, personalInfo.website)}');
+      }
+      if (personalInfo.whatsapp.isNotEmpty) {
+        socialEntries.add('WhatsApp: ${SocialLinkHelper.buildDisplayText(SocialPlatform.whatsapp, personalInfo.whatsapp)}');
+      }
+      if (personalInfo.instagram.isNotEmpty) {
+        socialEntries.add('Instagram: ${SocialLinkHelper.buildDisplayText(SocialPlatform.instagram, personalInfo.instagram)}');
+      }
+      if (personalInfo.facebook.isNotEmpty) {
+        socialEntries.add('Facebook: ${SocialLinkHelper.buildDisplayText(SocialPlatform.facebook, personalInfo.facebook)}');
+      }
+      if (socialEntries.isNotEmpty) {
+        buffer.writeln(socialEntries.join(' | '));
+      }
     }
     buffer.writeln();
 
@@ -307,7 +329,7 @@ class CvDocument {
       buffer.writeln('CORE COMPETENCIES & SKILLS');
       buffer.writeln('--------------------------');
       for (final s in skills) {
-        if (s.description.trim().isNotEmpty) {
+        if (showSkillDescription && s.description.trim().isNotEmpty) {
           buffer.writeln('• ${s.name}: ${s.description.trim()}');
         } else {
           buffer.writeln('• ${s.name}');
@@ -321,7 +343,7 @@ class CvDocument {
       buffer.writeln('--------------');
       for (final cert in certifications) {
         final title = cert.displayTitle;
-        if (cert.description.trim().isNotEmpty) {
+        if (showCertificationDescription && cert.description.trim().isNotEmpty) {
           buffer.writeln('• $title - ${cert.description.trim()}');
         } else {
           buffer.writeln('• $title');
@@ -338,7 +360,7 @@ class CvDocument {
         buffer.writeln(titleLine);
         final period = p.displayPeriod;
         if (period.isNotEmpty) buffer.writeln(period);
-        if (p.description.trim().isNotEmpty) {
+        if (showProjectDescription && p.description.trim().isNotEmpty) {
           for (final line in p.description.trim().split('\n')) {
             final trimmed = line.trim();
             if (trimmed.isNotEmpty) {
