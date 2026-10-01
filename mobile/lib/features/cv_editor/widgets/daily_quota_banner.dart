@@ -78,37 +78,33 @@ class DailyQuotaBanner extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: isExhausted ? const Color(0xFF92400E) : AppColors.midnightNavy,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (showBypassBadge) ...[
-                      const SizedBox(width: 6),
+                    if (isExhausted && showBypassBadge) ...[
+                      const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                         decoration: BoxDecoration(
-                          color: isExhausted ? const Color(0xFFD97706) : AppColors.subtleSlateTint,
+                          color: const Color(0xFFD97706),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: isExhausted ? const Color(0xFFD97706) : AppColors.borderHairline,
-                            width: 0.8,
-                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.toll_rounded,
                               size: 11,
-                              color: isExhausted ? Colors.white : const Color(0xFFD97706),
+                              color: Colors.white,
                             ),
                             const SizedBox(width: 3),
                             Text(
-                              isExhausted ? 'Bypass 1 Koin' : 'Bisa Koin',
+                              'Bypass 1 Koin',
                               style: GoogleFonts.outfit(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w700,
-                                color: isExhausted ? Colors.white : AppColors.midnightNavy,
+                                color: Colors.white,
                               ),
                             ),
                           ],

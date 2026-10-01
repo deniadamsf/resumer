@@ -275,7 +275,7 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
                                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                                                 color: isSelected ? AppColors.midnightNavy : AppColors.textPrimary,
                                               ),
-                                              maxLines: 1,
+                                              maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),

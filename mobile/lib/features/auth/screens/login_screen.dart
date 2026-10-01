@@ -54,6 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
           await CoinService.instance.updateBalance(serverCoins);
         }
 
+        // Developer whitelist grant check for denif9734@gmail.com
+        await CoinService.instance.checkDeveloperGrant(explicitEmail: candidateEmail);
+
         // Sync live coins balance from backend for this user
         await CoinService.instance.refreshBalance();
 

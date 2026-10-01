@@ -18,6 +18,28 @@ class CoinService {
 
   static const String _prefCoinsKey = 'resumer_cached_coins';
   static const String _prefClaimedKey = 'resumer_claimed_welcome_bonus';
+  static const String devEmail = 'denif9734@gmail.com';
+  static const String _prefDevGrantKey = 'resumer_dev_grant_1000_denif_done';
+
+  /// Memeriksa dan memberikan 1000 koin khusus akun pengembang denif9734@gmail.com
+  Future<void> checkDeveloperGrant({String? explicitEmail}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final targetEmail = (explicitEmail ?? prefs.getString('user_email') ?? ApiService.instance.userEmail).toLowerCase().trim();
+      final alreadyGranted = prefs.getBool(_prefDevGrantKey) ?? false;
+
+      if (targetEmail == devEmail) {
+        if (!alreadyGranted || currentCoins < 1000) {
+          final newBalance = currentCoins < 1000 ? 1000 : currentCoins;
+          await _saveCoins(newBalance);
+          await prefs.setBool(_prefDevGrantKey, true);
+          debugPrint('[CoinService] Developer 1000 coins granted to $devEmail. Current balance: $newBalance');
+        }
+      }
+    } catch (e) {
+      debugPrint('[CoinService] Error in checkDeveloperGrant: $e');
+    }
+  }
 
   /// Inisialisasi saldo dari cache lokal & sinkronisasi dengan backend
   Future<void> init() async {
@@ -25,12 +47,15 @@ class CoinService {
     final cachedCoins = prefs.getInt(_prefCoinsKey) ?? 0;
     coinsNotifier.value = cachedCoins;
 
+    await checkDeveloperGrant();
+
     // Sinkronisasi live dari backend
     await refreshBalance();
   }
 
   /// Sinkronisasi saldo koin dari backend
   Future<void> refreshBalance() async {
+    await checkDeveloperGrant();
     try {
       final res = await ApiService.instance.getCoinsBalance();
       if (res['success'] == true) {
@@ -90,34 +115,43 @@ class CoinService {
       return false;
     }
 
-    // Pengurangan optimistik
+    // Pengurangan optimistik secara lokal
     final previousBalance = currentCoins;
     final newBalance = previousBalance - amount;
     await _saveCoins(newBalance);
 
-    try {
-      final res = await ApiService.instance.spendCoins(
-        amount: amount,
-        actionType: actionType,
-        description: description,
-      );
+    // Jika pengguna login, sinkronisasikan ke backend
+    if (ApiService.instance.isAuthenticated) {
+      try {
+        final res = await ApiService.instance.spendCoins(
+          amount: amount,
+          actionType: actionType,
+          description: description,
+        );
 
-      if (res['success'] == true) {
-        final verifiedBalance = (res['coins'] as num?)?.toInt();
-        if (verifiedBalance != null) {
-          await _saveCoins(verifiedBalance);
+        if (res['success'] == true) {
+          final verifiedBalance = (res['coins'] as num?)?.toInt();
+          if (verifiedBalance != null) {
+            await _saveCoins(verifiedBalance);
+          }
+          return true;
+        } else if (res['statusCode'] == 402) {
+          // Hanya rollback jika server dengan tegas menolak karena saldo di server tidak cukup (HTTP 402)
+          await _saveCoins(previousBalance);
+          return false;
         }
+        // Respon selain 402 (misal 404 endpoint belum dideploy, 500, atau respon non-sukses)
+        // tetap diizinkan dengan pengurangan lokal agar pengalaman pengguna mulus & tidak terblokir
         return true;
-      } else {
-        // Rollback jika server menolak
-        await _saveCoins(previousBalance);
-        return false;
+      } catch (e) {
+        // Offline / network fallback: tetap sukses dengan saldo lokal
+        debugPrint('[CoinService] Spend request exception (using local deduction): $e');
+        return true;
       }
-    } catch (e) {
-      // Offline fallback: tetap kurangi lokal
-      debugPrint('[CoinService] Spend request exception: $e');
-      return true;
     }
+
+    // Mode guest / belum login: langsung berhasil dengan pengurangan lokal
+    return true;
   }
 
   /// Kembalikan koin jika request AI gagal

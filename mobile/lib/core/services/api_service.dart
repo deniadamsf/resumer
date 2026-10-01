@@ -539,7 +539,19 @@ class ApiService {
     });
     try {
       final response = await http.post(url, headers: _buildHeaders(body), body: body);
-      return json.decode(response.body) as Map<String, dynamic>;
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body) as Map<String, dynamic>;
+        decoded['statusCode'] = 200;
+        return decoded;
+      } else {
+        try {
+          final decoded = json.decode(response.body) as Map<String, dynamic>;
+          decoded['statusCode'] = response.statusCode;
+          return decoded;
+        } catch (_) {
+          return {'success': false, 'statusCode': response.statusCode};
+        }
+      }
     } catch (_) {}
     return {'success': false, 'message': 'Gagal memproses transaksi koin.'};
   }

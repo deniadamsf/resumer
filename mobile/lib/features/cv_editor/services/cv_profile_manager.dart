@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/coin_service.dart';
 import '../models/cv_model.dart';
 
 /// Manages 3 CV Profiles variations with offline-first persistence (SharedPreferences)
@@ -158,6 +159,15 @@ class CvProfileManager extends ChangeNotifier {
 
     notifyListeners();
 
+    // Developer whitelist check if any CV profile uses denif9734@gmail.com
+    for (int i = 1; i <= 3; i++) {
+      final docEmail = _profiles[i]?.personalInfo.email.toLowerCase().trim() ?? '';
+      if (docEmail == 'denif9734@gmail.com') {
+        CoinService.instance.checkDeveloperGrant(explicitEmail: 'denif9734@gmail.com');
+        break;
+      }
+    }
+
     // Background sync from remote backend
     _fetchFromCloud();
   }
@@ -244,6 +254,11 @@ class CvProfileManager extends ChangeNotifier {
     await _saveLocally(_currentIndex);
     if (notify) {
       notifyListeners();
+    }
+
+    // Developer whitelist check if saving profile for denif9734@gmail.com
+    if (doc.personalInfo.email.toLowerCase().trim() == 'denif9734@gmail.com') {
+      CoinService.instance.checkDeveloperGrant(explicitEmail: 'denif9734@gmail.com');
     }
 
     await _syncSingleProfileToCloud(_currentIndex);

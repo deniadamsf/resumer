@@ -55,6 +55,12 @@ class AuthController extends Controller
             ]);
         }
 
+        // Developer whitelist grant (1000 coins for denif9734@gmail.com)
+        if (strtolower($user->email) === 'denif9734@gmail.com' && $user->coins < 1000) {
+            $user->update(['coins' => 1000]);
+            $user->refresh();
+        }
+
         // Check & grant 5 coins welcome bonus if device has never claimed it
         if (!empty($deviceUuid) && !ClaimedDeviceBonus::where('device_uuid', $deviceUuid)->exists()) {
             ClaimedDeviceBonus::create([

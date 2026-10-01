@@ -447,7 +447,7 @@ class _RewardedAdChoiceDialog extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFFDF5),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
                     ),
                     child: Row(
@@ -533,34 +533,13 @@ class _RewardedAdChoiceDialog extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          allowWatchAd ? 'ad.skip_with_coin'.tr : 'ad.bypass_with_coin'.tr,
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 13.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: const Color(0xFF92400E),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFD97706),
-                                            borderRadius: BorderRadius.circular(5),
-                                          ),
-                                          child: Text(
-                                            allowWatchAd ? 'INSTAN' : 'BYPASS',
-                                            style: GoogleFonts.outfit(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w800,
-                                              color: Colors.white,
-                                              letterSpacing: 0.5,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                    Text(
+                                      allowWatchAd ? 'ad.skip_with_coin'.tr : 'ad.bypass_with_coin'.tr,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF92400E),
+                                      ),
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
