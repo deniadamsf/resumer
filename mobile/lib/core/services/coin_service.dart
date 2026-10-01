@@ -21,19 +21,21 @@ class CoinService {
   static const String devEmail = 'denif9734@gmail.com';
   static const String _prefDevGrantKey = 'resumer_dev_grant_1000_denif_done';
 
-  /// Memeriksa dan memberikan 1000 koin khusus akun pengembang denif9734@gmail.com
+  /// Memeriksa dan memberikan 1000 koin khusus akun pengembang denif9734@gmail.com (Hanya 1x, tidak pernah mereset saldo)
   Future<void> checkDeveloperGrant({String? explicitEmail}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final targetEmail = (explicitEmail ?? prefs.getString('user_email') ?? ApiService.instance.userEmail).toLowerCase().trim();
       final alreadyGranted = prefs.getBool(_prefDevGrantKey) ?? false;
 
+      // Jika sudah pernah diberikan, jangan pernah sentuh atau reset saldo lagi!
+      if (alreadyGranted) return;
+
       if (targetEmail == devEmail) {
-        if (!alreadyGranted || currentCoins < 1000) {
-          final newBalance = currentCoins < 1000 ? 1000 : currentCoins;
-          await _saveCoins(newBalance);
-          await prefs.setBool(_prefDevGrantKey, true);
-          debugPrint('[CoinService] Developer 1000 coins granted to $devEmail. Current balance: $newBalance');
+        await prefs.setBool(_prefDevGrantKey, true);
+        if (currentCoins == 0) {
+          await _saveCoins(1000);
+          debugPrint('[CoinService] Developer 1000 coins granted once to $devEmail.');
         }
       }
     } catch (e) {
@@ -55,7 +57,6 @@ class CoinService {
 
   /// Sinkronisasi saldo koin dari backend
   Future<void> refreshBalance() async {
-    await checkDeveloperGrant();
     try {
       final res = await ApiService.instance.getCoinsBalance();
       if (res['success'] == true) {

@@ -130,6 +130,11 @@ class CvProfileManager extends ChangeNotifier {
       }
 
       // Check and restore persistent local photo path
+      final currentDocPhoto = _profiles[i]?.personalInfo.localPhotoPath;
+      if (currentDocPhoto != null && (currentDocPhoto.isEmpty || !File(currentDocPhoto).existsSync())) {
+        _profiles[i]?.personalInfo.localPhotoPath = null;
+      }
+
       final savedPhotoPath = prefs.getString('cv_photo_path_$i') ??
           prefs.getString('user_master_photo_path');
       if (savedPhotoPath != null && savedPhotoPath.isNotEmpty) {
@@ -137,6 +142,10 @@ class CvProfileManager extends ChangeNotifier {
           _profiles[i]?.personalInfo.localPhotoPath = savedPhotoPath;
         } else {
           await prefs.remove('cv_photo_path_$i');
+          if (prefs.getString('user_master_photo_path') == savedPhotoPath) {
+            await prefs.remove('user_master_photo_path');
+          }
+          _profiles[i]?.personalInfo.localPhotoPath = null;
         }
       }
 

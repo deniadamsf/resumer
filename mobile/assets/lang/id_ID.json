@@ -193,6 +193,7 @@
     "add_bullet_point": "Tambah Poin Capaian",
     "photo_saved_locally": "Pas Foto Tersimpan (Lokal HP)",
     "photo_secure_badge": "0 Byte Server Load • Aman & Privat",
+    "photo_disabled_template_hint": "Template ini (Western Strict ATS) sengaja tidak menggunakan pas foto sesuai standar internasional US/UK.",
     "delete_photo_tooltip": "Hapus Foto",
     "profile_saved_snack": "Profil berhasil disimpan",
     "add_hobby_tooltip": "Tambah Hobi",

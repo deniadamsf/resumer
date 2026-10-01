@@ -193,6 +193,7 @@
     "add_bullet_point": "Add Achievement Point",
     "photo_saved_locally": "Photo Stored (Locally on Device)",
     "photo_secure_badge": "0 Byte Server Load • Secure & Private",
+    "photo_disabled_template_hint": "This template (Western Strict ATS) intentionally omits photos per US/UK international standards.",
     "delete_photo_tooltip": "Remove Photo",
     "profile_saved_snack": "Profile saved successfully",
     "add_hobby_tooltip": "Add Hobby",

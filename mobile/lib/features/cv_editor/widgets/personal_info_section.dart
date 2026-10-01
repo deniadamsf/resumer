@@ -71,6 +71,16 @@ class _PersonalInfoSectionState extends State<PersonalInfoSection> {
     } catch (_) {}
   }
 
+  bool get _hasValidPhoto {
+    final path = widget.localPhotoPath;
+    if (path == null || path.isEmpty) return false;
+    try {
+      return File(path).existsSync();
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -106,14 +116,20 @@ class _PersonalInfoSectionState extends State<PersonalInfoSection> {
                 ),
               ),
               const SizedBox(width: 8),
-              if (widget.showPhotoOption) _buildPhotoPickerBtn(context),
+              if (widget.showPhotoOption && _hasValidPhoto) _buildPhotoPickerBtn(context),
             ],
           ),
-          if (widget.showPhotoOption && widget.localPhotoPath != null) ...[
-            const SizedBox(height: 12),
-            _buildPhotoPreview(context),
-          ],
           const SizedBox(height: 12),
+          if (widget.showPhotoOption) ...[
+            if (_hasValidPhoto)
+              _buildPhotoPreview(context)
+            else
+              _buildPhotoEmptyState(context),
+            const SizedBox(height: 12),
+          ] else ...[
+            _buildNoPhotoNotice(),
+            const SizedBox(height: 12),
+          ],
           _buildField('form.full_name'.tr, widget.nameController, Icons.person_outline_rounded),
           const SizedBox(height: 10),
           _buildField('form.professional_title'.tr, widget.titleController, Icons.work_outline_rounded),
@@ -252,11 +268,12 @@ class _PersonalInfoSectionState extends State<PersonalInfoSection> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.camera_alt_rounded, size: 16, color: AppColors.accentSteel),
+            const Icon(Icons.camera_alt_rounded, size: 15, color: AppColors.accentSteel),
             const SizedBox(width: 4),
             Text(
-              widget.localPhotoPath != null ? 'form.photo_change'.tr : 'form.photo_btn'.tr,
+              'form.photo_change'.tr,
               style: GoogleFonts.outfit(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -269,38 +286,194 @@ class _PersonalInfoSectionState extends State<PersonalInfoSection> {
     );
   }
 
-  Widget _buildPhotoPreview(BuildContext context) {
-    final file = File(widget.localPhotoPath!);
-    return Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: file.existsSync()
-              ? Image.file(file, key: ValueKey(widget.localPhotoPath), width: 44, height: 54, fit: BoxFit.cover)
-              : Container(width: 44, height: 54, color: AppColors.subtleSlateTint),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'form.photo_saved_locally'.tr,
-                style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-              Text(
-                'form.photo_secure_badge'.tr,
-                style: GoogleFonts.outfit(fontSize: 10, color: AppColors.forestPine),
-              ),
-            ],
+  Widget _buildPhotoEmptyState(BuildContext context) {
+    return InkWell(
+      onTap: () => _pickPhoto(context),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.subtleSlateTint.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.accentSteel.withValues(alpha: 0.28),
+            width: 1,
           ),
         ),
-        IconButton(
-          onPressed: () => widget.onPhotoChanged(null),
-          icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.crimsonBordeaux),
-          tooltip: 'form.delete_photo_tooltip'.tr,
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.borderHairline),
+              ),
+              child: const Icon(
+                Icons.add_a_photo_outlined,
+                size: 20,
+                color: AppColors.accentSteel,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'form.photo_label'.tr,
+                    style: GoogleFonts.outfit(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.midnightNavy,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'form.photo_notice'.tr,
+                    style: GoogleFonts.outfit(
+                      fontSize: 10.5,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.accentSteel.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '+ ${'form.photo_btn'.tr}',
+                style: GoogleFonts.outfit(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accentSteel,
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoPreview(BuildContext context) {
+    final file = File(widget.localPhotoPath!);
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.subtleSlateTint.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderHairline),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: file.existsSync()
+                ? Image.file(
+                    file,
+                    key: ValueKey(widget.localPhotoPath),
+                    width: 44,
+                    height: 54,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    width: 44,
+                    height: 54,
+                    color: AppColors.subtleSlateTint,
+                    child: const Icon(Icons.broken_image_rounded, size: 20, color: AppColors.textSecondary),
+                  ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'form.photo_saved_locally'.tr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.midnightNavy,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'form.photo_secure_badge'.tr,
+                  style: GoogleFonts.outfit(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.forestPine,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () => _pickPhoto(context),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.refresh_rounded, size: 14, color: AppColors.accentSteel),
+                  const SizedBox(width: 4),
+                  Text(
+                    'form.photo_change'.tr,
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accentSteel,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () => widget.onPhotoChanged(null),
+            icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.crimsonBordeaux),
+            tooltip: 'form.delete_photo_tooltip'.tr,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoPhotoNotice() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.subtleSlateTint.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.borderHairline),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 16,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'form.photo_disabled_template_hint'.tr,
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
