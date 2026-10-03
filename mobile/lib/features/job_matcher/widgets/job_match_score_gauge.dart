@@ -37,8 +37,8 @@ class JobMatchScoreGauge extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(
-            width: 140,
-            height: 140,
+            width: 148,
+            height: 148,
             child: TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: (score / 100).clamp(0.0, 1.0)),
               duration: const Duration(milliseconds: 1000),
@@ -51,41 +51,29 @@ class JobMatchScoreGauge extends StatelessWidget {
                     trackColor: AppColors.subtleSlateTint,
                   ),
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${(value * 100).toInt()}',
-                              style: GoogleFonts.outfit(
-                                fontSize: 38,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.midnightNavy,
-                                letterSpacing: -1,
-                                height: 1,
-                              ),
-                            ),
-                            Text(
-                              '%',
-                              style: GoogleFonts.outfit(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: scoreColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
                         Text(
-                          'job_match.score_label'.tr,
+                          '${(value * 100).toInt()}',
                           style: GoogleFonts.outfit(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 0.4,
+                            fontSize: 42,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.midnightNavy,
+                            letterSpacing: -1.5,
+                            height: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '%',
+                            style: GoogleFonts.outfit(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: scoreColor,
+                            ),
                           ),
                         ),
                       ],
@@ -95,7 +83,20 @@ class JobMatchScoreGauge extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+
+          // Score label placed cleanly below the gauge arc without overlapping
+          Text(
+            'job_match.score_label'.tr,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 10),
 
           // Executive Verdict Badge Bubble (Responsive & Centered)
           ConstrainedBox(
