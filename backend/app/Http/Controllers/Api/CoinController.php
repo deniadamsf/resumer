@@ -21,7 +21,9 @@ class CoinController extends Controller
         $user = $request->user();
         $deviceUuid = $request->header('X-Device-UUID') ?? $request->input('device_uuid') ?? $user->device_uuid;
 
-        $hasClaimedBonus = ClaimedDeviceBonus::where('device_uuid', $deviceUuid)->exists();
+        $hasClaimedBonus = ClaimedDeviceBonus::where('device_uuid', $deviceUuid)
+            ->orWhere('user_id', $user->id)
+            ->exists();
 
         $recentTransactions = $user->coinTransactions()
             ->orderBy('id', 'desc')
@@ -38,7 +40,7 @@ class CoinController extends Controller
     }
 
     /**
-     * Claim initial 5 coins welcome bonus (Device UUID locked).
+     * Claim initial 5 coins welcome bonus (Device UUID and User ID locked).
      */
     public function claimWelcomeBonus(Request $request)
     {
@@ -52,12 +54,14 @@ class CoinController extends Controller
             ], 422);
         }
 
-        // Anti-abuse check
-        $alreadyClaimed = ClaimedDeviceBonus::where('device_uuid', $deviceUuid)->exists();
+        // Anti-abuse check: locked to both device_uuid and user_id
+        $alreadyClaimed = ClaimedDeviceBonus::where('device_uuid', $deviceUuid)
+            ->orWhere('user_id', $user->id)
+            ->exists();
         if ($alreadyClaimed) {
             return response()->json([
                 'success' => false,
-                'message' => 'Bonus selamat datang 5 koin sudah pernah diklaim pada perangkat ini.',
+                'message' => 'Bonus selamat datang 5 koin sudah pernah diklaim pada perangkat atau akun ini.',
                 'coins' => (int) $user->coins,
             ], 400);
         }
