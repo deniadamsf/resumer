@@ -282,6 +282,39 @@ class CvController extends Controller
     }
 
     /**
+     * Tailor CV to Job: Applies recommendations & keywords to tailor the candidate's CV.
+     */
+    public function tailorCv(Request $request)
+    {
+        $request->validate([
+            'cv_text' => 'required|string|min:50',
+            'job_text' => 'nullable|string',
+            'suggestions' => 'nullable|array',
+            'missing_keywords' => 'nullable|array',
+        ]);
+
+        try {
+            $tailored = $this->gemini->tailorCvToJob(
+                $request->input('cv_text'),
+                $request->input('job_text'),
+                $request->input('suggestions', []),
+                $request->input('missing_keywords', []),
+                $request->input('language', 'id_ID')
+            );
+
+            return response()->json([
+                'success' => true,
+                'tailored_cv_data' => $tailored['tailored_cv_data'] ?? $tailored,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tailoring failed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * AI Cover Letter Generator.
      */
     public function coverLetter(Request $request)

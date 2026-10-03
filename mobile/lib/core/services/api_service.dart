@@ -447,6 +447,52 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> tailorJobCv({
+    required String cvText,
+    String? jobText,
+    List<String>? suggestions,
+    List<String>? missingKeywords,
+  }) async {
+    final url = Uri.parse('$baseUrl/cv/job-tailor');
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+    final body = json.encode({
+      'cv_text': cvText,
+      if (jobText != null && jobText.isNotEmpty) 'job_text': jobText,
+      if (suggestions != null && suggestions.isNotEmpty) 'suggestions': suggestions,
+      if (missingKeywords != null && missingKeywords.isNotEmpty) 'missing_keywords': missingKeywords,
+      'language': AppLocalizations.instance.currentLocale,
+    });
+    try {
+      final response = await http.post(url, headers: _buildHeaders(body), body: body);
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final err = json.decode(response.body) as Map<String, dynamic>;
+          return {
+            'success': false,
+            'statusCode': response.statusCode,
+            'message': err['message'] ??
+                (isEn ? 'Failed to tailor CV (${response.statusCode})' : 'Gagal menyesuaikan CV (${response.statusCode})'),
+          };
+        } catch (_) {
+          return {
+            'success': false,
+            'statusCode': response.statusCode,
+            'message': isEn ? 'Server returned status ${response.statusCode}' : 'Server mengembalikan status ${response.statusCode}',
+          };
+        }
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': isEn
+            ? 'Unable to connect to server. Please check your internet connection.'
+            : 'Gagal terhubung ke server. Periksa koneksi internet Anda.',
+      };
+    }
+  }
+
   Future<Map<String, dynamic>> generateCoverLetter(String cvText, String company, String role) async {
     final url = Uri.parse('$baseUrl/cv/cover-letter');
     final isEn = AppLocalizations.instance.currentLocale.startsWith('en');

@@ -175,75 +175,170 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
     }
   }
 
+  String _sanitizeSummary(String raw) {
+    String s = raw.trim();
+    if (s.startsWith('{') && s.endsWith('}')) {
+      try {
+        final decoded = json.decode(s);
+        if (decoded is Map && decoded['summary'] != null) {
+          s = decoded['summary'].toString();
+        }
+      } catch (_) {
+        s = s.substring(1, s.length - 1).trim();
+      }
+    }
+    final match = RegExp(r'^"?summary"?\s*:\s*"(.*)"$', dotAll: true).firstMatch(s);
+    if (match != null) {
+      s = match.group(1) ?? s;
+    }
+    return s.replaceAll(RegExp(r'[\{\}\[\]]'), '').trim();
+  }
+
   Future<void> _handleTailorCv() async {
     if (_result == null) return;
     setState(() => _isTailoring = true);
 
     try {
-      // 1. Inject missing keywords and enrich skill descriptions
-      final currentSkillsMap = <String, SkillItem>{};
-      for (final s in _cv.skills) {
-        currentSkillsMap[s.name.trim().toLowerCase()] = s;
-      }
+      Map<String, dynamic>? tailoredData = _result!.tailoredCvData;
 
-      // Add missing keywords as skills with industry-standard descriptions
-      for (final kw in _result!.missingKeywords) {
-        final cleanKw = kw.trim();
-        if (cleanKw.isNotEmpty && !currentSkillsMap.containsKey(cleanKw.toLowerCase())) {
-          final newSkill = SkillItem(
-            name: cleanKw,
-            description: 'job_match.tailor_skill_desc'.tr,
-          );
-          _cv.skills.add(newSkill);
-          currentSkillsMap[cleanKw.toLowerCase()] = newSkill;
+      // If tailoredCvData is not in memory, fetch it dynamically from backend
+      if (tailoredData == null || tailoredData.isEmpty) {
+        final res = await ApiService.instance.tailorJobCv(
+          cvText: _cv.toPlainText(),
+          jobText: _mode == JobInputMode.text ? _textController.text.trim() : null,
+          suggestions: _result!.tailoringSuggestions,
+          missingKeywords: _result!.missingKeywords,
+        );
+        if (res['success'] == true && res['tailored_cv_data'] is Map) {
+          tailoredData = Map<String, dynamic>.from(res['tailored_cv_data'] as Map);
         }
       }
 
-      // Enrich existing skills descriptions if empty
-      for (final skill in _cv.skills) {
-        if (skill.description.trim().isEmpty) {
-          skill.description = 'job_match.tailor_existing_skill_desc'.tr;
-        }
-      }
+      final List<String> appliedSections = [];
+      final preservedCertifications = List<CertificationItem>.from(_cv.certifications);
+      final preservedProjects = List<ProjectItem>.from(_cv.projects);
 
-      // 2. Optimize Certifications & Licenses (ONLY if user already has certifications)
-      // ATURAN MUTLAK USER: "tapi kalo kosong ya jangan diisi"
-      if (_cv.certifications.isNotEmpty) {
-        for (final cert in _cv.certifications) {
-          if (cert.description.trim().isEmpty) {
-            cert.description = 'job_match.tailor_cert_desc'.tr;
+      if (tailoredData != null && tailoredData.isNotEmpty) {
+        // 1. Apply AI Tailored Summary (Natural language, no JSON, no crude appending)
+        if (tailoredData['summary'] != null && tailoredData['summary'] is String) {
+          final newSummary = _sanitizeSummary(tailoredData['summary'] as String);
+          if (newSummary.isNotEmpty) {
+            _cv.summary = newSummary;
+            _cv.showSummary = true;
+            appliedSections.add('form.summary'.tr);
+          }
+        }
+
+        // 2. Apply AI Tailored Experiences (Google XYZ bullet points with job keywords)
+        if (tailoredData['experiences'] != null && tailoredData['experiences'] is List) {
+          final expList = tailoredData['experiences'] as List;
+          bool expUpdated = false;
+          for (int i = 0; i < expList.length && i < _cv.experiences.length; i++) {
+            final expItem = expList[i];
+            if (expItem is Map && expItem['bullet_points'] != null && expItem['bullet_points'] is List) {
+              final bullets = (expItem['bullet_points'] as List)
+                  .map((e) => e.toString().trim())
+                  .where((e) => e.isNotEmpty)
+                  .toList();
+              if (bullets.isNotEmpty) {
+                _cv.experiences[i].highlights = bullets;
+                expUpdated = true;
+              }
+            }
+          }
+          if (expUpdated) {
+            appliedSections.add('form.experience'.tr);
+          }
+        }
+
+        // 3. Apply AI Tailored Skills (Prioritized high-impact competencies)
+        if (tailoredData['skills'] != null && tailoredData['skills'] is List) {
+          final rawSkills = tailoredData['skills'] as List;
+          final List<SkillItem> parsedSkills = [];
+          for (final s in rawSkills) {
+            if (s != null) {
+              parsedSkills.add(SkillItem.fromJson(s));
+            }
+          }
+          if (parsedSkills.isNotEmpty) {
+            _cv.skills = parsedSkills;
+            _cv.showSkills = true;
+            appliedSections.add('form.skills'.tr);
+          }
+        }
+
+        // 4. Apply AI Tailored Projects (ONLY if candidate already has projects)
+        if (preservedProjects.isNotEmpty &&
+            tailoredData['projects'] != null &&
+            tailoredData['projects'] is List) {
+          final projList = tailoredData['projects'] as List;
+          bool projUpdated = false;
+          for (int i = 0; i < projList.length && i < _cv.projects.length; i++) {
+            final pItem = projList[i];
+            if (pItem is Map && pItem['description'] != null) {
+              final desc = pItem['description'].toString().trim();
+              if (desc.isNotEmpty) {
+                _cv.projects[i].description = desc;
+                projUpdated = true;
+              }
+            }
+          }
+          if (projUpdated) {
+            appliedSections.add('form.projects'.tr);
+          }
+        }
+      } else {
+        // Fallback: graceful local alignment if offline
+        final currentSkillsMap = <String, SkillItem>{};
+        for (final s in _cv.skills) {
+          currentSkillsMap[s.name.trim().toLowerCase()] = s;
+        }
+
+        bool skillAdded = false;
+        for (final kw in _result!.missingKeywords) {
+          final cleanKw = kw.trim();
+          if (cleanKw.isNotEmpty && !currentSkillsMap.containsKey(cleanKw.toLowerCase())) {
+            final newSkill = SkillItem(
+              name: cleanKw,
+              description: 'job_match.tailor_skill_desc'.tr,
+            );
+            _cv.skills.add(newSkill);
+            currentSkillsMap[cleanKw.toLowerCase()] = newSkill;
+            skillAdded = true;
+          }
+        }
+        if (skillAdded) appliedSections.add('form.skills'.tr);
+
+        // Safe Summary check - NEVER append JSON or raw braces
+        if (_cv.summary.trim().isNotEmpty && _result!.matchedKeywords.isNotEmpty) {
+          final topKeywords = _result!.matchedKeywords
+              .where((k) => !k.contains('{') && !k.contains('}') && k.length < 30)
+              .take(3)
+              .join(', ');
+          if (topKeywords.isNotEmpty && !_cv.summary.contains(topKeywords)) {
+            final addition = 'job_match.tailor_summary_addition'.trArgs([topKeywords]);
+            _cv.summary = '${_cv.summary.trim()}$addition';
+            appliedSections.add('form.summary'.tr);
           }
         }
       }
 
-      // 3. Optimize Projects & Portfolio (ONLY if user already has projects)
-      // ATURAN MUTLAK USER: "tapi kalo kosong ya jangan diisi"
-      if (_cv.projects.isNotEmpty) {
-        for (final proj in _cv.projects) {
-          if (proj.description.trim().isEmpty) {
-            proj.description = 'job_match.tailor_project_desc'.tr;
-          }
-        }
+      // Preserve data fidelity: if user had no certifications or projects, guarantee empty
+      if (preservedCertifications.isEmpty) {
+        _cv.certifications = [];
       }
-
-      // 4. Align Professional Summary with target keywords if summary is active
-      if (_cv.summary.trim().isNotEmpty && _result!.matchedKeywords.isNotEmpty) {
-        final topKeywords = _result!.matchedKeywords.take(3).join(', ');
-        final addition = 'job_match.tailor_summary_addition'.trArgs([topKeywords]);
-        if (!_cv.summary.contains(topKeywords)) {
-          _cv.summary = '${_cv.summary.trim()}$addition';
-        }
+      if (preservedProjects.isEmpty) {
+        _cv.projects = [];
       }
 
       await CvProfileManager.instance.saveCurrentProfile(_cv);
       widget.onCvUpdated?.call(_cv);
 
       if (mounted) {
-        final additions = <String>[];
-        if (_cv.certifications.isNotEmpty) additions.add('job_match.tailor_cert_mention'.tr);
-        if (_cv.projects.isNotEmpty) additions.add('job_match.tailor_project_mention'.tr);
-        final extraMention = additions.join('');
-        final successMsg = 'job_match.tailor_success_detailed'.trArgs([extraMention]);
+        final sectionsText = appliedSections.isNotEmpty
+            ? appliedSections.join(', ')
+            : 'form.summary'.tr;
+        final successMsg = 'job_match.tailor_success_detailed'.trArgs([sectionsText]);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

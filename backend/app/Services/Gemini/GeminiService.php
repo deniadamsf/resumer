@@ -243,13 +243,14 @@ PROMPT;
 
     /**
      * Job Matcher: Compares CV with job description (or OCR screenshot) and calculates compatibility.
+     * Also generates tailored_cv_data that directly implements the tailoring suggestions.
      */
     public function matchJob(string $cvText, ?string $jobText = null, ?string $imageBase64 = null, string $locale = 'id_ID'): array
     {
         $isEnglish = str_starts_with(strtolower($locale), 'en');
         $langInstruction = $isEnglish
-            ? "CRITICAL LANGUAGE REQUIREMENT: Output verdict, fit_summary, and tailoring_suggestions strictly in US English."
-            : "CRITICAL LANGUAGE REQUIREMENT: Output verdict, fit_summary, and tailoring_suggestions strictly in formal corporate Indonesian (Bahasa Indonesia baku HRD).";
+            ? "CRITICAL LANGUAGE REQUIREMENT: Output verdict, fit_summary, tailoring_suggestions, and tailored_cv_data strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Output verdict, fit_summary, tailoring_suggestions, and tailored_cv_data strictly in formal corporate Indonesian (Bahasa Indonesia baku HRD).";
 
         $systemPrompt = <<<PROMPT
 You are a Senior Executive Talent Matcher and Corporate Recruiter.
@@ -260,7 +261,14 @@ CRITICAL RULES:
 1. {$langInstruction}
 2. Provide a comprehensive fit_summary explaining the strategic alignment and specific gap areas.
 3. List matched keywords and missing high-priority keywords from the job posting.
+   - FORMAT RULE: matched_keywords and missing_keywords MUST be pure flat string arrays of keyword names (e.g. ["Python", "SQL", "Docker"]). NEVER output nested JSON objects, key-value maps, or curly brackets {} inside these arrays!
 4. Provide structured tailoring suggestions covering summary alignment, experience bullet point keyword integration, skills refinement, project alignment, and certification alignment.
+5. Generate "tailored_cv_data" that DIRECTLY IMPLEMENTS your tailoring suggestions so the candidate can tailor their CV to this job with 1 click:
+   - "summary": A complete, polished 3-4 sentence professional executive summary rewritten in fluent, compelling natural language specifically aligned with this job vacancy (highlighting the candidate's real relevant experience, technical breadth, and quantifiable value proposition for this role). NEVER output JSON code, curly brackets {}, or raw key-value lists in this summary!
+   - "experiences": Array of existing work experiences from candidate's CV with rewritten "bullet_points" using Google XYZ formula ("Accomplished [X] as measured by [Y] by doing [Z]") directly integrating the keywords and responsibilities required by the vacancy. Retain original company and position names.
+   - "skills": Array of objects {"name": "...", "description": "..."} prioritizing the most crucial competencies for this job at the top, with impactful contextual descriptions (tools, metrics, frameworks).
+   - "projects": If candidate's CV has projects, rewrite their "description" using STAR/XYZ format emphasizing technologies and problems relevant to the vacancy. If candidate has NO projects, output an empty array: "projects": [].
+   - DATA FIDELITY: Never fabricate fake employers, degrees, or licenses not present in the candidate's CV.
 
 Output strict JSON:
 {
@@ -271,7 +279,30 @@ Output strict JSON:
   "missing_keywords": ["string"],
   "tailoring_suggestions": [
     "string (rekomendasi konkret per seksi)"
-  ]
+  ],
+  "tailored_cv_data": {
+    "summary": "string (ringkasan profesional lengkap yang telah disesuaikan secara alami tanpa format JSON/kode)",
+    "experiences": [
+      {
+        "company": "string",
+        "position": "string",
+        "bullet_points": ["string"]
+      }
+    ],
+    "skills": [
+      {
+        "name": "string",
+        "description": "string"
+      }
+    ],
+    "projects": [
+      {
+        "name": "string",
+        "role": "string",
+        "description": "string"
+      }
+    ]
+  }
 }
 PROMPT;
 
@@ -294,7 +325,19 @@ PROMPT;
         $parts[] = ['text' => "Candidate CV:\n" . $cvText];
         $contents[] = ['role' => 'user', 'parts' => $parts];
 
-        return $this->callGeminiWithContents($systemPrompt, $contents);
+        $result = $this->callGeminiWithContents($systemPrompt, $contents);
+
+        if (isset($result['matched_keywords']) && is_array($result['matched_keywords'])) {
+            $result['matched_keywords'] = $this->sanitizeKeywordList($result['matched_keywords']);
+        }
+        if (isset($result['missing_keywords']) && is_array($result['missing_keywords'])) {
+            $result['missing_keywords'] = $this->sanitizeKeywordList($result['missing_keywords']);
+        }
+        if (isset($result['tailored_cv_data']) && is_array($result['tailored_cv_data'])) {
+            $result['tailored_cv_data'] = $this->sanitizeTailoredCvData($result['tailored_cv_data']);
+        }
+
+        return $result;
     }
 
     /**
@@ -401,6 +444,136 @@ PROMPT;
     }
 
     /**
+     * Tailor CV to Job: Dedicated method to tailor CV based on job description, suggestions, and keywords.
+     */
+    public function tailorCvToJob(string $cvText, ?string $jobText = null, array $suggestions = [], array $missingKeywords = [], string $locale = 'id_ID'): array
+    {
+        $isEnglish = str_starts_with(strtolower($locale), 'en');
+        $langInstruction = $isEnglish
+            ? "CRITICAL LANGUAGE REQUIREMENT: Output summary, bullet points, skills, and projects strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Output summary, bullet points, skills, and projects strictly in formal corporate Indonesian (Bahasa Indonesia baku HRD).";
+
+        $systemPrompt = <<<PROMPT
+You are a Senior Executive Talent Matcher and Corporate Resume Tailoring Specialist.
+Your task is to tailor the candidate's CV specifically for the target job vacancy, enacting all recommended adjustments.
+
+CRITICAL RULES:
+1. {$langInstruction}
+2. "summary": A complete, polished 3-4 sentence professional executive summary rewritten in fluent, compelling natural language specifically aligned with this job vacancy (highlighting the candidate's real relevant experience, technical breadth, and quantifiable value proposition for this role). NEVER output JSON code, curly brackets {}, or raw key-value lists in this summary!
+3. "experiences": Array of existing work experiences from candidate's CV with rewritten "bullet_points" using Google XYZ formula ("Accomplished [X] as measured by [Y] by doing [Z]") directly integrating the keywords and responsibilities required by the vacancy. Retain original company and position names.
+4. "skills": Array of objects {"name": "...", "description": "..."} prioritizing the most crucial competencies for this job at the top, with impactful contextual descriptions (tools, metrics, frameworks).
+5. "projects": If candidate's CV has projects, rewrite their "description" using STAR/XYZ format emphasizing technologies and problems relevant to the vacancy. If candidate has NO projects, output an empty array: "projects": [].
+6. DATA FIDELITY: Never fabricate fake employers, degrees, or licenses not present in the candidate's CV.
+
+Output strict JSON:
+{
+  "tailored_cv_data": {
+    "summary": "string (ringkasan profesional lengkap yang telah disesuaikan secara alami tanpa format JSON/kode)",
+    "experiences": [
+      {
+        "company": "string",
+        "position": "string",
+        "bullet_points": ["string"]
+      }
+    ],
+    "skills": [
+      {
+        "name": "string",
+        "description": "string"
+      }
+    ],
+    "projects": [
+      {
+        "name": "string",
+        "role": "string",
+        "description": "string"
+      }
+    ]
+  }
+}
+PROMPT;
+
+        $userPrompt = "Candidate CV:\n{$cvText}\n";
+        if ($jobText) {
+            $userPrompt .= "\nTarget Job Vacancy:\n{$jobText}\n";
+        }
+        if (!empty($suggestions)) {
+            $userPrompt .= "\nTailoring Recommendations to Apply:\n" . json_encode($suggestions, JSON_UNESCAPED_UNICODE) . "\n";
+        }
+        if (!empty($missingKeywords)) {
+            $userPrompt .= "\nMissing Keywords to Integrate:\n" . json_encode($missingKeywords, JSON_UNESCAPED_UNICODE) . "\n";
+        }
+
+        $result = $this->callGeminiJson($systemPrompt, $userPrompt);
+        if (isset($result['tailored_cv_data']) && is_array($result['tailored_cv_data'])) {
+            $result['tailored_cv_data'] = $this->sanitizeTailoredCvData($result['tailored_cv_data']);
+        }
+        return $result;
+    }
+
+    /**
+     * Sanitizes keyword list to ensure each item is a pure, flat string.
+     */
+    protected function sanitizeKeywordList(array $list): array
+    {
+        $sanitized = [];
+        foreach ($list as $item) {
+            if (is_array($item)) {
+                $item = $item['keyword'] ?? $item['name'] ?? $item['skill'] ?? $item['title'] ?? reset($item) ?? '';
+            }
+            $clean = trim(strip_tags((string)$item));
+            $clean = preg_replace('/^[\{\[\"\'\s]+|[\}\]\"\'\s]+$/', '', $clean);
+            if (str_contains($clean, ':')) {
+                $parts = explode(':', $clean, 2);
+                $clean = trim($parts[1]);
+            }
+            $clean = trim($clean, " \t\n\r\0\x0B\"'{}[]");
+            if (!empty($clean) && !in_array($clean, $sanitized, true)) {
+                $sanitized[] = $clean;
+            }
+        }
+        return $sanitized;
+    }
+
+    /**
+     * Sanitizes tailored CV data to remove any raw JSON strings or brackets.
+     */
+    protected function sanitizeTailoredCvData(array $tailored): array
+    {
+        if (isset($tailored['summary']) && is_string($tailored['summary'])) {
+            $s = trim($tailored['summary']);
+            if (str_starts_with($s, '{') && str_ends_with($s, '}')) {
+                $jsonSub = json_decode($s, true);
+                if (is_array($jsonSub) && !empty($jsonSub['summary'])) {
+                    $s = (string)$jsonSub['summary'];
+                }
+            }
+            if (preg_match('/^"?summary"?\s*:\s*"(.*)"$/s', $s, $m)) {
+                $s = $m[1];
+            }
+            $tailored['summary'] = trim($s);
+        }
+
+        if (isset($tailored['skills']) && is_array($tailored['skills'])) {
+            $cleanSkills = [];
+            foreach ($tailored['skills'] as $s) {
+                if (is_string($s)) {
+                    $cleanSkills[] = ['name' => trim($s), 'description' => ''];
+                } elseif (is_array($s)) {
+                    $name = trim((string)($s['name'] ?? $s['skill'] ?? ''));
+                    $desc = trim((string)($s['description'] ?? ''));
+                    if (!empty($name)) {
+                        $cleanSkills[] = ['name' => $name, 'description' => $desc];
+                    }
+                }
+            }
+            $tailored['skills'] = $cleanSkills;
+        }
+
+        return $tailored;
+    }
+
+    /**
      * Mock response for local automated unit tests without hitting Gemini API.
      */
     protected function getMockResponse(): array
@@ -451,6 +624,31 @@ PROMPT;
             'tailoring_suggestions' => [
                 'Tambahkan pengalaman mengenai integrasi CI/CD dan unit test pada ringkasan kerja',
                 'Tonjolkan pencapaian optimasi performa dan skalabilitas arsitektur'
+            ],
+            'tailored_cv_data' => [
+                'summary' => 'Senior Mobile Engineer berpengalaman lebih dari 5 tahun dalam merancang dan mengembangkan aplikasi Flutter berkinerja tinggi, selaras dengan kebutuhan skalabilitas sistem dan analitik modern.',
+                'experiences' => [
+                    [
+                        'company' => 'Tech Enterprise',
+                        'position' => 'Senior Mobile Engineer',
+                        'bullet_points' => [
+                            'Mengembangkan arsitektur aplikasi mobile berbasis Flutter & Clean Architecture dengan integrasi pipeline data analitik.',
+                            'Meningkatkan efisiensi query dan stabilitas sistem hingga 45% untuk 200.000+ pengguna aktif.'
+                        ]
+                    ]
+                ],
+                'skills' => [
+                    ['name' => 'Flutter & Dart', 'description' => 'Pengembangan aplikasi mobile skala enterprise dengan clean architecture'],
+                    ['name' => 'Python & SQL', 'description' => 'Pengolahan dan analitik data terstruktur untuk integrasi sistem'],
+                    ['name' => 'Docker & CI/CD', 'description' => 'Containerization dan otomatisasi pengujian serta deployment']
+                ],
+                'projects' => [
+                    [
+                        'name' => 'Enterprise Analytics Mobile',
+                        'role' => 'Lead Mobile Engineer',
+                        'description' => 'Membangun dashboard visualisasi data interaktif real-time dengan performa rendering 60fps.'
+                    ]
+                ]
             ],
             // Cover Letter mock fields
             'salutation' => 'Dear Hiring Team,',

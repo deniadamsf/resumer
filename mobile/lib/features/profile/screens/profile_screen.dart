@@ -955,15 +955,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'quota.resets_info'.tr,
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                      fontStyle: FontStyle.italic,
+                  Expanded(
+                    child: Text(
+                      'quota.resets_info'.tr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (isExhausted)
+                  if (isExhausted) ...[
+                    const SizedBox(width: 8),
                     Text(
                       'Bisa bypass dengan 1 koin',
                       style: GoogleFonts.outfit(
@@ -972,6 +976,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: const Color(0xFFD97706),
                       ),
                     ),
+                  ],
                 ],
               ),
             ],
