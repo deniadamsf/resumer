@@ -61,8 +61,12 @@ class AuthController extends Controller
             $user->refresh();
         }
 
-        // Check & grant 5 coins welcome bonus if device has never claimed it
-        if (!empty($deviceUuid) && !ClaimedDeviceBonus::where('device_uuid', $deviceUuid)->exists()) {
+        // Check & grant 5 coins welcome bonus if device and user have never claimed it
+        $alreadyClaimed = ClaimedDeviceBonus::where('device_uuid', $deviceUuid)
+            ->orWhere('user_id', $user->id)
+            ->exists();
+
+        if (!empty($deviceUuid) && !$alreadyClaimed) {
             ClaimedDeviceBonus::create([
                 'device_uuid' => $deviceUuid,
                 'user_id' => $user->id,
