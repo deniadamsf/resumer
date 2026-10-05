@@ -17,39 +17,16 @@ class CoinService {
   bool hasEnoughCoins(int required) => coinsNotifier.value >= required;
 
   static const String _prefCoinsKey = 'resumer_cached_coins';
+
+  /// Flag level-perangkat: bonus 5 koin sudah pernah diklaim di device ini.
+  /// TIDAK dihapus saat logout agar relogin / ganti akun tidak mereset bonus.
   static const String _prefClaimedKey = 'resumer_claimed_welcome_bonus';
-  static const String devEmail = 'denif9734@gmail.com';
-  static const String _prefDevGrantKey = 'resumer_dev_grant_1000_denif_done';
-
-  /// Memeriksa dan memberikan 1000 koin khusus akun pengembang denif9734@gmail.com (Hanya 1x, tidak pernah mereset saldo)
-  Future<void> checkDeveloperGrant({String? explicitEmail}) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final targetEmail = (explicitEmail ?? prefs.getString('user_email') ?? ApiService.instance.userEmail).toLowerCase().trim();
-      final alreadyGranted = prefs.getBool(_prefDevGrantKey) ?? false;
-
-      // Jika sudah pernah diberikan, jangan pernah sentuh atau reset saldo lagi!
-      if (alreadyGranted) return;
-
-      if (targetEmail == devEmail) {
-        await prefs.setBool(_prefDevGrantKey, true);
-        if (currentCoins == 0) {
-          await _saveCoins(1000);
-          debugPrint('[CoinService] Developer 1000 coins granted once to $devEmail.');
-        }
-      }
-    } catch (e) {
-      debugPrint('[CoinService] Error in checkDeveloperGrant: $e');
-    }
-  }
 
   /// Inisialisasi saldo dari cache lokal & sinkronisasi dengan backend
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final cachedCoins = prefs.getInt(_prefCoinsKey) ?? 0;
     coinsNotifier.value = cachedCoins;
-
-    await checkDeveloperGrant();
 
     // Sinkronisasi live dari backend
     await refreshBalance();
@@ -82,24 +59,32 @@ class CoinService {
     }
   }
 
-  /// Klaim 5 koin gratis untuk pengguna baru
+  /// Klaim 5 koin gratis untuk pengguna baru (sekali per Device ID).
   Future<bool> claimInitialBonus() async {
     final prefs = await SharedPreferences.getInstance();
     final alreadyClaimed = prefs.getBool(_prefClaimedKey) ?? false;
     if (alreadyClaimed) return false;
 
-    try {
+    if (ApiService.instance.isAuthenticated && !ApiService.instance.isGuestMode) {
+      // Server adalah sumber kebenaran (dikunci per device_uuid & user_id).
       final res = await ApiService.instance.claimWelcomeBonus();
+      final serverCoins = (res['coins'] as num?)?.toInt();
       if (res['success'] == true) {
-        final newBalance = (res['coins'] as num?)?.toInt() ?? (currentCoins + 5);
         await prefs.setBool(_prefClaimedKey, true);
-        await _saveCoins(newBalance);
-        debugPrint('[CoinService] Successfully claimed 5 welcome coins! Balance: $newBalance');
+        await _saveCoins(serverCoins ?? currentCoins + 5);
+        debugPrint('[CoinService] Successfully claimed 5 welcome coins! Balance: $currentCoins');
         return true;
       }
-    } catch (_) {}
+      if (serverCoins != null) {
+        // Server menolak: bonus sudah pernah diklaim di perangkat/akun ini.
+        await prefs.setBool(_prefClaimedKey, true);
+        await _saveCoins(serverCoins);
+      }
+      // Offline / error jaringan: jangan tambah koin lokal, coba lagi di sinkronisasi berikutnya.
+      return false;
+    }
 
-    // Fallback lokal jika backend offline
+    // Mode guest: bonus lokal sekali per perangkat.
     await prefs.setBool(_prefClaimedKey, true);
     await _saveCoins(currentCoins + 5);
     return true;
@@ -225,12 +210,12 @@ class CoinService {
     await _saveCoins(newBalance);
   }
 
-  /// Reset saldo koin saat pengguna sign-out
+  /// Reset saldo koin saat pengguna sign-out.
+  /// Flag bonus selamat datang (level perangkat) sengaja TIDAK dihapus.
   Future<void> reset() async {
     coinsNotifier.value = 0;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefCoinsKey);
-    await prefs.remove(_prefClaimedKey);
   }
 
   Future<void> _saveCoins(int coins) async {

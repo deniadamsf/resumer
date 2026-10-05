@@ -55,16 +55,26 @@ class AuthController extends Controller
             ]);
         }
 
-        // Developer whitelist grant (1000 coins for denif9734@gmail.com)
-        if (strtolower($user->email) === 'denif9734@gmail.com' && $user->coins < 1000) {
-            $user->update(['coins' => 1000]);
+        // Developer whitelist grant (+1000 coins for denif9734@gmail.com) — ONE-TIME ONLY.
+        // Ditandai dengan transaksi 'developer_grant' agar tidak pernah di-top-up ulang saat relogin.
+        if (strtolower($user->email) === 'denif9734@gmail.com'
+            && !$user->coinTransactions()->where('action_type', 'developer_grant')->exists()) {
+            $user->increment('coins', 1000);
             $user->refresh();
+
+            CoinTransaction::create([
+                'user_id' => $user->id,
+                'amount' => 1000,
+                'action_type' => 'developer_grant',
+                'description' => 'Developer Grant (1000 Koin, sekali saja)',
+                'balance_after' => $user->coins,
+            ]);
         }
 
-        // Check & grant 5 coins welcome bonus if device and user have never claimed it
-        $alreadyClaimed = ClaimedDeviceBonus::where('device_uuid', $deviceUuid)
-            ->orWhere('user_id', $user->id)
-            ->exists();
+        // Check & grant 5 coins welcome bonus if device (new or legacy ID) and user have never claimed it
+        $legacyDeviceUuid = $request->input('legacy_device_uuid') ?? $request->header('X-Legacy-Device-UUID');
+        $legacyDeviceUuid = is_string($legacyDeviceUuid) ? $legacyDeviceUuid : null;
+        $alreadyClaimed = ClaimedDeviceBonus::isClaimed($deviceUuid, $legacyDeviceUuid, $user->id);
 
         if (!empty($deviceUuid) && !$alreadyClaimed) {
             ClaimedDeviceBonus::create([

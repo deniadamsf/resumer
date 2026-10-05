@@ -27,4 +27,27 @@ class ClaimedDeviceBonus extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Cek apakah bonus selamat datang sudah pernah diklaim oleh perangkat ini
+     * (Device ID baru berbasis ANDROID_ID atau UUID lama sebelum update) ATAU oleh akun ini.
+     */
+    public static function isClaimed(?string $deviceUuid, ?string $legacyDeviceUuid, ?int $userId): bool
+    {
+        $deviceIds = array_values(array_filter([$deviceUuid, $legacyDeviceUuid]));
+
+        return self::query()
+            ->where(function ($q) use ($deviceIds, $userId) {
+                if (!empty($deviceIds)) {
+                    $q->whereIn('device_uuid', $deviceIds);
+                }
+                if ($userId) {
+                    $q->orWhere('user_id', $userId);
+                }
+                if (empty($deviceIds) && !$userId) {
+                    $q->whereRaw('1 = 0');
+                }
+            })
+            ->exists();
+    }
 }

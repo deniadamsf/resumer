@@ -21,9 +21,11 @@ class CoinController extends Controller
         $user = $request->user();
         $deviceUuid = $request->header('X-Device-UUID') ?? $request->input('device_uuid') ?? $user->device_uuid;
 
-        $hasClaimedBonus = ClaimedDeviceBonus::where('device_uuid', $deviceUuid)
-            ->orWhere('user_id', $user->id)
-            ->exists();
+        $hasClaimedBonus = ClaimedDeviceBonus::isClaimed(
+            $deviceUuid,
+            $request->header('X-Legacy-Device-UUID'),
+            $user->id
+        );
 
         $recentTransactions = $user->coinTransactions()
             ->orderBy('id', 'desc')
@@ -54,10 +56,12 @@ class CoinController extends Controller
             ], 422);
         }
 
-        // Anti-abuse check: locked to both device_uuid and user_id
-        $alreadyClaimed = ClaimedDeviceBonus::where('device_uuid', $deviceUuid)
-            ->orWhere('user_id', $user->id)
-            ->exists();
+        // Anti-abuse check: locked to device_uuid (new + legacy) and user_id
+        $alreadyClaimed = ClaimedDeviceBonus::isClaimed(
+            $deviceUuid,
+            $request->header('X-Legacy-Device-UUID'),
+            $user->id
+        );
         if ($alreadyClaimed) {
             return response()->json([
                 'success' => false,
