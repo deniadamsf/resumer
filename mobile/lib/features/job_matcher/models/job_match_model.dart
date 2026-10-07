@@ -21,7 +21,10 @@ class JobMatchResult {
   static String _cleanKeyword(dynamic raw) {
     if (raw == null) return '';
     if (raw is Map) {
-      final val = raw['keyword'] ??
+      final val = raw['suggestion'] ??
+          raw['description'] ??
+          raw['text'] ??
+          raw['keyword'] ??
           raw['name'] ??
           raw['skill'] ??
           raw['title'] ??

@@ -127,4 +127,96 @@ void main() {
     expect(finalCv.educations[0].institution, 'ITB');
     expect(manager.currentMeta.atsScore, 97);
   });
+
+  test('isEligibleForAi supports project-based candidates without formal experience', () {
+    final cv = CvDocument.empty();
+    cv.personalInfo.fullName = 'Budi Santoso';
+    cv.personalInfo.email = 'budi@example.com';
+    cv.skills = [
+      SkillItem(name: 'Golang', description: 'REST APIs'),
+      SkillItem(name: 'PostgreSQL', description: 'Database design'),
+      SkillItem(name: 'Docker', description: 'Containerization'),
+    ];
+    cv.projects = [
+      ProjectItem(
+        name: 'Clara: Jurnal Bayi dengan AI',
+        role: 'Backend Developer',
+        description: 'Engineered microservices backend handling baby journal records using Go and PostgreSQL.',
+      ),
+    ];
+
+    // Experiences & educations are empty, but projects are present with > 50 chars plain text
+    expect(cv.experiences.isEmpty, isTrue);
+    expect(cv.educations.isEmpty, isTrue);
+    expect(cv.isEligibleForAi, isTrue);
+  });
+
+  test('Auto-Fix deduplicates identical project entries and merges recommended skills', () {
+    final cv = CvDocument.empty();
+    cv.projects = [
+      ProjectItem(name: 'Clara: Jurnal Bayi dengan AI', role: 'Backend', description: 'Initial desc'),
+      ProjectItem(name: 'Clara: Jurnal Bayi dengan AI', role: 'Backend', description: 'Duplicate desc'),
+    ];
+    cv.skills = [
+      SkillItem(name: 'Golang', description: 'Core development'),
+    ];
+
+    expect(cv.projects.length, 2);
+
+    // Simulate improvedData from autoFixAts resolving HRD suggestions
+    final improvedProjects = [
+      {
+        'name': 'Clara: Jurnal Bayi dengan AI',
+        'role': 'Lead Backend Engineer',
+        'description': 'Architected high-concurrency backend microservice with Go and Redis caching.',
+      }
+    ];
+    final improvedSkills = [
+      {'name': 'Golang', 'description': 'Core backend development'},
+      {'name': 'Redis', 'description': 'Distributed caching and pub/sub messaging'},
+      {'name': 'gRPC', 'description': 'High-performance inter-service RPC communication'},
+    ];
+
+    // Deduplication logic identical to AtsCheckerScreen
+    final List<ProjectItem> newProjects = [];
+    final Set<String> seenProjectNames = <String>{};
+    for (final projMap in improvedProjects) {
+      final name = projMap['name']?.trim() ?? '';
+      final key = name.toLowerCase();
+      if (name.isNotEmpty && seenProjectNames.contains(key)) continue;
+      if (key.isNotEmpty) seenProjectNames.add(key);
+      newProjects.add(ProjectItem(
+        name: name,
+        role: projMap['role'] ?? '',
+        description: projMap['description'] ?? '',
+      ));
+    }
+    cv.projects = newProjects;
+
+    // Skills update
+    final List<SkillItem> newSkills = [];
+    final Set<String> seenSkillNames = <String>{};
+    for (final s in improvedSkills) {
+      final item = SkillItem.fromJson(s);
+      final k = item.name.trim().toLowerCase();
+      if (k.isNotEmpty && !seenSkillNames.contains(k)) {
+        seenSkillNames.add(k);
+        newSkills.add(item);
+      }
+    }
+    cv.skills = newSkills;
+
+    // Verify duplicate is gone
+    expect(cv.projects.length, 1);
+    expect(cv.projects[0].name, 'Clara: Jurnal Bayi dengan AI');
+    expect(cv.projects[0].role, 'Lead Backend Engineer');
+
+    // Verify recommended skills (Redis & gRPC) are successfully included
+    expect(cv.skills.length, 3);
+    final skillNames = cv.skills.map((s) => s.name).toList();
+    expect(skillNames, contains('Golang'));
+    expect(skillNames, contains('Redis'));
+    expect(skillNames, contains('gRPC'));
+  });
 }
+

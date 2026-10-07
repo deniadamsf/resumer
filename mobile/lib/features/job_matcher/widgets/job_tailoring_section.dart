@@ -9,12 +9,14 @@ class JobTailoringSection extends StatelessWidget {
   final List<String> suggestions;
   final VoidCallback onTailorCv;
   final bool isTailoring;
+  final bool isApplied;
 
   const JobTailoringSection({
     super.key,
     required this.suggestions,
     required this.onTailorCv,
     this.isTailoring = false,
+    this.isApplied = false,
   });
 
   @override
@@ -94,13 +96,21 @@ class JobTailoringSection extends StatelessWidget {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
-                : const Icon(Icons.auto_awesome_outlined, size: 18, color: Colors.white),
+                : Icon(
+                    isApplied ? Icons.check_circle_rounded : Icons.auto_awesome_outlined,
+                    size: 18,
+                    color: Colors.white,
+                  ),
             label: Text(
-              'job_match.tailor_cv_btn'.tr,
+              isApplied
+                  ? (AppLocalizations.instance.currentLocale.startsWith('en')
+                      ? 'CV Tailored to Job (Re-apply)'
+                      : 'CV Berhasil Disesuaikan (Terapkan Ulang)')
+                  : 'job_match.tailor_cv_btn'.tr,
               style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.midnightNavy,
+              backgroundColor: isApplied ? AppColors.forestPine : AppColors.midnightNavy,
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -109,12 +119,16 @@ class JobTailoringSection extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'job_match.tailor_cv_desc'.tr,
+            isApplied
+                ? (AppLocalizations.instance.currentLocale.startsWith('en')
+                    ? 'Saved directly to CV Editor draft. Check Editor tab to view.'
+                    : 'Tersimpan langsung ke draft Editor CV. Buka tab Editor untuk melihat.')
+                : 'job_match.tailor_cv_desc'.tr,
             textAlign: TextAlign.center,
             style: GoogleFonts.outfit(
               fontSize: 11,
               fontWeight: FontWeight.w400,
-              color: AppColors.textSecondary,
+              color: isApplied ? AppColors.forestPine : AppColors.textSecondary,
             ),
           ),
         ],

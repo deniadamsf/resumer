@@ -87,11 +87,11 @@ class CvDocument {
   }
 
   /// Blueprint Bagian 10: Validasi Pra-Generate AI & ATS Checker (Filter Kelayakan Data)
-  /// Wajib mengisi kolom inti (Nama, Kontak, min 1 Riwayat Kerja/Pendidikan, min 3 Keahlian, min 50 karakter teks)
+  /// Wajib mengisi kolom inti (Nama, Kontak, min 1 Riwayat Kerja/Pendidikan/Proyek, min 3 Keahlian, min 50 karakter teks)
   bool get isEligibleForAi {
     final hasName = personalInfo.fullName.trim().isNotEmpty;
     final hasContact = personalInfo.email.trim().isNotEmpty || personalInfo.phone.trim().isNotEmpty;
-    final hasHistory = experiences.isNotEmpty || educations.isNotEmpty;
+    final hasHistory = experiences.isNotEmpty || educations.isNotEmpty || projects.isNotEmpty;
     final hasSkills = skills.length >= 3;
     final hasMinLength = toPlainText().trim().length >= 50;
     return hasName && hasContact && hasHistory && hasSkills && hasMinLength;
@@ -376,14 +376,14 @@ class CvDocument {
       }
     }
 
-    if (languages.isNotEmpty) {
+    if (showLanguages && languages.isNotEmpty) {
       buffer.writeln('LANGUAGES');
       buffer.writeln('---------');
       buffer.writeln(languages.map((l) => '${l.name} (${l.proficiency})').join(' • '));
       buffer.writeln();
     }
 
-    if (hobbies.isNotEmpty) {
+    if (showHobbies && hobbies.isNotEmpty) {
       buffer.writeln('HOBBIES & INTERESTS');
       buffer.writeln('-------------------');
       buffer.writeln(hobbies.join(' • '));

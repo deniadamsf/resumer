@@ -49,6 +49,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
   File? _selectedImage;
   bool _isLoading = false;
   bool _isTailoring = false;
+  bool _isTailored = false;
   JobMatchResult? _result;
 
   @override
@@ -75,6 +76,9 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
   }
 
   Future<void> _handleStartMatch() async {
+    // Synchronize to the latest CV in memory from the Editor
+    _cv = (widget.currentCv ?? _profileMgr.currentCv).clone();
+
     if (!_cv.isEligibleForAi) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -121,6 +125,9 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Re-read latest CV from profile manager
+      _cv = (widget.currentCv ?? _profileMgr.currentCv).clone();
+
       String? base64Image;
       if (_mode == JobInputMode.image && _selectedImage != null) {
         final bytes = await _selectedImage!.readAsBytes();
@@ -145,6 +152,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
         final rawResult = (response['match_result'] ?? response['ats_result'] ?? {}) as Map<String, dynamic>;
         setState(() {
           _result = JobMatchResult.fromJson(rawResult);
+          _isTailored = false;
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
@@ -199,12 +207,14 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
     setState(() => _isTailoring = true);
 
     try {
+      // Always base tailoring on the fresh draft from the Editor
+      final workingCv = (widget.currentCv ?? _profileMgr.currentCv).clone();
       Map<String, dynamic>? tailoredData = _result!.tailoredCvData;
 
       // If tailoredCvData is not in memory, fetch it dynamically from backend
       if (tailoredData == null || tailoredData.isEmpty) {
         final res = await ApiService.instance.tailorJobCv(
-          cvText: _cv.toPlainText(),
+          cvText: workingCv.toPlainText(),
           jobText: _mode == JobInputMode.text ? _textController.text.trim() : null,
           suggestions: _result!.tailoringSuggestions,
           missingKeywords: _result!.missingKeywords,
@@ -215,16 +225,22 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       }
 
       final List<String> appliedSections = [];
-      final preservedCertifications = List<CertificationItem>.from(_cv.certifications);
-      final preservedProjects = List<ProjectItem>.from(_cv.projects);
+      final preservedCertifications = List<CertificationItem>.from(workingCv.certifications);
+      final preservedProjects = List<ProjectItem>.from(workingCv.projects);
 
       if (tailoredData != null && tailoredData.isNotEmpty) {
         // 1. Apply AI Tailored Summary (Natural language, no JSON, no crude appending)
-        if (tailoredData['summary'] != null && tailoredData['summary'] is String) {
-          final newSummary = _sanitizeSummary(tailoredData['summary'] as String);
+        if (tailoredData['summary'] != null) {
+          String rawSummary = '';
+          if (tailoredData['summary'] is String) {
+            rawSummary = tailoredData['summary'] as String;
+          } else if (tailoredData['summary'] is Map) {
+            rawSummary = (tailoredData['summary']['summary'] ?? tailoredData['summary']['text'] ?? '').toString();
+          }
+          final newSummary = _sanitizeSummary(rawSummary);
           if (newSummary.isNotEmpty) {
-            _cv.summary = newSummary;
-            _cv.showSummary = true;
+            workingCv.summary = newSummary;
+            workingCv.showSummary = true;
             appliedSections.add('form.summary'.tr);
           }
         }
@@ -233,15 +249,25 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
         if (tailoredData['experiences'] != null && tailoredData['experiences'] is List) {
           final expList = tailoredData['experiences'] as List;
           bool expUpdated = false;
-          for (int i = 0; i < expList.length && i < _cv.experiences.length; i++) {
+          for (int i = 0; i < expList.length && i < workingCv.experiences.length; i++) {
             final expItem = expList[i];
-            if (expItem is Map && expItem['bullet_points'] != null && expItem['bullet_points'] is List) {
-              final bullets = (expItem['bullet_points'] as List)
-                  .map((e) => e.toString().trim())
-                  .where((e) => e.isNotEmpty)
-                  .toList();
+            if (expItem is Map) {
+              final rawBullets = expItem['bullet_points'] ?? expItem['highlights'] ?? expItem['bulletPoints'];
+              List<String> bullets = [];
+              if (rawBullets is List) {
+                bullets = rawBullets
+                    .map((e) => e.toString().trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+              } else if (rawBullets is String && rawBullets.trim().isNotEmpty) {
+                bullets = rawBullets
+                    .split('\n')
+                    .map((e) => e.replaceAll(RegExp(r'^[•\-\*]\s*'), '').trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+              }
               if (bullets.isNotEmpty) {
-                _cv.experiences[i].highlights = bullets;
+                workingCv.experiences[i].highlights = bullets;
                 expUpdated = true;
               }
             }
@@ -251,7 +277,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
           }
         }
 
-        // 3. Apply AI Tailored Skills (Prioritized high-impact competencies)
+        // 3. Apply AI Tailored Skills (Prioritized high-impact competencies merged uniquely)
         if (tailoredData['skills'] != null && tailoredData['skills'] is List) {
           final rawSkills = tailoredData['skills'] as List;
           final List<SkillItem> parsedSkills = [];
@@ -261,8 +287,20 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
             }
           }
           if (parsedSkills.isNotEmpty) {
-            _cv.skills = parsedSkills;
-            _cv.showSkills = true;
+            final existingNames = <String>{};
+            final mergedSkills = <SkillItem>[];
+            for (final s in parsedSkills) {
+              if (s.name.trim().isNotEmpty && existingNames.add(s.name.trim().toLowerCase())) {
+                mergedSkills.add(s);
+              }
+            }
+            for (final s in workingCv.skills) {
+              if (s.name.trim().isNotEmpty && existingNames.add(s.name.trim().toLowerCase())) {
+                mergedSkills.add(s);
+              }
+            }
+            workingCv.skills = mergedSkills;
+            workingCv.showSkills = true;
             appliedSections.add('form.skills'.tr);
           }
         }
@@ -273,12 +311,18 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
             tailoredData['projects'] is List) {
           final projList = tailoredData['projects'] as List;
           bool projUpdated = false;
-          for (int i = 0; i < projList.length && i < _cv.projects.length; i++) {
+          for (int i = 0; i < projList.length && i < workingCv.projects.length; i++) {
             final pItem = projList[i];
-            if (pItem is Map && pItem['description'] != null) {
-              final desc = pItem['description'].toString().trim();
+            if (pItem is Map) {
+              final rawDesc = pItem['description'] ?? pItem['highlights'] ?? pItem['details'];
+              String desc = '';
+              if (rawDesc is String) {
+                desc = rawDesc.trim();
+              } else if (rawDesc is List) {
+                desc = rawDesc.map((e) => '• ${e.toString().trim()}').join('\n');
+              }
               if (desc.isNotEmpty) {
-                _cv.projects[i].description = desc;
+                workingCv.projects[i].description = desc;
                 projUpdated = true;
               }
             }
@@ -290,7 +334,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
       } else {
         // Fallback: graceful local alignment if offline
         final currentSkillsMap = <String, SkillItem>{};
-        for (final s in _cv.skills) {
+        for (final s in workingCv.skills) {
           currentSkillsMap[s.name.trim().toLowerCase()] = s;
         }
 
@@ -302,7 +346,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
               name: cleanKw,
               description: 'job_match.tailor_skill_desc'.tr,
             );
-            _cv.skills.add(newSkill);
+            workingCv.skills.add(newSkill);
             currentSkillsMap[cleanKw.toLowerCase()] = newSkill;
             skillAdded = true;
           }
@@ -310,14 +354,14 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
         if (skillAdded) appliedSections.add('form.skills'.tr);
 
         // Safe Summary check - NEVER append JSON or raw braces
-        if (_cv.summary.trim().isNotEmpty && _result!.matchedKeywords.isNotEmpty) {
+        if (workingCv.summary.trim().isNotEmpty && _result!.matchedKeywords.isNotEmpty) {
           final topKeywords = _result!.matchedKeywords
               .where((k) => !k.contains('{') && !k.contains('}') && k.length < 30)
               .take(3)
               .join(', ');
-          if (topKeywords.isNotEmpty && !_cv.summary.contains(topKeywords)) {
+          if (topKeywords.isNotEmpty && !workingCv.summary.contains(topKeywords)) {
             final addition = 'job_match.tailor_summary_addition'.trArgs([topKeywords]);
-            _cv.summary = '${_cv.summary.trim()}$addition';
+            workingCv.summary = '${workingCv.summary.trim()}$addition';
             appliedSections.add('form.summary'.tr);
           }
         }
@@ -325,14 +369,19 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
 
       // Preserve data fidelity: if user had no certifications or projects, guarantee empty
       if (preservedCertifications.isEmpty) {
-        _cv.certifications = [];
+        workingCv.certifications = [];
       }
       if (preservedProjects.isEmpty) {
-        _cv.projects = [];
+        workingCv.projects = [];
       }
 
-      await CvProfileManager.instance.saveCurrentProfile(_cv);
-      widget.onCvUpdated?.call(_cv);
+      _cv = workingCv.clone();
+      await CvProfileManager.instance.saveCurrentProfile(workingCv);
+      widget.onCvUpdated?.call(workingCv);
+
+      setState(() {
+        _isTailored = true;
+      });
 
       if (mounted) {
         final sectionsText = appliedSections.isNotEmpty
@@ -510,6 +559,7 @@ class _JobMatcherScreenState extends State<JobMatcherScreen> {
                 suggestions: _result!.tailoringSuggestions,
                 onTailorCv: _handleTailorCv,
                 isTailoring: _isTailoring,
+                isApplied: _isTailored,
               ),
             ],
           ],

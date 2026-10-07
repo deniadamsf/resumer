@@ -25,6 +25,8 @@ class GeminiService
     public function generateCv(array $input): array
     {
         $locale = $input['language'] ?? 'id_ID';
+        $targetJob = $input['target_job'] ?? $input['professional_title'] ?? null;
+        $targetJobContext = $targetJob ? "Target Job / Specialization: {$targetJob}\n" : "";
         $isEnglish = str_starts_with(strtolower($locale), 'en');
         $langInstruction = $isEnglish
             ? "CRITICAL LANGUAGE REQUIREMENT: Generate ALL resume text (summary, highlights/bullet points, project descriptions, skills) strictly in US English."
@@ -32,13 +34,21 @@ class GeminiService
 
         $systemPrompt = <<<PROMPT
 You are a premier Executive ATS CV Architect for elite Fortune 500 and global tech standards.
-Your objective is to polish the candidate's data into a world-class ATS-ready resume.
+Your objective is to polish the candidate's data into a world-class ATS-ready resume aligned with their target career.
+{$targetJobContext}
 Rules:
 1. Apply Google XYZ formula: "Accomplished [X] as measured by [Y], by doing [Z]" using strong action verbs (Spearheaded, Orchestrated, Engineered, Accelerated).
-2. Professional Summary: 3-4 impactful sentences summarizing core value proposition, key competencies, and career trajectory.
+2. Professional Summary: 3-4 impactful sentences summarizing core value proposition, key competencies, and career trajectory aligned with the candidate's target job.
 3. Work Experience: Rephrase each bullet point with high-impact action verbs and estimated realistic metrics.
-4. {$langInstruction}
-5. Output strict JSON only. Do not add markdown backticks outside JSON.
+4. Projects & Portfolio:
+   - If candidate provides projects in input, refine the project name, role, start/end dates, and enrich the description into high-impact Google XYZ / STAR format highlighting technical stack, architecture, scale, and measurable impact.
+   - If candidate's input has NO projects, return an empty array "projects": []. NEVER fabricate fake projects!
+5. Certifications:
+   - If candidate provides certifications in input, polish name, issuer, year, and description.
+   - If candidate's input has NO certifications, return an empty array "certifications": []. NEVER fabricate fake certifications!
+6. Skills: Enrich existing skills with deep contextual descriptions (tools, frameworks, metrics).
+7. {$langInstruction}
+8. Output strict JSON only. Do not add markdown backticks outside JSON.
 
 Output JSON structure:
 {
@@ -179,20 +189,23 @@ PROMPT;
 
         $systemPrompt = <<<PROMPT
 You are an elite Enterprise ATS Optimization Engine.
-Your task is to take the provided CV text and suggestions, and transform it into a 95+ ATS score corporate resume.
+Your task is to take the provided CV text and suggestions, and transform it into a 95+ ATS score corporate resume by systematically resolving all issues identified in the suggestions.
 
-CRITICAL RULES ON EMPTY SECTIONS & DATA FIDELITY:
+CRITICAL RULES ON RESOLVING HRD SUGGESTIONS & DATA FIDELITY:
 1. {$langInstruction}
-2. Apply Google XYZ formula ("Accomplished [X] measured by [Y] by doing [Z]") to experience bullet points using powerful active verbs.
-3. Summary: If present in the original CV, rewrite into a commanding 3-4 sentence Executive Summary.
-4. Skills: Optimize and refine names and provide clear contextual descriptions (tools, metrics, frameworks) for the skills present.
-5. Certifications & Licenses:
-   - CRITICAL: If the candidate's original CV has NO certifications (empty or missing), you MUST return an empty array "certifications": []. NEVER invent, fabricate, or hallucinate certifications that the user never earned!
-   - If the candidate DOES have certifications, refine the name, issuer, year, and enrich the description to emphasize industry credential standards.
+2. RESOLVE ALL ACTIONABLE SUGGESTIONS:
+   - Carefully review each suggestion in "Suggestions" (actionable HRD feedback).
+   - PROJECT DEDUPLICATION: If suggestions or the original CV identify duplicated project entries (e.g. identical projects like "Clara: Jurnal Bayi dengan AI" listed twice), you MUST deduplicate them: output each unique project only ONCE. NEVER return duplicate project items!
+   - HIGH-IMPACT SKILLS INJECTION: If suggestions note missing high-demand technical tools, protocols, or architecture competencies required for the candidate's target role (e.g. Redis caching, gRPC modern communication protocols, message brokers, distributed systems), you MUST integrate them into "skills" with rich contextual descriptions (tools, metrics, frameworks).
+   - CERTIFICATIONS INTEGRITY: If the candidate has NO certifications in the original CV, you MUST keep "certifications": []. NEVER fabricate fake certificates or licenses! In "changes_made", add a clear note advising the candidate to obtain and manually add relevant certifications to reach 98-100 ATS score.
+3. Summary: If present in the original CV, rewrite into a commanding 3-4 sentence Executive Summary adhering to executive standards.
+4. Work Experience: Rephrase each bullet point with high-impact action verbs using Google XYZ formula ("Accomplished [X] measured by [Y] by doing [Z]").
+5. Skills: Refine existing skills AND append high-impact missing keywords/tools identified in suggestions.
 6. Projects & Portfolio:
-   - CRITICAL: If the candidate's original CV has NO projects (empty or missing), you MUST return an empty array "projects": []. NEVER invent, fabricate, or hallucinate projects the user never created!
-   - If the candidate DOES have projects, refine the project name, role, period, and enrich the description into a powerful Google XYZ / STAR format highlighting accomplishments, technologies, and measurable results.
-7. Do NOT fabricate companies, degrees, projects, or licenses not mentioned by the candidate.
+   - If candidate's original CV has NO projects, return an empty array "projects": [].
+   - If candidate DOES have projects: DEDUPLICATE all projects so each unique project appears once, refine project name and role, and enrich descriptions into powerful STAR/XYZ format highlighting technical complexity and quantifiable scale.
+7. Do NOT fabricate companies, degrees, or licenses not mentioned by the candidate.
+8. changes_made: Provide a concise, professional list detailing all concrete fixes executed (e.g., "Menghapus duplikasi entri proyek Clara", "Menambahkan keahlian teknis Redis dan gRPC", "Mengonversi bullet point riwayat ke formula Google XYZ").
 
 Output strict JSON:
 {
@@ -236,7 +249,7 @@ Output strict JSON:
 }
 PROMPT;
 
-        $userPrompt = "Original CV Content:\n{$cvText}\nSuggestions:\n" . json_encode($suggestions);
+        $userPrompt = "Original CV Content:\n{$cvText}\nSuggestions / HRD Actionable Feedback to Resolve:\n" . json_encode($suggestions, JSON_UNESCAPED_UNICODE);
 
         return $this->callGeminiJson($systemPrompt, $userPrompt);
     }
@@ -314,9 +327,15 @@ PROMPT;
         }
 
         if ($imageBase64) {
+            $mimeType = 'image/jpeg';
+            if (str_starts_with($imageBase64, 'iVBORw0KGgo')) {
+                $mimeType = 'image/png';
+            } elseif (str_starts_with($imageBase64, 'UklGR')) {
+                $mimeType = 'image/webp';
+            }
             $parts[] = [
                 'inline_data' => [
-                    'mime_type' => 'image/jpeg',
+                    'mime_type' => $mimeType,
                     'data' => $imageBase64
                 ]
             ];

@@ -43,7 +43,6 @@ class CvEditorScreen extends StatefulWidget {
 class _CvEditorScreenState extends State<CvEditorScreen> {
   final _profileMgr = CvProfileManager.instance;
   late CvDocument _cv;
-  int _remainingQuota = 5;
   bool _isLoading = false;
 
   final _nameController = TextEditingController();
@@ -219,16 +218,13 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
   bool get _isEligibleForAi {
     final hasName = _nameController.text.trim().isNotEmpty;
     final hasContact = _emailController.text.trim().isNotEmpty || _phoneController.text.trim().isNotEmpty;
-    final hasHistory = _cv.experiences.isNotEmpty || _cv.educations.isNotEmpty;
+    final hasHistory = _cv.experiences.isNotEmpty || _cv.educations.isNotEmpty || _cv.projects.isNotEmpty;
     final hasSkills = _cv.skills.length >= 3;
     return hasName && hasContact && hasHistory && hasSkills;
   }
 
   Future<void> _fetchQuota() async {
     await QuotaService.instance.fetchQuota();
-    if (mounted) {
-      setState(() => _remainingQuota = QuotaService.instance.remainingQuota);
-    }
   }
 
   Future<void> _handleProfileSwitch(int newIndex) async {
@@ -261,24 +257,22 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
       return;
     }
 
-    if (_remainingQuota <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('quota.limit_reached'.tr)),
-      );
-      return;
-    }
+    final hasQuota = QuotaService.instance.hasRemainingQuota;
 
     await AdService.instance.showRewardedAd(
       context: context,
-      prompt: 'ad.reward_prompt_generate'.tr,
+      prompt: hasQuota
+          ? 'ad.reward_prompt_generate'.tr
+          : 'ad.quota_exhausted_prompt'.tr,
       actionType: 'ai_generate',
-      actionDescription: 'Generate Deskripsi AI',
+      actionDescription: hasQuota ? 'Poles CV dengan AI' : 'Bypass Kuota Poles AI',
       coinCost: 1,
-      onRewarded: _executeGenerateAi,
+      allowWatchAd: hasQuota,
+      onRewarded: () => _executeGenerateAi(bypassQuota: !hasQuota),
     );
   }
 
-  Future<void> _executeGenerateAi() async {
+  Future<void> _executeGenerateAi({bool bypassQuota = false}) async {
     _syncModelFromControllers();
     setState(() => _isLoading = true);
 
@@ -286,22 +280,33 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
       final payload = {
         'full_name': _cv.personalInfo.fullName,
         'professional_title': _cv.personalInfo.professionalTitle,
+        'target_job': _profileMgr.currentMeta.targetJob.isNotEmpty
+            ? _profileMgr.currentMeta.targetJob
+            : _cv.personalInfo.professionalTitle,
         'contact': {
           'email': _cv.personalInfo.email,
           'phone': _cv.personalInfo.phone,
           'location': _cv.personalInfo.location,
+          'linkedin': _cv.personalInfo.linkedin,
+          'github': _cv.personalInfo.github,
+          'website': _cv.personalInfo.website,
+          'whatsapp': _cv.personalInfo.whatsapp,
         },
         'summary': _cv.summary,
         'experiences': _cv.experiences.map((e) => e.toJson()).toList(),
         'educations': _cv.educations.map((e) => e.toJson()).toList(),
         'skills': _cv.skills.map((s) => s.toJson()).toList(),
+        'projects': _cv.projects.map((p) => p.toJson()).toList(),
         'certifications': _cv.certifications.map((c) => c.toJson()).toList(),
         'languages': _cv.languages.map((l) => l.toJson()).toList(),
         'hobbies': _cv.hobbies,
         'language': AppLocalizations.instance.currentLocale,
       };
 
-      final response = await ApiService.instance.generateCv(payload);
+      final response = await ApiService.instance.generateCv(
+        payload,
+        bypassQuota: bypassQuota,
+      );
       if (response['success'] == true && mounted) {
         final data = response['cv_data'];
         final List<String> changesApplied = [];
@@ -367,6 +372,40 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
           }
         }
 
+        // Apply improved projects if present
+        if (data['projects'] != null && data['projects'] is List) {
+          final projList = data['projects'] as List;
+          final List<ProjectItem> updatedProjects = [];
+          for (int i = 0; i < projList.length; i++) {
+            final projItem = projList[i];
+            if (projItem is Map) {
+              final original = i < _cv.projects.length ? _cv.projects[i] : null;
+              updatedProjects.add(ProjectItem(
+                name: (projItem['name'] as String?)?.trim().isNotEmpty == true
+                    ? projItem['name'].toString().trim()
+                    : (original?.name ?? ''),
+                role: (projItem['role'] as String?)?.trim().isNotEmpty == true
+                    ? projItem['role'].toString().trim()
+                    : (original?.role ?? ''),
+                startDate: (projItem['start_date'] as String?)?.trim().isNotEmpty == true
+                    ? projItem['start_date'].toString().trim()
+                    : (original?.startDate ?? ''),
+                endDate: (projItem['end_date'] as String?)?.trim().isNotEmpty == true
+                    ? projItem['end_date'].toString().trim()
+                    : (original?.endDate ?? ''),
+                isCurrent: original?.isCurrent ?? false,
+                description: (projItem['description'] as String?)?.trim().isNotEmpty == true
+                    ? projItem['description'].toString().trim()
+                    : (original?.description ?? ''),
+              ));
+            }
+          }
+          if (updatedProjects.isNotEmpty) {
+            _cv.projects = updatedProjects;
+            changesApplied.add('form.projects'.tr);
+          }
+        }
+
         // Apply improved educations if present
         if (data['educations'] != null && data['educations'] is List) {
           final eduList = data['educations'] as List;
@@ -409,13 +448,14 @@ class _CvEditorScreenState extends State<CvEditorScreen> {
           changesApplied.add('form.hobbies'.tr);
         }
 
-        // Update quota
-        if (response['quota']?['remaining'] != null) {
-          final q = (response['quota']['remaining'] as num).toInt();
-          _remainingQuota = q;
-          QuotaService.instance.updateQuota(q);
-        } else {
-          QuotaService.instance.consumeLocally();
+        // Update quota (only if not bypassing with coins)
+        if (!bypassQuota) {
+          if (response['quota']?['remaining'] != null) {
+            final q = (response['quota']['remaining'] as num).toInt();
+            QuotaService.instance.updateQuota(q);
+          } else {
+            QuotaService.instance.consumeLocally();
+          }
         }
 
         await _profileMgr.saveCurrentProfile(_cv);

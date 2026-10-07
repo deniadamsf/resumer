@@ -101,6 +101,10 @@ class CvController extends Controller
             'educations' => 'nullable|array',
             'skills' => 'nullable|array',
             'projects' => 'nullable|array',
+            'certifications' => 'nullable|array',
+            'languages' => 'nullable|array',
+            'hobbies' => 'nullable|array',
+            'target_job' => 'nullable|string|max:100',
         ]);
 
         /** @var DailyQuota $dailyQuota */

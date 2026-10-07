@@ -661,7 +661,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          isEn ? 'For Job Matcher & Instant Exports' : 'Untuk Cocok Loker & Ekspor Bebas Iklan',
+                          isEn
+                              ? 'Bypass daily limit, match jobs, & instant actions'
+                              : 'Bypass limit kuota AI, cocok loker & fitur instan',
                           style: GoogleFonts.outfit(fontSize: 11.5, color: AppColors.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -861,6 +863,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildQuotaCard() {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+
     return ValueListenableBuilder<int>(
       valueListenable: QuotaService.instance.remainingQuotaNotifier,
       builder: (context, remaining, _) {
@@ -968,17 +972,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   if (isExhausted) ...[
                     const SizedBox(width: 8),
-                    Text(
-                      'Bisa bypass dengan 1 koin',
-                      style: GoogleFonts.outfit(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFFD97706),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.toll_rounded, size: 11, color: Color(0xFFD97706)),
+                          const SizedBox(width: 3),
+                          Text(
+                            isEn ? 'Bypass 1 Coin' : 'Bypass 1 Koin',
+                            style: GoogleFonts.outfit(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF92400E),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ],
               ),
+              if (isExhausted) ...[
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () => CoinTopupSheet.show(context),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7).withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFD97706)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isEn
+                                ? 'Daily quota reached. You can keep using Poles AI & Auto-Fix with 1 coin per use.'
+                                : 'Jatah gratis hari ini habis. Anda tetap bisa menggunakan Poles AI & Auto-Fix dengan 1 koin per aksi.',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              color: const Color(0xFF92400E),
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFD97706)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );

@@ -268,74 +268,54 @@ class ApiService {
     return json.decode(response.body) as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> generateCv(Map<String, dynamic> candidateInput) async {
+  Future<Map<String, dynamic>> generateCv(
+    Map<String, dynamic> candidateInput, {
+    bool bypassQuota = false,
+  }) async {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
     final url = Uri.parse('$baseUrl/cv/generate');
     final payload = Map<String, dynamic>.from(candidateInput);
     payload['language'] = AppLocalizations.instance.currentLocale;
+    if (bypassQuota) {
+      payload['bypass_quota'] = true;
+    }
     final body = json.encode(payload);
     try {
-      final response = await http.post(url, headers: _buildHeaders(body), body: body);
+      final headers = _buildHeaders(body);
+      if (bypassQuota) {
+        headers['X-Bypass-Quota'] = 'true';
+      }
+      final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final err = json.decode(response.body) as Map<String, dynamic>;
+          return {
+            'success': false,
+            'message': err['message'] ??
+                (isEn
+                    ? 'Failed to polish CV (${response.statusCode})'
+                    : 'Gagal memoles CV (${response.statusCode})'),
+            'quota': err['quota'],
+          };
+        } catch (_) {
+          return {
+            'success': false,
+            'message': isEn
+                ? 'Server returned status ${response.statusCode}'
+                : 'Server mengembalikan status ${response.statusCode}',
+          };
+        }
       }
-    } catch (_) {}
-
-    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
-
-    // Comprehensive fallback mock — applies real improvements to ALL sections in user's chosen language
-    final existingExperiences = (candidateInput['experiences'] as List?) ?? [];
-    final improvedExperiences = existingExperiences.map((exp) {
-      final e = exp as Map<String, dynamic>;
+    } catch (e) {
       return {
-        'position': e['position'] ?? '',
-        'company': e['company'] ?? '',
-        'start_date': e['start_date'] ?? '',
-        'end_date': e['end_date'] ?? '',
-        'bullet_points': isEn
-            ? [
-                'Spearheaded end-to-end data pipeline architecture serving 50K+ daily transactions, reducing processing latency by 42% through optimized ETL workflows and automated validation checkpoints.',
-                'Engineered executive-grade BI dashboards consolidating 12+ cross-departmental KPIs, accelerating strategic decision-making cycles from 14 days to 48 hours for C-suite leadership.',
-                'Orchestrated migration of legacy on-premise data warehouse to cloud-native infrastructure (AWS/GCP), achieving 99.7% uptime SLA and 35% reduction in annual infrastructure costs.',
-              ]
-            : [
-                'Memimpin arsitektur pipeline data end-to-end melayani 50.000+ transaksi harian, memangkas latensi pemrosesan hingga 42% melalui optimalisasi alur ETL dan pos validasi terotomatisasi.',
-                'Merancang dashboard visualisasi BI eksekutif yang mengonsolidasikan 12+ KPI lintas departemen, mempercepat siklus pengambilan keputusan direksi dari 14 hari menjadi 48 jam.',
-                'Mengorkestrasi migrasi data warehouse on-premise ke infrastruktur cloud (AWS/GCP), mencapai SLA uptime 99,7% dan efisiensi biaya tahunan hingga 35%.',
-              ],
+        'success': false,
+        'message': isEn
+            ? 'Unable to connect to server. Please check your internet connection.'
+            : 'Gagal terhubung ke server. Periksa koneksi internet Anda.',
       };
-    }).toList();
-
-    final existingSkills = (candidateInput['skills'] as List?) ?? [];
-    final enhancedSkills = <String>{
-      ...existingSkills.map((s) => s.toString()),
-      if (isEn) ...[
-        'Data Pipeline Architecture',
-        'Business Intelligence',
-        'ETL Automation',
-        'Strategic Analytics',
-        'Cross-functional Leadership',
-      ] else ...[
-        'Arsitektur Data Pipeline',
-        'Business Intelligence',
-        'Otomasi Alur ETL',
-        'Analitika Strategis',
-        'Kepemimpinan Lintas Divisi',
-      ]
-    }.toList();
-
-    final summary = isEn
-        ? 'Results-driven analytical professional with proven expertise in enterprise data pipeline architecture, predictive modeling, and executive-grade business intelligence. Demonstrated track record of reducing operational latency by 42%, cutting infrastructure costs by 35%, and accelerating C-suite decision-making from 14 days to 48 hours through data-driven strategic frameworks and cross-functional team leadership.'
-        : 'Profesional analitika data dengan keahlian teruji dalam arsitektur data pipeline enterprise, pemodelan prediktif, dan business intelligence tingkat eksekutif. Terbukti berhasil memangkas latensi operasional sebesar 42%, menghemat biaya infrastruktur cloud hingga 35%, serta mempercepat siklus pengambilan keputusan C-suite dari 14 hari menjadi 48 jam melalui strategi berbasis data dan kepemimpinan tim lintas divisi.';
-
-    return {
-      'success': true,
-      'cv_data': {
-        'summary': summary,
-        'experiences': improvedExperiences,
-        'skills': enhancedSkills,
-      },
-      'quota': {'remaining': 4, 'limit': 5}
-    };
+    }
   }
 
   Future<Map<String, dynamic>> checkAtsScore(String cvText, {String? targetRole, int? profileId}) async {

@@ -99,9 +99,14 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
     setState(() => _isLoading = true);
     try {
       final cv = _profileMgr.currentCv;
+      final effectiveRole = _profileMgr.currentMeta.targetJob.trim().isNotEmpty
+          ? _profileMgr.currentMeta.targetJob.trim()
+          : (cv.personalInfo.professionalTitle.trim().isNotEmpty
+              ? cv.personalInfo.professionalTitle.trim()
+              : null);
       final response = await ApiService.instance.checkAtsScore(
         cv.toPlainText(),
-        targetRole: cv.personalInfo.professionalTitle,
+        targetRole: effectiveRole,
       );
 
       if (response['success'] == true && mounted) {
@@ -205,6 +210,7 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
 
       final response = await ApiService.instance.autoFixAts(
         cv.toPlainText(),
+        suggestions: _feedback,
         bypassQuota: bypassQuota,
       );
 
@@ -240,9 +246,15 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
           if (improvedData['skills'] != null && (improvedData['skills'] as List).isNotEmpty) {
             final rawSkills = improvedData['skills'] as List;
             final List<SkillItem> parsedSkills = [];
+            final Set<String> seenSkillNames = <String>{};
             for (final s in rawSkills) {
               if (s != null) {
-                parsedSkills.add(SkillItem.fromJson(s));
+                final item = SkillItem.fromJson(s);
+                final k = item.name.trim().toLowerCase();
+                if (k.isNotEmpty && !seenSkillNames.contains(k)) {
+                  seenSkillNames.add(k);
+                  parsedSkills.add(item);
+                }
               }
             }
             if (parsedSkills.isNotEmpty) {
@@ -275,26 +287,50 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             }
           }
 
-          // 5. Optimize projects & portfolio (ONLY if user already has projects)
+          // 5. Optimize projects & portfolio with AUTOMATIC DEDUPLICATION
           // ATURAN MUTLAK USER: "tapi kalo kosong ya jangan diisi"
-          if (preservedProjects.isNotEmpty &&
-              improvedData['projects'] != null &&
-              (improvedData['projects'] as List).isNotEmpty) {
-            final rawProjects = improvedData['projects'] as List;
-            for (int i = 0; i < rawProjects.length && i < cv.projects.length; i++) {
-              final projMap = rawProjects[i];
-              if (projMap is Map) {
-                if (projMap['name'] != null && (projMap['name'] as String).trim().isNotEmpty) {
-                  cv.projects[i].name = projMap['name'].toString().trim();
-                }
-                if (projMap['role'] != null && (projMap['role'] as String).trim().isNotEmpty) {
-                  cv.projects[i].role = projMap['role'].toString().trim();
-                }
-                if (projMap['description'] != null && (projMap['description'] as String).trim().isNotEmpty) {
-                  cv.projects[i].description = projMap['description'].toString().trim();
+          if (preservedProjects.isNotEmpty) {
+            final List<ProjectItem> newProjects = [];
+            final Set<String> seenProjectNames = <String>{};
+
+            if (improvedData['projects'] != null && (improvedData['projects'] as List).isNotEmpty) {
+              final rawProjects = improvedData['projects'] as List;
+              for (int i = 0; i < rawProjects.length; i++) {
+                final projMap = rawProjects[i];
+                if (projMap is Map) {
+                  final name = (projMap['name'] as String?)?.trim() ?? '';
+                  final key = name.toLowerCase();
+                  if (name.isNotEmpty && seenProjectNames.contains(key)) {
+                    continue; // Skip duplicate project entries!
+                  }
+                  if (key.isNotEmpty) seenProjectNames.add(key);
+
+                  final original = i < preservedProjects.length ? preservedProjects[i] : null;
+                  newProjects.add(ProjectItem(
+                    name: name.isNotEmpty ? name : (original?.name ?? ''),
+                    role: (projMap['role'] as String?)?.trim() ?? (original?.role ?? ''),
+                    startDate: (projMap['start_date'] as String?)?.trim() ?? (original?.startDate ?? ''),
+                    endDate: (projMap['end_date'] as String?)?.trim() ?? (original?.endDate ?? ''),
+                    isCurrent: original?.isCurrent ?? false,
+                    description: (projMap['description'] as String?)?.trim() ?? (original?.description ?? ''),
+                  ));
                 }
               }
             }
+
+            // Fallback deduplication from preserved projects if AI returned no projects
+            if (newProjects.isEmpty) {
+              for (final p in preservedProjects) {
+                final key = p.name.trim().toLowerCase();
+                if (key.isNotEmpty && seenProjectNames.contains(key)) continue;
+                if (key.isNotEmpty) seenProjectNames.add(key);
+                newProjects.add(p);
+              }
+            }
+
+            cv.projects = newProjects;
+          } else {
+            cv.projects = [];
           }
         }
 
@@ -316,14 +352,26 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         cv.showProjects = preservedShowProjects;
 
         final newScore = (improved?['estimated_new_score'] as num?)?.toInt() ?? 96;
+        final changesList = (improved?['changes_made'] as List?)?.map((c) => c.toString()).toList() ?? [];
         const newVerdict = 'Top 5% ATS Ready';
         final newBreakdown = {
           'keyword_match': 25,
           'impact_verbs': 24,
           'readability': 24,
-          'completeness': 23,
+          'completeness': cv.certifications.isEmpty ? 22 : 25,
         };
+
+        // If user has no certifications, keep an informative guidance feedback item
         final newFeedback = <dynamic>[];
+        if (cv.certifications.isEmpty) {
+          newFeedback.add({
+            'section': 'Sertifikasi / Pelatihan',
+            'priority': 'Sedang',
+            'issue': 'Seksi sertifikasi belum diisi di tab Editor.',
+            'suggestion': 'Tambahkan sertifikasi riil Anda (AI tidak memalsukan sertifikat) di tab Editor untuk memvalidasi keahlian teknis secara penuh.',
+            'example': 'Contoh: AWS Certified Developer / Certified Golang Engineer / Dicoding / Scrum Master',
+          });
+        }
 
         setState(() {
           _score = newScore;
@@ -340,10 +388,14 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
         );
 
         if (mounted) {
+          final changesSummary = changesList.isNotEmpty
+              ? ' (${changesList.length} perbaikan diterapkan)'
+              : '';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('ats.autofix_success_snack'.trArgs([newScore.toString()])),
+              content: Text('ats.autofix_success_snack'.trArgs([newScore.toString()]) + changesSummary),
               backgroundColor: AppColors.forestPine,
+              duration: const Duration(seconds: 4),
             ),
           );
         }
