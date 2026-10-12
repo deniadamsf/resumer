@@ -239,13 +239,36 @@ class EducationSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  'form.education'.tr,
-                  style: GoogleFonts.outfit(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.midnightNavy,
-                  ),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'form.education'.tr,
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.midnightNavy,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.subtleSlateTint,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${educations.length}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.mutedSteelSlate,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Switch.adaptive(

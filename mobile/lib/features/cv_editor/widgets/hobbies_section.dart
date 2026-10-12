@@ -4,7 +4,7 @@ import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 
 /// Hobbies & Interests Section with dynamic toggle ON/OFF & Wrap chips
-class HobbiesSection extends StatelessWidget {
+class HobbiesSection extends StatefulWidget {
   final List<String> hobbies;
   final bool isEnabled;
   final ValueChanged<bool> onToggle;
@@ -21,9 +21,28 @@ class HobbiesSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final controller = TextEditingController();
+  State<HobbiesSection> createState() => _HobbiesSectionState();
+}
 
+class _HobbiesSectionState extends State<HobbiesSection> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submitHobby() {
+    final val = _controller.text.trim();
+    if (val.isNotEmpty) {
+      widget.onAddHobby(val);
+      _controller.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -58,6 +77,22 @@ class HobbiesSection extends StatelessWidget {
                         color: AppColors.midnightNavy,
                       ),
                     ),
+                    if (widget.hobbies.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.subtleSlateTint,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${widget.hobbies.length}',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.mutedSteelSlate,
+                          ),
+                        ),
+                      ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
@@ -73,19 +108,19 @@ class HobbiesSection extends StatelessWidget {
                 ),
               ),
               Switch.adaptive(
-                value: isEnabled,
+                value: widget.isEnabled,
                 activeTrackColor: AppColors.midnightNavy,
-                onChanged: onToggle,
+                onChanged: widget.onToggle,
               ),
             ],
           ),
-          if (isEnabled) ...[
+          if (widget.isEnabled) ...[
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller: controller,
+                    controller: _controller,
                     style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'form.hobbies_hint'.tr,
@@ -102,23 +137,12 @@ class HobbiesSection extends StatelessWidget {
                         borderSide: const BorderSide(color: AppColors.borderHairline),
                       ),
                     ),
-                    onSubmitted: (val) {
-                      if (val.trim().isNotEmpty) {
-                        onAddHobby(val.trim());
-                        controller.clear();
-                      }
-                    },
+                    onSubmitted: (_) => _submitHobby(),
                   ),
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
-                  onPressed: () {
-                    final val = controller.text.trim();
-                    if (val.isNotEmpty) {
-                      onAddHobby(val);
-                      controller.clear();
-                    }
-                  },
+                  onPressed: _submitHobby,
                   tooltip: 'form.add_hobby_tooltip'.tr,
                   icon: const Icon(Icons.add_rounded, size: 20),
                   style: IconButton.styleFrom(
@@ -131,7 +155,7 @@ class HobbiesSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (hobbies.isEmpty)
+            if (widget.hobbies.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
@@ -144,10 +168,10 @@ class HobbiesSection extends StatelessWidget {
                 spacing: 8.0,
                 runSpacing: 8.0,
                 children: [
-                  for (int i = 0; i < hobbies.length; i++)
+                  for (int i = 0; i < widget.hobbies.length; i++)
                     Chip(
                       label: Text(
-                        hobbies[i],
+                        widget.hobbies[i],
                         style: GoogleFonts.outfit(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -156,7 +180,7 @@ class HobbiesSection extends StatelessWidget {
                       ),
                       backgroundColor: AppColors.subtleSlateTint,
                       deleteIcon: const Icon(Icons.close, size: 14),
-                      onDeleted: () => onRemoveHobby(i),
+                      onDeleted: () => widget.onRemoveHobby(i),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side: const BorderSide(color: AppColors.borderHairline),

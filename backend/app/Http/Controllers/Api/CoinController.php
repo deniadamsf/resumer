@@ -42,7 +42,7 @@ class CoinController extends Controller
     }
 
     /**
-     * Claim initial 5 coins welcome bonus (Device UUID and User ID locked).
+     * Claim initial 2 coins welcome bonus (Device UUID and User ID locked).
      */
     public function claimWelcomeBonus(Request $request)
     {
@@ -65,7 +65,7 @@ class CoinController extends Controller
         if ($alreadyClaimed) {
             return response()->json([
                 'success' => false,
-                'message' => 'Bonus selamat datang 5 koin sudah pernah diklaim pada perangkat atau akun ini.',
+                'message' => 'Bonus selamat datang 2 koin sudah pernah diklaim pada perangkat atau akun ini.',
                 'coins' => (int) $user->coins,
             ], 400);
         }
@@ -77,20 +77,20 @@ class CoinController extends Controller
                 'claimed_at' => now(),
             ]);
 
-            $user->increment('coins', 5);
+            $user->increment('coins', 2);
             $user->refresh();
 
             CoinTransaction::create([
                 'user_id' => $user->id,
-                'amount' => 5,
+                'amount' => 2,
                 'action_type' => 'welcome_bonus',
-                'description' => 'Bonus Pengguna Baru (5 Koin)',
+                'description' => 'Bonus Pengguna Baru (2 Koin)',
                 'balance_after' => $user->coins,
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Selamat! Bonus 5 koin berhasil ditambahkan.',
+                'message' => 'Selamat! Bonus 2 koin berhasil ditambahkan.',
                 'coins' => (int) $user->coins,
             ]);
         });

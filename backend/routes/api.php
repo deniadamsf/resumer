@@ -39,6 +39,7 @@ Route::prefix('v1')->group(function () {
 
         // AI Services (Monetized via Rewarded Ads in Mobile App)
         Route::post('/cv/ats-check', [CvController::class, 'atsCheck']);
+        Route::post('/cv/parse-external', [CvController::class, 'parseExternalCv']);
         Route::post('/cv/job-match', [CvController::class, 'jobMatch']);
         Route::post('/cv/job-tailor', [CvController::class, 'tailorCv']);
         Route::post('/cv/cover-letter', [CvController::class, 'coverLetter']);

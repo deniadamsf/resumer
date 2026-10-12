@@ -18,7 +18,7 @@ class CoinService {
 
   static const String _prefCoinsKey = 'resumer_cached_coins';
 
-  /// Flag level-perangkat: bonus 5 koin sudah pernah diklaim di device ini.
+  /// Flag level-perangkat: bonus 2 koin sudah pernah diklaim di device ini.
   /// TIDAK dihapus saat logout agar relogin / ganti akun tidak mereset bonus.
   static const String _prefClaimedKey = 'resumer_claimed_welcome_bonus';
 
@@ -42,7 +42,7 @@ class CoinService {
 
         await _saveCoins(serverCoins);
 
-        // Jika belum pernah klaim bonus selamat datang, klaim 5 koin gratis
+        // Jika belum pernah klaim bonus selamat datang, klaim 2 koin gratis
         if (!hasClaimed) {
           await claimInitialBonus();
         }
@@ -59,7 +59,7 @@ class CoinService {
     }
   }
 
-  /// Klaim 5 koin gratis untuk pengguna baru (sekali per Device ID).
+  /// Klaim 2 koin gratis untuk pengguna baru (sekali per Device ID).
   Future<bool> claimInitialBonus() async {
     final prefs = await SharedPreferences.getInstance();
     final alreadyClaimed = prefs.getBool(_prefClaimedKey) ?? false;
@@ -71,8 +71,8 @@ class CoinService {
       final serverCoins = (res['coins'] as num?)?.toInt();
       if (res['success'] == true) {
         await prefs.setBool(_prefClaimedKey, true);
-        await _saveCoins(serverCoins ?? currentCoins + 5);
-        debugPrint('[CoinService] Successfully claimed 5 welcome coins! Balance: $currentCoins');
+        await _saveCoins(serverCoins ?? currentCoins + 2);
+        debugPrint('[CoinService] Successfully claimed 2 welcome coins! Balance: $currentCoins');
         return true;
       }
       if (serverCoins != null) {
@@ -86,7 +86,7 @@ class CoinService {
 
     // Mode guest: bonus lokal sekali per perangkat.
     await prefs.setBool(_prefClaimedKey, true);
-    await _saveCoins(currentCoins + 5);
+    await _saveCoins(currentCoins + 2);
     return true;
   }
 

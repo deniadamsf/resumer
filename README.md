@@ -68,9 +68,21 @@ php artisan migrate
 php artisan serve
 ```
 
+## Production Deployment (Hostinger VPS / Shared)
+
+- **API Base URL:** `https://resumer.cellanoma.my.id/api/v1`
+- **Direktori Aktif (Live Production):** `/home/u731410318/domains/cellanoma.my.id/public_html/resumer`
+- **Direktori Arsip Cadangan (Non-aktif):** `/home/u731410318/resumer-core-BACKUP-LAMA`
+- **SSH Access:** `153.92.8.198` (Port: `65002`, User: `u731410318`)
+- **Deploy Command (Contoh Sync File):**
+  ```bash
+  scp -P 65002 backend/app/Http/Controllers/Api/AuthController.php u731410318@153.92.8.198:/home/u731410318/domains/cellanoma.my.id/public_html/resumer/app/Http/Controllers/Api/
+  ssh -p 65002 u731410318@153.92.8.198 "cd /home/u731410318/domains/cellanoma.my.id/public_html/resumer && php artisan optimize:clear"
+  ```
+
 ## Versi
 
-Mobile: **1.0.7+8**
+Mobile: **1.0.13+14**
 
 ## Lisensi
 

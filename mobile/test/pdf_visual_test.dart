@@ -64,7 +64,7 @@ void main() {
     expect(letterBytes.isNotEmpty, true);
   });
 
-  test('Generate PDF for all 14 registered templates across all official colors', () async {
+  test('Generate PDF for all 24 registered templates across all official colors', () async {
     final cv = CvDocument(
       personalInfo: PersonalInfo(
         fullName: 'Alexander Wright',
@@ -113,6 +113,11 @@ void main() {
       'asian_ats',
       'western_strict',
       'modern_ats',
+      'executive_classic_ats',
+      'corporate_clean_ats',
+      'nordic_compact_ats',
+      'tech_modern_ats',
+      'federal_strict_ats',
       'modern_creative',
       'compact_portfolio',
       'executive_split',
@@ -124,6 +129,11 @@ void main() {
       'gradient_header',
       'color_block',
       'ribbon_banner',
+      'swiss_high_contrast',
+      'infographic_modern',
+      'floating_card',
+      'midnight_executive',
+      'studio_portfolio',
     ];
 
     final colors = ['#0B132B', '#065F46', '#1C2541', '#92400E'];
@@ -255,6 +265,11 @@ void main() {
       'asian_ats',
       'western_strict',
       'modern_ats',
+      'executive_classic_ats',
+      'corporate_clean_ats',
+      'nordic_compact_ats',
+      'tech_modern_ats',
+      'federal_strict_ats',
       'modern_creative',
       'compact_portfolio',
       'executive_split',
@@ -266,6 +281,11 @@ void main() {
       'gradient_header',
       'color_block',
       'ribbon_banner',
+      'swiss_high_contrast',
+      'infographic_modern',
+      'floating_card',
+      'midnight_executive',
+      'studio_portfolio',
     ];
 
     for (final tId in templateIds) {
@@ -368,6 +388,11 @@ void main() {
       'asian_ats',
       'western_strict',
       'modern_ats',
+      'executive_classic_ats',
+      'corporate_clean_ats',
+      'nordic_compact_ats',
+      'tech_modern_ats',
+      'federal_strict_ats',
       'modern_creative',
       'compact_portfolio',
       'executive_split',
@@ -379,6 +404,11 @@ void main() {
       'gradient_header',
       'color_block',
       'ribbon_banner',
+      'swiss_high_contrast',
+      'infographic_modern',
+      'floating_card',
+      'midnight_executive',
+      'studio_portfolio',
     ];
 
     for (final tId in templateIds) {
@@ -460,11 +490,16 @@ void main() {
     expect(DateFormatHelper.formatEducationDate('2022', isEnglish: false), 'Agustus 2022');
     expect(DateFormatHelper.formatEducationDate('2022', isEnglish: true), 'August 2022');
 
-    // Verify all 14 templates generate without error on this document
+    // Verify all 24 templates generate without error on this document
     final templateIds = [
       'asian_ats',
       'western_strict',
       'modern_ats',
+      'executive_classic_ats',
+      'corporate_clean_ats',
+      'nordic_compact_ats',
+      'tech_modern_ats',
+      'federal_strict_ats',
       'modern_creative',
       'compact_portfolio',
       'executive_split',
@@ -476,6 +511,11 @@ void main() {
       'gradient_header',
       'color_block',
       'ribbon_banner',
+      'swiss_high_contrast',
+      'infographic_modern',
+      'floating_card',
+      'midnight_executive',
+      'studio_portfolio',
     ];
 
     for (final tId in templateIds) {

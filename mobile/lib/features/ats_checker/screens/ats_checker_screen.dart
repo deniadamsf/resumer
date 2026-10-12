@@ -6,12 +6,14 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/ad_service.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/coin_service.dart';
+import '../../../core/services/document_text_extractor_service.dart';
 import '../../../core/services/quota_service.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../cv_editor/models/cv_model.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
 import '../../cv_editor/widgets/daily_quota_banner.dart';
 import '../../cv_editor/widgets/profile_switcher_bar.dart';
+import '../../navigation/screens/main_navigation_shell.dart';
 import '../../pdf_engine/templates/template_registry.dart';
 import '../widgets/ats_breakdown_section.dart';
 import '../widgets/ats_feedback_section.dart';
@@ -35,6 +37,9 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
   Map<String, dynamic>? _breakdown;
   Map<String, dynamic>? _keywordAnalysis;
   List<dynamic> _feedback = [];
+  String? _uploadedFileName;
+  Map<String, dynamic>? _parsedCvData;
+  List<String> _mappingNotes = [];
 
   @override
   void initState() {
@@ -167,6 +172,443 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _handleUploadDocument() async {
+    try {
+      final extracted = await DocumentTextExtractorService.instance.pickAndExtractText();
+      if (extracted == null) return; // Pengguna membatalkan
+
+      if (!extracted.hasContent) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Teks dokumen terlalu pendek atau kosong. Pastikan memilih CV yang valid.'),
+              backgroundColor: AppColors.crimsonBordeaux,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (!mounted) return;
+
+      await AdService.instance.showRewardedAd(
+        context: context,
+        prompt: 'ad.reward_prompt_check'.tr,
+        actionType: 'ats_upload_check',
+        actionDescription: 'Analisis Unggah CV (${extracted.fileName})',
+        coinCost: 1,
+        onRewarded: () => _executeUploadAnalysis(extracted),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membaca berkas: $e'),
+            backgroundColor: AppColors.crimsonBordeaux,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _executeUploadAnalysis(ExtractedDocumentResult doc) async {
+    setState(() => _isLoading = true);
+    try {
+      final effectiveRole = _profileMgr.currentMeta.targetJob.trim().isNotEmpty
+          ? _profileMgr.currentMeta.targetJob.trim()
+          : null;
+
+      final response = await ApiService.instance.parseExternalCv(
+        doc.text,
+        targetRole: effectiveRole,
+      );
+
+      if (response['success'] == true && mounted) {
+        final result = response['result'];
+        final newScore = (result['total_score'] as num?)?.toInt() ?? 0;
+        final newVerdict = result['verdict'] as String? ?? 'Hasil Analisis Dokumen';
+        final newBreakdown = result['breakdown'] != null
+            ? Map<String, dynamic>.from(result['breakdown'])
+            : null;
+        final newKeywords = result['keyword_analysis'] != null
+            ? Map<String, dynamic>.from(result['keyword_analysis'])
+            : null;
+        final newFeedback = result['actionable_feedback'] != null
+            ? List<dynamic>.from(result['actionable_feedback'])
+            : [];
+        final notes = (result['mapping_notes'] as List?)
+            ?.map((e) => e.toString())
+            .toList() ?? [];
+
+        setState(() {
+          _score = newScore;
+          _verdict = newVerdict;
+          _breakdown = newBreakdown;
+          _keywordAnalysis = newKeywords;
+          _feedback = newFeedback;
+          _parsedCvData = result['parsed_cv_data'] is Map
+              ? Map<String, dynamic>.from(result['parsed_cv_data'])
+              : null;
+          _mappingNotes = notes;
+          _uploadedFileName = doc.fileName;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Dokumen "${doc.fileName}" berhasil dianalisa! Skor ATS: $newScore'),
+            backgroundColor: AppColors.forestPine,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'Gagal menganalisis dokumen.'),
+            backgroundColor: AppColors.crimsonBordeaux,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSlotSelectionModal() {
+    if (_parsedCvData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Belum ada data CV dari unggah dokumen. Silakan unggah dokumen PDF/DOCX terlebih dahulu.'),
+          backgroundColor: AppColors.antiqueBronze,
+        ),
+      );
+      return;
+    }
+
+    int selectedSlot = _profileMgr.currentIndex;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: AppColors.cardSurface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.borderHairline,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Pilih Slot CV Tujuan',
+                    style: GoogleFonts.outfit(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.midnightNavy,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'CV dari berkas "${_uploadedFileName ?? 'Dokumen'}" telah disesuaikan oleh AI. Pilih slot untuk menaruh dan membuka CV ini di Editor:',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12.5,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  for (int slot = 1; slot <= 3; slot++) ...[
+                    _buildSlotSelectionTile(
+                      slot: slot,
+                      isSelected: selectedSlot == slot,
+                      onTap: () => setSheetState(() => selectedSlot = slot),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _applyCvToSlot(selectedSlot);
+                      },
+                      icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+                      label: Text(
+                        'Simpan ke Slot $selectedSlot & Buka Editor',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.midnightNavy,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _applyCvToSlot(int slotIndex) async {
+    if (_parsedCvData == null) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final doc = CvDocument.fromJson(_parsedCvData!);
+
+      // Language proficiency fallback
+      for (final lang in doc.languages) {
+        if (lang.proficiency.trim().isEmpty) {
+          lang.proficiency = 'Professional Working';
+        }
+      }
+
+      doc.ensureMonthIntegrity(
+        isEnglish: AppLocalizations.instance.currentLocale.startsWith('en'),
+      );
+
+      final title = doc.personalInfo.professionalTitle.isNotEmpty
+          ? doc.personalInfo.professionalTitle
+          : 'CV $slotIndex';
+
+      await _profileMgr.saveProfileToSlot(
+        slotIndex,
+        doc,
+        atsScore: _score,
+        atsVerdict: _verdict,
+        atsBreakdown: _breakdown,
+        atsFeedback: _feedback,
+        title: title,
+        targetJob: doc.personalInfo.professionalTitle,
+        switchToThisSlot: true,
+      );
+
+      if (mounted) {
+        // Switch to Editor Tab (Tab 0) seamlessly!
+        MainNavigationShell.switchToTab(0);
+
+        // Show Mapping notes alert if any unmapped sections occurred
+        if (_mappingNotes.isNotEmpty) {
+          _showMappingNotesDialog(_mappingNotes);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('CV berhasil disimpan ke Slot $slotIndex dan disesuaikan di Editor!'),
+              backgroundColor: AppColors.forestPine,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menerapkan CV ke Slot: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Widget _buildSlotSelectionTile({
+    required int slot,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final meta = _profileMgr.getMeta(slot);
+    final profileCv = _profileMgr.getProfile(slot);
+    final hasData = !profileCv.isEmpty;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.midnightNavy.withValues(alpha: 0.05)
+              : AppColors.subtleSlateTint.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? AppColors.midnightNavy : AppColors.borderHairline,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.midnightNavy : AppColors.cardSurface,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  '$slot',
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? Colors.white : AppColors.midnightNavy,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        meta.title,
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.midnightNavy,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      if (slot == _profileMgr.currentIndex)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.forestPine.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Aktif',
+                            style: GoogleFonts.outfit(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.forestPine,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasData
+                        ? (meta.targetJob.isNotEmpty ? meta.targetJob : profileCv.personalInfo.fullName)
+                        : 'Slot Kosong (Belum ada data)',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11.5,
+                      color: hasData ? AppColors.textSecondary : AppColors.mutedSteelSlate,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: isSelected ? AppColors.midnightNavy : AppColors.mutedSteelSlate,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMappingNotesDialog(List<String> notes) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.cardSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: AppColors.midnightNavy, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'Penyesuaian Format ATS',
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.midnightNavy,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Agar CV Anda lolos uji mesin ATS dan sesuai tata letak Resumer, AI telah merapikan isian berikut:',
+              style: GoogleFonts.outfit(fontSize: 12.5, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 10),
+            for (final note in notes)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Text(
+                        note,
+                        style: GoogleFonts.outfit(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.midnightNavy,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text('Tutup', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleAutoFix() async {
@@ -490,6 +932,10 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             ),
             const SizedBox(height: 14),
 
+            // Upload & Analisa Dokumen CV (PDF / DOCX) Card
+            _buildUploadDocumentCard(),
+            const SizedBox(height: 14),
+
             // Active Template Context Info Card
             _buildActiveTemplateCard(_profileMgr.currentCv),
             const SizedBox(height: 14),
@@ -647,6 +1093,33 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
                       ),
                     ],
                   ),
+                  if (_parsedCvData != null) ...[
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isLoading ? null : _showSlotSelectionModal,
+                        icon: const Icon(Icons.auto_fix_high_rounded, size: 20, color: Colors.white),
+                        label: Text(
+                          '✦ Sesuaikan CV & Simpan ke Slot (CV 1/2/3)',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.midnightNavy,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -840,4 +1313,127 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
       ),
     );
   }
+
+  Widget _buildUploadDocumentCard() {
+    final hasUploaded = _uploadedFileName != null;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: hasUploaded ? AppColors.forestPine.withValues(alpha: 0.5) : AppColors.borderHairline,
+          width: hasUploaded ? 1.5 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: (hasUploaded ? AppColors.forestPine : AppColors.midnightNavy).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  hasUploaded ? Icons.task_alt_rounded : Icons.upload_file_rounded,
+                  color: hasUploaded ? AppColors.forestPine : AppColors.midnightNavy,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasUploaded ? 'Dokumen CV Terunggah' : 'Unggah CV (PDF / DOCX)',
+                      style: GoogleFonts.outfit(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.midnightNavy,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      hasUploaded
+                          ? _uploadedFileName!
+                          : 'Ekstraksi 100% lokal di HP, hemat kuota & privasi aman.',
+                      style: GoogleFonts.outfit(
+                        fontSize: 11.5,
+                        color: hasUploaded ? AppColors.forestPine : AppColors.textSecondary,
+                        fontWeight: hasUploaded ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _handleUploadDocument,
+                  icon: const Icon(Icons.folder_open_rounded, size: 18),
+                  label: Text(
+                    hasUploaded ? 'Ganti Berkas CV' : 'Pilih File (PDF/DOCX)',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.midnightNavy,
+                    minimumSize: const Size(0, 44),
+                    side: const BorderSide(color: AppColors.borderHairline),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              if (_parsedCvData != null) ...[
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoading ? null : _showSlotSelectionModal,
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                    label: Text(
+                      'Terapkan ke Slot',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.forestPine,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 44),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
+

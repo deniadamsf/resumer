@@ -2,7 +2,7 @@ name: resumer
 description: "Resumer - AI ATS CV Maker, Score Checker & Job Matcher"
 publish_to: 'none'
 
-version: 1.0.12+13
+version: 1.0.13+14
 
 environment:
   sdk: ^3.12.2
@@ -25,6 +25,10 @@ dependencies:
   google_mobile_ads: ^9.1.0
   flutter_native_splash: ^2.4.8
   in_app_purchase: ^3.3.0
+  file_picker: ^11.0.3
+  syncfusion_flutter_pdf: ^35.1.39
+  archive: ^4.5.1
+  xml: ^7.0.1
 
 dev_dependencies:
   flutter_test:

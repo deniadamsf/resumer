@@ -348,4 +348,35 @@ class CvController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Parse raw external CV text extracted locally on device (PDF/DOCX)
+     * and return ATS score, feedback, and full structured CvDocument JSON.
+     */
+    public function parseExternalCv(Request $request)
+    {
+        $request->validate([
+            'cv_text' => 'required|string|min:40',
+            'target_role' => 'nullable|string|max:100',
+        ]);
+
+        try {
+            $result = $this->gemini->parseAndScoreExternalCv(
+                $request->input('cv_text'),
+                $request->input('target_role'),
+                $request->input('language', 'id_ID')
+            );
+
+            return response()->json([
+                'success' => true,
+                'result' => $result,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses analisis dokumen CV: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
+

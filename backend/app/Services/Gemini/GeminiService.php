@@ -593,9 +593,161 @@ PROMPT;
     }
 
     /**
+     * Parse raw external CV text (uploaded from PDF/DOCX) into full Resumer CV schema
+     * with ATS score, detailed breakdown, and smart semantic mapping for unmapped sections.
+     */
+    public function parseAndScoreExternalCv(string $cvText, ?string $targetRole = null, string $locale = 'id_ID'): array
+    {
+        $roleContext = $targetRole ? "Target Role / Specialization: {$targetRole}\n" : "";
+        $isEnglish = str_starts_with(strtolower($locale), 'en');
+        $langInstruction = $isEnglish
+            ? "CRITICAL LANGUAGE REQUIREMENT: Output summary, bullet points, skills, feedback, and notes strictly in US English."
+            : "CRITICAL LANGUAGE REQUIREMENT: Output summary, bullet points, skills, feedback, and notes strictly in formal corporate Indonesian (Bahasa Indonesia baku HRD).";
+
+        $systemPrompt = <<<PROMPT
+You are an elite Executive ATS Resume Parser, Transformer, and Talent Acquisition Architect.
+Your task is to take the candidate's raw CV text (extracted from PDF/DOCX) and:
+1. Conduct an ATS scoring evaluation (0-100) based on enterprise ATS standards (Workday, Taleo, Greenhouse).
+2. Fully parse, extract, and transform the entire CV into Resumer's structured schema.
+3. Apply Smart Semantic Mapping for non-standard sections and resolve missing details.
+
+CRITICAL RULES FOR EXTRACTION & SEMANTIC RECONCILIATION:
+1. {$langInstruction}
+2. PERSONAL INFO: Extract full_name, professional_title, email, phone, location (City, Country), and social/portfolio links (linkedin, github, instagram, facebook, whatsapp, website).
+3. EXECUTIVE SUMMARY: Craft a high-impact 3-4 sentence professional summary highlighting core expertise, career highlights, and value proposition.
+4. WORK EXPERIENCE: Extract all employment history. Convert highlights into high-impact Google XYZ formula ("Accomplished [X] measured by [Y] by doing [Z]"). Format dates as full month and year (e.g. "Januari 2021" - "Sekarang" / "Present").
+5. EDUCATION: Extract institution, degree, field_of_study, graduation_year, and gpa (empty string if not specified).
+6. SKILLS: Extract technical competencies with rich contextual descriptions (tools, metrics, frameworks).
+7. CERTIFICATIONS: Extract certifications and licenses (name, issuer, year, description).
+8. PROJECTS & PORTFOLIO: Extract key projects (name, role, start_date, end_date, description in STAR/XYZ format).
+9. LANGUAGES & PROFICIENCY INFERENCE:
+   - Extract all mentioned languages.
+   - If proficiency is NOT explicitly stated in the CV, INTELLIGENTLY INFER it from context:
+     * Primary language of residence/university -> "Native / Bilingual" or "Fluent (Fasih)"
+     * Secondary/international business language -> "Professional Working"
+     * Other learned languages -> "Intermediate (Menengah)"
+   - Must strictly pick from: ["Native / Bilingual", "Fluent (Fasih)", "Professional Working", "Intermediate (Menengah)", "Elementary / Basic (Dasar)"].
+10. UNMAPPED SECTIONS MAPPING:
+   - Scientific Publications / Research Papers / Thesis: Map to "projects" with name "Publikasi Ilmiah: [Title]" and role "Penulis Utama / Peneliti".
+   - Student / Professional Organization / Volunteering: Map to "experiences" or "projects" with clear leadership responsibilities.
+   - Honors & Awards / Competition wins: Map to "certifications" with issuer and year.
+11. mapping_notes: Provide a concise array of user-facing notes explaining how non-standard items were mapped (e.g. "Karya tulis ilmiah dipetakan ke seksi Proyek & Riset agar terbaca optimal oleh mesin ATS", "Tingkat kemahiran Bahasa Inggris diatur ke Professional Working").
+
+Output strict JSON:
+{
+  "total_score": 88,
+  "verdict": "ATS Ready / Top 5% / Siap Lolos Seleksi",
+  "breakdown": {
+    "keyword_match": 22,
+    "impact_verbs": 23,
+    "readability": 23,
+    "completeness": 20
+  },
+  "keyword_analysis": {
+    "detected_keywords": ["string"],
+    "missing_keywords": ["string"]
+  },
+  "strengths": ["string"],
+  "improvements": ["string"],
+  "actionable_feedback": [
+    {
+      "section": "string",
+      "priority": "Tinggi / Sedang / Rendah",
+      "issue": "string",
+      "suggestion": "string",
+      "example": "string"
+    }
+  ],
+  "mapping_notes": ["string"],
+  "parsed_cv_data": {
+    "template_id": "asian_ats",
+    "font_family": "Outfit",
+    "accent_color": "#0B132B",
+    "personal_info": {
+      "full_name": "string",
+      "professional_title": "string",
+      "email": "string",
+      "phone": "string",
+      "location": "string",
+      "linkedin": "string",
+      "github": "string",
+      "instagram": "string",
+      "facebook": "string",
+      "whatsapp": "string",
+      "website": "string"
+    },
+    "summary": "string",
+    "show_summary": true,
+    "experiences": [
+      {
+        "company": "string",
+        "position": "string",
+        "start_date": "string",
+        "end_date": "string",
+        "highlights": ["string"]
+      }
+    ],
+    "show_experience": true,
+    "educations": [
+      {
+        "institution": "string",
+        "degree": "string",
+        "field_of_study": "string",
+        "graduation_year": "string",
+        "gpa": "string"
+      }
+    ],
+    "show_education": true,
+    "skills": [
+      {
+        "name": "string",
+        "description": "string"
+      }
+    ],
+    "show_skills": true,
+    "certifications": [
+      {
+        "name": "string",
+        "issuer": "string",
+        "year": "string",
+        "description": "string"
+      }
+    ],
+    "show_certifications": true,
+    "projects": [
+      {
+        "name": "string",
+        "role": "string",
+        "start_date": "string",
+        "end_date": "string",
+        "is_current": false,
+        "description": "string"
+      }
+    ],
+    "show_projects": true,
+    "languages": [
+      {
+        "name": "string",
+        "proficiency": "string"
+      }
+    ],
+    "show_languages": true,
+    "hobbies": ["string"],
+    "show_hobbies": false
+  }
+}
+PROMPT;
+
+        $userPrompt = "{$roleContext}Raw Candidate CV Content to Parse and Score:\n" . $cvText;
+
+        return $this->callGeminiJson($systemPrompt, $userPrompt);
+    }
+
+    /**
      * Mock response for local automated unit tests without hitting Gemini API.
      */
     protected function getMockResponse(): array
+
     {
         return [
             'full_name' => 'John Doe',
@@ -674,7 +826,60 @@ PROMPT;
             'paragraph_1' => 'I am writing to express my strong interest in the open position...',
             'paragraph_2' => 'With extensive background in high-performance application engineering...',
             'paragraph_3' => 'I welcome the opportunity to discuss how my skill set aligns with your goals...',
-            'signoff' => 'Sincerely,'
+            'signoff' => 'Sincerely,',
+            // External CV Parser mock fields
+            'mapping_notes' => [
+                'Karya tulis ilmiah dipetakan ke seksi Proyek & Riset agar terbaca optimal oleh mesin ATS',
+                'Tingkat kemahiran Bahasa Inggris diatur ke Professional Working'
+            ],
+            'parsed_cv_data' => [
+                'template_id' => 'asian_ats',
+                'font_family' => 'Outfit',
+                'accent_color' => '#0B132B',
+                'personal_info' => [
+                    'full_name' => 'Alexander Wright',
+                    'professional_title' => 'Lead Mobile Architect',
+                    'email' => 'alexander.wright@executive.io',
+                    'phone' => '+62 812-9876-5432',
+                    'location' => 'Jakarta, Indonesia',
+                ],
+                'summary' => 'Lead Mobile Engineer with 8+ years experience.',
+                'show_summary' => true,
+                'experiences' => [
+                    [
+                        'company' => 'Zenith Tech',
+                        'position' => 'Lead Mobile Architect',
+                        'start_date' => 'Januari 2022',
+                        'end_date' => 'Sekarang',
+                        'highlights' => ['Accelerated sprint release velocity by 35%.']
+                    ]
+                ],
+                'show_experience' => true,
+                'educations' => [
+                    [
+                        'institution' => 'ITB',
+                        'degree' => 'S.Kom',
+                        'field_of_study' => 'Informatika',
+                        'graduation_year' => '2020',
+                        'gpa' => '3.85'
+                    ]
+                ],
+                'show_education' => true,
+                'skills' => [
+                    ['name' => 'Flutter & Dart', 'description' => 'Cross-platform mobile architecture']
+                ],
+                'show_skills' => true,
+                'certifications' => [],
+                'show_certifications' => true,
+                'projects' => [],
+                'show_projects' => true,
+                'languages' => [
+                    ['name' => 'English', 'proficiency' => 'Professional Working']
+                ],
+                'show_languages' => true,
+                'hobbies' => [],
+                'show_hobbies' => false,
+            ]
         ];
     }
 }

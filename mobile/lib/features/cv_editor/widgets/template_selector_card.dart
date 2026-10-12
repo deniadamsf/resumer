@@ -32,6 +32,7 @@ class TemplateSelectorCard extends StatefulWidget {
 class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
   late CvTemplateCategory _activeCategory;
   bool _isCreativeExpanded = false;
+  bool _isAtsExpanded = false;
 
   @override
   void initState() {
@@ -71,9 +72,13 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
     final atsCount = TemplateRegistry.byCategory(CvTemplateCategory.atsFriendly).length.toString();
     final creativeCount = TemplateRegistry.byCategory(CvTemplateCategory.creativeNonAts).length.toString();
 
-    // Limit creative list to top 3 unless expanded, but ensure active selection is always visible
+    final isExpanded = _activeCategory == CvTemplateCategory.atsFriendly
+        ? _isAtsExpanded
+        : _isCreativeExpanded;
+
+    // Limit list to top 3 unless expanded, but ensure active selection is always visible
     List<CvTemplate> displayedTemplates = allCategoryTemplates;
-    if (_activeCategory == CvTemplateCategory.creativeNonAts && !_isCreativeExpanded) {
+    if (!isExpanded && allCategoryTemplates.length > 3) {
       final selectedIdx = allCategoryTemplates.indexWhere((t) => t.id == widget.selectedTemplateId);
       if (selectedIdx >= 3) {
         displayedTemplates = [
@@ -202,14 +207,20 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
             }).toList(),
           ),
 
-          // Expand / Collapse button for creative templates
-          if (_activeCategory == CvTemplateCategory.creativeNonAts && allCategoryTemplates.length > 3) ...[
+          // Expand / Collapse button if category has > 3 templates
+          if (allCategoryTemplates.length > 3) ...[
             Padding(
               padding: const EdgeInsets.only(top: 2, bottom: 6),
               child: Center(
                 child: InkWell(
                   onTap: () {
-                    setState(() => _isCreativeExpanded = !_isCreativeExpanded);
+                    setState(() {
+                      if (_activeCategory == CvTemplateCategory.atsFriendly) {
+                        _isAtsExpanded = !_isAtsExpanded;
+                      } else {
+                        _isCreativeExpanded = !_isCreativeExpanded;
+                      }
+                    });
                   },
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
@@ -223,19 +234,23 @@ class _TemplateSelectorCardState extends State<TemplateSelectorCard> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          _isCreativeExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                          size: 18,
+                          isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                          size: 16,
                           color: AppColors.midnightNavy,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          _isCreativeExpanded
-                              ? 'form.template_collapse'.tr
-                              : '${'form.template_show_all'.tr} ($creativeCount)',
-                          style: GoogleFonts.outfit(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.midnightNavy,
+                        Flexible(
+                          child: Text(
+                            isExpanded
+                                ? 'form.template_collapse'.tr
+                                : '${'form.template_show_all'.tr} (${allCategoryTemplates.length})',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.midnightNavy,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

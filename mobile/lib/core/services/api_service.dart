@@ -370,6 +370,60 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> parseExternalCv(
+    String cvText, {
+    String? targetRole,
+  }) async {
+    final isEn = AppLocalizations.instance.currentLocale.startsWith('en');
+
+    if (cvText.trim().length < 40) {
+      return {
+        'success': false,
+        'message': isEn
+            ? 'Document text is too short to parse.'
+            : 'Teks dokumen terlalu pendek untuk dianalisis.',
+      };
+    }
+
+    final url = Uri.parse('$baseUrl/cv/parse-external');
+    final body = json.encode({
+      'cv_text': cvText,
+      'target_role': targetRole,
+      'language': AppLocalizations.instance.currentLocale,
+    });
+    try {
+      final response = await http.post(url, headers: _buildHeaders(body), body: body);
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final err = json.decode(response.body) as Map<String, dynamic>;
+          return {
+            'success': false,
+            'message': err['message'] ??
+                (isEn
+                    ? 'Failed to parse CV document (${response.statusCode})'
+                    : 'Gagal menganalisis dokumen CV (${response.statusCode})'),
+          };
+        } catch (_) {
+          return {
+            'success': false,
+            'message': isEn
+                ? 'Server returned status ${response.statusCode}'
+                : 'Server mengembalikan status ${response.statusCode}',
+          };
+        }
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': isEn
+            ? 'Unable to connect to server. Please check your internet connection.'
+            : 'Gagal terhubung ke server. Periksa koneksi internet Anda.',
+      };
+    }
+  }
+
   Future<Map<String, dynamic>> autoFixAts(
     String cvText, {
     List<dynamic> suggestions = const [],
@@ -568,7 +622,7 @@ class ApiService {
     return {'success': false, 'coins': 0};
   }
 
-  /// Klaim bonus selamat datang 5 koin (Device UUID locked)
+  /// Klaim bonus selamat datang 2 koin (Device UUID locked)
   Future<Map<String, dynamic>> claimWelcomeBonus() async {
     final url = Uri.parse('$baseUrl/coins/claim-welcome');
     final body = json.encode({'device_uuid': deviceUuid});

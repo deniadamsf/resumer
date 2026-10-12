@@ -71,7 +71,7 @@ class AuthController extends Controller
             ]);
         }
 
-        // Check & grant 5 coins welcome bonus if device (new or legacy ID) and user have never claimed it
+        // Check & grant 2 coins welcome bonus if device (new or legacy ID) and user have never claimed it
         $legacyDeviceUuid = $request->input('legacy_device_uuid') ?? $request->header('X-Legacy-Device-UUID');
         $legacyDeviceUuid = is_string($legacyDeviceUuid) ? $legacyDeviceUuid : null;
         $alreadyClaimed = ClaimedDeviceBonus::isClaimed($deviceUuid, $legacyDeviceUuid, $user->id);
@@ -82,14 +82,14 @@ class AuthController extends Controller
                 'user_id' => $user->id,
                 'claimed_at' => now(),
             ]);
-            $user->increment('coins', 5);
+            $user->increment('coins', 2);
             $user->refresh();
 
             CoinTransaction::create([
                 'user_id' => $user->id,
-                'amount' => 5,
+                'amount' => 2,
                 'action_type' => 'welcome_bonus',
-                'description' => 'Bonus Pengguna Baru (5 Koin)',
+                'description' => 'Bonus Pengguna Baru (2 Koin)',
                 'balance_after' => $user->coins,
             ]);
         }

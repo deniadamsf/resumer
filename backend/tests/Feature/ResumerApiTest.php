@@ -324,12 +324,12 @@ class ResumerApiTest extends TestCase
             ->getJson('/api/v1/coins/balance');
         $balanceRes->assertStatus(200)->assertJson(['coins' => 0, 'has_claimed_welcome_bonus' => false]);
 
-        // 2. Claim welcome bonus (5 coins)
+        // 2. Claim welcome bonus (2 coins)
         $claimRes = $this->actingAs($user)
             ->withHeader('X-Device-UUID', 'device-wallet-test-01')
             ->postJson('/api/v1/coins/claim-welcome');
-        $claimRes->assertStatus(200)->assertJson(['success' => true, 'coins' => 5]);
-        $this->assertEquals(5, $user->fresh()->coins);
+        $claimRes->assertStatus(200)->assertJson(['success' => true, 'coins' => 2]);
+        $this->assertEquals(2, $user->fresh()->coins);
 
         // 3. Second claim with same device must fail (anti-nuyul)
         $duplicateClaim = $this->actingAs($user)
@@ -344,7 +344,7 @@ class ResumerApiTest extends TestCase
                 'product_id' => 'resumer_coins_30',
                 'purchase_token' => 'mock_token_abc_xyz',
             ]);
-        $iapRes->assertStatus(200)->assertJson(['success' => true, 'coins' => 35, 'coins_granted' => 30]);
+        $iapRes->assertStatus(200)->assertJson(['success' => true, 'coins' => 32, 'coins_granted' => 30]);
 
         // 5. Replay attack with same order_id must be rejected (409)
         $replayRes = $this->actingAs($user)
@@ -362,7 +362,7 @@ class ResumerApiTest extends TestCase
                 'action_type' => 'export_pdf',
                 'description' => 'Bypass Iklan Ekspor PDF',
             ]);
-        $spendRes->assertStatus(200)->assertJson(['coins' => 34]);
+        $spendRes->assertStatus(200)->assertJson(['coins' => 31]);
 
         // 7. Spend exceeding balance
         $overSpend = $this->actingAs($user)
@@ -404,6 +404,47 @@ class ResumerApiTest extends TestCase
 
         $this->assertStringContainsString('Dear Hiring Team', $response->json('cover_letter.salutation'));
         $this->assertNotEmpty($response->json('cover_letter.paragraph_1'));
+    }
+
+    public function test_parse_external_cv_endpoint(): void
+    {
+        $user = User::factory()->create(['device_uuid' => 'device-parse-external-test']);
+
+        $response = $this->actingAs($user)
+            ->withHeader('X-Device-UUID', 'device-parse-external-test')
+            ->postJson('/api/v1/cv/parse-external', [
+                'cv_text' => 'Alexander Wright Lead Mobile Architect with 8+ years building enterprise Flutter applications. ITB Computer Science graduate.',
+                'target_role' => 'Principal Mobile Engineer',
+                'language' => 'id_ID',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ])
+            ->assertJsonStructure([
+                'result' => [
+                    'total_score',
+                    'verdict',
+                    'breakdown',
+                    'parsed_cv_data' => [
+                        'personal_info' => [
+                            'full_name',
+                            'professional_title',
+                            'email',
+                        ],
+                        'summary',
+                        'experiences',
+                        'educations',
+                        'skills',
+                    ],
+                    'mapping_notes',
+                ]
+            ]);
+
+        $this->assertEquals(95, $response->json('result.total_score'));
+        $this->assertIsArray($response->json('result.mapping_notes'));
+        $this->assertEquals('Alexander Wright', $response->json('result.parsed_cv_data.personal_info.full_name'));
     }
 }
 

@@ -777,6 +777,17 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
                     ),
                     const SizedBox(width: 6),
                     _buildCompactionChip(
+                      label: 'pdf_preview.toggle_languages'.tr,
+                      isActive: _activeCv!.showLanguages,
+                      icon: Icons.translate_rounded,
+                      onTap: () {
+                        _toggleCvSetting(() {
+                          _activeCv!.showLanguages = !_activeCv!.showLanguages;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                    _buildCompactionChip(
                       label: 'pdf_preview.toggle_hobbies'.tr,
                       isActive: _activeCv!.showHobbies,
                       icon: Icons.interests_outlined,

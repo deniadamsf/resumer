@@ -5,7 +5,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../models/cv_model.dart';
 
 /// Certifications Section with detailed metadata & description for AI Polish
-class CertificationsSection extends StatelessWidget {
+class CertificationsSection extends StatefulWidget {
   final List<CertificationItem> certifications;
   final bool isEnabled;
   final ValueChanged<bool> onToggle;
@@ -23,9 +23,22 @@ class CertificationsSection extends StatelessWidget {
     this.onUpdateCertification,
   });
 
+  @override
+  State<CertificationsSection> createState() => _CertificationsSectionState();
+}
+
+class _CertificationsSectionState extends State<CertificationsSection> {
+  final TextEditingController _quickController = TextEditingController();
+
+  @override
+  void dispose() {
+    _quickController.dispose();
+    super.dispose();
+  }
+
   void _showCertDialog(BuildContext context, [int? editIndex]) {
     final isEditing = editIndex != null;
-    final initial = isEditing ? certifications[editIndex] : null;
+    final initial = isEditing ? widget.certifications[editIndex] : null;
 
     final nameController = TextEditingController(text: initial?.name ?? '');
     final issuerController = TextEditingController(text: initial?.issuer ?? '');
@@ -101,6 +114,7 @@ class CertificationsSection extends StatelessWidget {
                         const SizedBox(height: 6),
                         TextField(
                           controller: yearController,
+                          keyboardType: TextInputType.text,
                           style: GoogleFonts.outfit(fontSize: 13),
                           decoration: InputDecoration(
                             hintText: '2023',
@@ -122,7 +136,7 @@ class CertificationsSection extends StatelessWidget {
               const SizedBox(height: 6),
               TextField(
                 controller: descController,
-                maxLines: 3,
+                maxLines: 2,
                 style: GoogleFonts.outfit(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'form.cert_desc_hint'.tr,
@@ -150,9 +164,9 @@ class CertificationsSection extends StatelessWidget {
                   description: descController.text.trim(),
                 );
                 if (isEditing) {
-                  onUpdateCertification?.call(editIndex, cert);
+                  widget.onUpdateCertification?.call(editIndex, cert);
                 } else {
-                  onAddCertification(cert);
+                  widget.onAddCertification(cert);
                 }
               }
               Navigator.pop(ctx);
@@ -174,8 +188,6 @@ class CertificationsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final quickController = TextEditingController();
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -197,29 +209,52 @@ class CertificationsSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  'form.certifications'.tr,
-                  style: GoogleFonts.outfit(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.midnightNavy,
-                  ),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'form.certifications'.tr,
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.midnightNavy,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.subtleSlateTint,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${widget.certifications.length}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.mutedSteelSlate,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Switch.adaptive(
-                value: isEnabled,
+                value: widget.isEnabled,
                 activeTrackColor: AppColors.midnightNavy,
-                onChanged: onToggle,
+                onChanged: widget.onToggle,
               ),
             ],
           ),
-          if (isEnabled) ...[
+          if (widget.isEnabled) ...[
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller: quickController,
+                    controller: _quickController,
                     style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'cth: AWS Solutions Architect, Google Cert',
@@ -238,8 +273,8 @@ class CertificationsSection extends StatelessWidget {
                     ),
                     onSubmitted: (val) {
                       if (val.trim().isNotEmpty) {
-                        onAddCertification(CertificationItem(name: val.trim()));
-                        quickController.clear();
+                        widget.onAddCertification(CertificationItem(name: val.trim()));
+                        _quickController.clear();
                       }
                     },
                   ),
@@ -247,10 +282,10 @@ class CertificationsSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton.filled(
                   onPressed: () {
-                    final val = quickController.text.trim();
+                    final val = _quickController.text.trim();
                     if (val.isNotEmpty) {
-                      onAddCertification(CertificationItem(name: val));
-                      quickController.clear();
+                      widget.onAddCertification(CertificationItem(name: val));
+                      _quickController.clear();
                     } else {
                       _showCertDialog(context);
                     }
@@ -267,8 +302,8 @@ class CertificationsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            for (int i = 0; i < certifications.length; i++) ...[
-              _buildCertCard(context, i, certifications[i]),
+            for (int i = 0; i < widget.certifications.length; i++) ...[
+              _buildCertCard(context, i, widget.certifications[i]),
               const SizedBox(height: 8),
             ],
             TextButton.icon(
@@ -316,7 +351,7 @@ class CertificationsSection extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: () => onRemoveCertification(index),
+                  onPressed: () => widget.onRemoveCertification(index),
                   icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.crimsonBordeaux),
                   visualDensity: VisualDensity.compact,
                   tooltip: 'common.delete'.tr,

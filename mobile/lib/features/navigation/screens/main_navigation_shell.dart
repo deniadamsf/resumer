@@ -19,6 +19,12 @@ import '../../profile/screens/profile_screen.dart';
 class MainNavigationShell extends StatefulWidget {
   final int initialIndex;
 
+  static final ValueNotifier<int> activeTabNotifier = ValueNotifier<int>(0);
+
+  static void switchToTab(int index) {
+    activeTabNotifier.value = index;
+  }
+
   const MainNavigationShell({
     super.key,
     this.initialIndex = 0,
@@ -43,13 +49,22 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    MainNavigationShell.activeTabNotifier.value = widget.initialIndex;
+    MainNavigationShell.activeTabNotifier.addListener(_onActiveTabNotifierChanged);
     AppLocalizations.instance.localeNotifier.addListener(_onLocaleChanged);
   }
 
   @override
   void dispose() {
+    MainNavigationShell.activeTabNotifier.removeListener(_onActiveTabNotifierChanged);
     AppLocalizations.instance.localeNotifier.removeListener(_onLocaleChanged);
     super.dispose();
+  }
+
+  void _onActiveTabNotifierChanged() {
+    if (mounted && _currentIndex != MainNavigationShell.activeTabNotifier.value) {
+      _onTabSelected(MainNavigationShell.activeTabNotifier.value);
+    }
   }
 
   void _onLocaleChanged() {
@@ -63,6 +78,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     CvProfileManager.instance.persistDraftLocally();
     // Keep coin wallet balance fresh across tabs
     CoinService.instance.refreshBalance();
+    MainNavigationShell.activeTabNotifier.value = index;
     setState(() {
       _currentIndex = index;
     });

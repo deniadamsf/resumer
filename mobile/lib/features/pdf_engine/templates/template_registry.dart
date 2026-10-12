@@ -3,14 +3,24 @@ import 'asian_ats_template.dart';
 import 'bento_grid_template.dart';
 import 'color_block_template.dart';
 import 'compact_portfolio_template.dart';
+import 'corporate_clean_ats_template.dart';
 import 'cv_template_interface.dart';
 import 'editorial_luxury_template.dart';
+import 'executive_classic_ats_template.dart';
 import 'executive_split_template.dart';
+import 'federal_strict_ats_template.dart';
+import 'floating_card_template.dart';
 import 'gradient_header_template.dart';
+import 'infographic_modern_template.dart';
+import 'midnight_executive_template.dart';
 import 'modern_ats_template.dart';
 import 'modern_creative_template.dart';
+import 'nordic_compact_ats_template.dart';
 import 'nordic_minimal_template.dart';
 import 'ribbon_banner_template.dart';
+import 'studio_portfolio_template.dart';
+import 'swiss_high_contrast_template.dart';
+import 'tech_modern_ats_template.dart';
 import 'tech_timeline_template.dart';
 import 'western_strict_template.dart';
 
@@ -30,6 +40,11 @@ class TemplateRegistry {
     AsianAtsTemplate(),
     WesternStrictTemplate(),
     ModernAtsTemplate(),
+    ExecutiveClassicAtsTemplate(),
+    CorporateCleanAtsTemplate(),
+    NordicCompactAtsTemplate(),
+    TechModernAtsTemplate(),
+    FederalStrictAtsTemplate(),
 
     // Creative Non-ATS Category (Human HR, Portfolios, Modern Layouts)
     ModernCreativeTemplate(),
@@ -43,6 +58,11 @@ class TemplateRegistry {
     GradientHeaderTemplate(),
     ColorBlockTemplate(),
     RibbonBannerTemplate(),
+    SwissHighContrastTemplate(),
+    InfographicModernTemplate(),
+    FloatingCardTemplate(),
+    MidnightExecutiveTemplate(),
+    StudioPortfolioTemplate(),
   ];
 
   /// 4 Official Executive Accent Colors according to blueprint Section I.5 & J.2

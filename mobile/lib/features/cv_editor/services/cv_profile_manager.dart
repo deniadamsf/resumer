@@ -258,6 +258,42 @@ class CvProfileManager extends ChangeNotifier {
     await _syncSingleProfileToCloud(_currentIndex);
   }
 
+  /// Saves a CV document to any specific profile slot (1, 2, or 3),
+  /// updates its metadata, optionally switches active profile to it, and syncs to cloud.
+  Future<void> saveProfileToSlot(
+    int targetSlot,
+    CvDocument doc, {
+    int? atsScore,
+    String? atsVerdict,
+    Map<String, dynamic>? atsBreakdown,
+    List<dynamic>? atsFeedback,
+    String? title,
+    String? targetJob,
+    bool switchToThisSlot = true,
+  }) async {
+    _profiles[targetSlot] = doc.clone();
+
+    final meta = getMeta(targetSlot);
+    if (title != null && title.isNotEmpty) meta.title = title;
+    if (targetJob != null && targetJob.isNotEmpty) meta.targetJob = targetJob;
+    if (atsScore != null) meta.atsScore = atsScore;
+    if (atsVerdict != null) meta.atsVerdict = atsVerdict;
+    if (atsBreakdown != null) meta.atsBreakdown = atsBreakdown;
+    if (atsFeedback != null) meta.atsFeedback = atsFeedback;
+    _metas[targetSlot] = meta;
+
+    await _saveLocally(targetSlot);
+
+    if (switchToThisSlot) {
+      _currentIndex = targetSlot;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('cv_active_profile_index', targetSlot);
+    }
+
+    notifyListeners();
+    await _syncSingleProfileToCloud(targetSlot);
+  }
+
   Future<void> _saveLocally(int index) async {
     final prefs = await SharedPreferences.getInstance();
     final doc = _profiles[index];
