@@ -9,6 +9,7 @@ import 'core/services/ad_service.dart';
 import 'core/services/api_service.dart';
 import 'core/services/coin_service.dart';
 import 'core/services/iap_service.dart';
+import 'core/services/review_service.dart';
 import 'core/services/signature_service.dart';
 import 'core/widgets/responsive_wrapper.dart';
 import 'features/splash/screens/splash_screen.dart';
@@ -50,6 +51,10 @@ void main() async {
     debugPrint('11. Initializing IapService (Google Play Billing)...');
     await IapService.instance.init();
     debugPrint('12. IapService initialized.');
+
+    debugPrint('13. Initializing ReviewService (Google Play In-App Review)...');
+    await ReviewService.instance.init();
+    debugPrint('14. ReviewService initialized.');
   } catch (e, stack) {
     debugPrint('ERROR during main initialization: $e\n$stack');
   }

@@ -536,5 +536,11 @@
     "lang_en_sub": "Global Corporate Standard",
     "lang_id_active": "ID Active",
     "lang_en_active": "EN Active"
+  },
+  "review": {
+    "profile_card_title": "Rate & Review Resumer",
+    "profile_card_desc": "Support our continuous updates with a 5-star rating on Google Play",
+    "profile_card_action": "Rate App",
+    "badge_label": "Google Play"
   }
 }

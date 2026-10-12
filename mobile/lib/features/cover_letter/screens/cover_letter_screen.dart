@@ -6,6 +6,7 @@ import '../../../core/constants/colors.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/services/ad_service.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/review_service.dart';
 import '../../../core/services/signature_service.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
@@ -174,6 +175,11 @@ class _CoverLetterScreenState extends State<CoverLetterScreen> {
         content: Text('cover_letter.copied'.tr),
         backgroundColor: AppColors.forestPine,
       ),
+    );
+
+    // Momen kepuasan: Berhasil salin surat lamaran AI
+    ReviewService.instance.recordSuccessfulAction(
+      actionType: 'cover_letter_copied',
     );
   }
 

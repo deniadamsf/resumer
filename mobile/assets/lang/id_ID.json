@@ -536,5 +536,11 @@
     "lang_en_sub": "Standar Korporat Global",
     "lang_id_active": "ID Aktif",
     "lang_en_active": "EN Aktif"
+  },
+  "review": {
+    "profile_card_title": "Beri Nilai & Ulasan Resumer",
+    "profile_card_desc": "Bantu dukung kami dengan rating bintang 5 di Google Play Store",
+    "profile_card_action": "Beri Rating",
+    "badge_label": "Google Play"
   }
 }

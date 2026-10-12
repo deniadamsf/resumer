@@ -8,6 +8,7 @@ import '../../../core/services/api_service.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/coin_service.dart';
 import '../../../core/services/quota_service.dart';
+import '../../../core/services/review_service.dart';
 import '../../../core/services/signature_service.dart';
 import '../../../core/widgets/coin_badge.dart';
 import '../../../core/widgets/coin_topup_sheet.dart';
@@ -442,6 +443,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildSignatureCard(),
             const SizedBox(height: 18),
 
+            // 5b. Rate & Review Resumer Card
+            _buildReviewCard(),
+            const SizedBox(height: 18),
+
             // 6. Data Privacy & Architecture Card
             _buildPrivacyCard(),
             const SizedBox(height: 24),
@@ -453,7 +458,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // App Version Info
             Center(
               child: Text(
-                'Resumer v1.0.0 • AI ATS Engine 2026',
+                'Resumer v1.0.14 • AI ATS Engine 2026',
                 style: GoogleFonts.outfit(
                   fontSize: 11,
                   color: AppColors.textSecondary.withValues(alpha: 0.6),
@@ -1309,6 +1314,99 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: AppColors.midnightNavy,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderHairline, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.midnightNavy.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.star_rounded,
+                  size: 20,
+                  color: AppColors.midnightNavy,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'review.profile_card_title'.tr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.midnightNavy,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'review.profile_card_desc'.tr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 42,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.midnightNavy,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () async {
+                HapticFeedback.lightImpact();
+                await ReviewService.instance.openStoreListing();
+              },
+              icon: const Icon(
+                Icons.rate_review_rounded,
+                size: 16,
+                color: Colors.white,
+              ),
+              label: Text(
+                'review.profile_card_action'.tr,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
             ),

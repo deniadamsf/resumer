@@ -8,6 +8,7 @@ import '../../../core/services/api_service.dart';
 import '../../../core/services/coin_service.dart';
 import '../../../core/services/document_text_extractor_service.dart';
 import '../../../core/services/quota_service.dart';
+import '../../../core/services/review_service.dart';
 import '../../../core/widgets/frosted_app_bar.dart';
 import '../../cv_editor/models/cv_model.dart';
 import '../../cv_editor/services/cv_profile_manager.dart';
@@ -152,6 +153,13 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
               backgroundColor: AppColors.forestPine,
             ),
           );
+
+          // Momen kepuasan: Skor ATS Tinggi (>= 80)
+          if (newScore >= 80) {
+            ReviewService.instance.recordSuccessfulAction(
+              actionType: 'ats_high_score',
+            );
+          }
         }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -262,6 +270,13 @@ class _AtsCheckerScreenState extends State<AtsCheckerScreen> {
             duration: const Duration(seconds: 4),
           ),
         );
+
+        // Momen kepuasan: Skor ATS Dokumen Tinggi (>= 80)
+        if (newScore >= 80) {
+          ReviewService.instance.recordSuccessfulAction(
+            actionType: 'ats_document_high_score',
+          );
+        }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

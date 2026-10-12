@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -34,32 +33,18 @@ class DocumentTextExtractorService {
   /// dan mengekstrak teksnya secara lokal di memori HP.
   Future<ExtractedDocumentResult?> pickAndExtractText() async {
     try {
-      final result = await FilePicker.pickFiles(
+      final platformFile = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'doc', 'txt'],
-        withData: kIsWeb, // Web butuh data langsung
       );
 
-      if (result == null || result.files.isEmpty) {
+      if (platformFile == null) {
         return null; // Pengguna membatalkan
       }
-
-      final platformFile = result.files.first;
       final fileName = platformFile.name;
       final ext = platformFile.extension?.toLowerCase() ?? '';
 
-      Uint8List bytes;
-      if (platformFile.bytes != null) {
-        bytes = platformFile.bytes!;
-      } else if (platformFile.path != null) {
-        final file = File(platformFile.path!);
-        if (!await file.exists()) {
-          throw Exception('Berkas tidak ditemukan pada perangkat.');
-        }
-        bytes = await file.readAsBytes();
-      } else {
-        throw Exception('Gagal membaca data berkas.');
-      }
+      final bytes = await platformFile.readAsBytes();
 
       String extractedText = '';
 

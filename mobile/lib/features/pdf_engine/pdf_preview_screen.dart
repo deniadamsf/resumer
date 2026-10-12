@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants/colors.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/services/ad_service.dart';
+import '../../core/services/review_service.dart';
 import '../../core/widgets/coin_badge.dart';
 import '../../core/widgets/frosted_app_bar.dart';
 import '../cv_editor/models/cv_model.dart';
@@ -462,6 +463,11 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         );
+
+        // Momen kepuasan puncak (Peak-End Rule): Berhasil ekspor/download CV
+        ReviewService.instance.recordSuccessfulAction(
+          actionType: 'export_pdf_save',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -484,9 +490,16 @@ class _PdfPreviewScreenState extends State<PdfPreviewScreen> {
     try {
       final file = await _writeTempFile();
       HapticFeedback.lightImpact();
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'application/pdf')],
-        subject: widget.fileName,
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'application/pdf')],
+          subject: widget.fileName,
+        ),
+      );
+
+      // Momen kepuasan: Berhasil share CV ke rekruter/aplikasi lain
+      ReviewService.instance.recordSuccessfulAction(
+        actionType: 'export_pdf_share',
       );
     } catch (e) {
       if (mounted) {
