@@ -71,13 +71,19 @@ php artisan serve
 ## Production Deployment (Hostinger VPS / Shared)
 
 - **API Base URL:** `https://resumer.cellanoma.my.id/api/v1`
+- **Domain Resmi:** `resumer.cellanoma.my.id` (DILARANG menggunakan domain lain)
 - **Direktori Aktif (Live Production):** `/home/u731410318/domains/cellanoma.my.id/public_html/resumer`
 - **Direktori Arsip Cadangan (Non-aktif):** `/home/u731410318/resumer-core-BACKUP-LAMA`
-- **SSH Access:** `153.92.8.198` (Port: `65002`, User: `u731410318`)
-- **Deploy Command (Contoh Sync File):**
+- **SSH Access:** `153.92.8.198` (Port: `65002`, User: `u731410318`, Key: `~/.ssh/id_ed25519_resumer`)
+- **Aturan Eksekusi SSH:** Selalu gunakan `-T -n` (misal: `ssh -T -n resumer "..."`) untuk mencegah Windows OpenSSH *hang*.
+- **Skrip Deploy Otomatis (Direkomendasikan):**
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts/deploy_backend.ps1
+  ```
+- **Deploy Command Manual (Contoh Sync File):**
   ```bash
-  scp -P 65002 backend/app/Http/Controllers/Api/AuthController.php u731410318@153.92.8.198:/home/u731410318/domains/cellanoma.my.id/public_html/resumer/app/Http/Controllers/Api/
-  ssh -p 65002 u731410318@153.92.8.198 "cd /home/u731410318/domains/cellanoma.my.id/public_html/resumer && php artisan optimize:clear"
+  scp -P 65002 -i ~/.ssh/id_ed25519_resumer backend/app/Http/Controllers/Api/CoinController.php u731410318@153.92.8.198:domains/cellanoma.my.id/public_html/resumer/app/Http/Controllers/Api/
+  ssh -T -n -p 65002 -i ~/.ssh/id_ed25519_resumer u731410318@153.92.8.198 "cd domains/cellanoma.my.id/public_html/resumer && php artisan optimize:clear"
   ```
 
 ## Versi
