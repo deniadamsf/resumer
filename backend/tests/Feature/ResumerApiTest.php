@@ -373,6 +373,57 @@ class ResumerApiTest extends TestCase
         $overSpend->assertStatus(402);
     }
 
+    public function test_daily_ad_coin_rewards_limit(): void
+    {
+        $user = User::factory()->create(['coins' => 0, 'device_uuid' => 'device-ad-reward-test']);
+
+        // 1. Claim 1st ad reward (+1)
+        $res1 = $this->actingAs($user)->postJson('/api/v1/coins/ad-reward');
+        $res1->assertStatus(200)->assertJson([
+            'success' => true,
+            'coins' => 1,
+            'claimed_today' => 1,
+            'remaining_today' => 2,
+        ]);
+        $this->assertEquals(1, $user->fresh()->coins);
+
+        // 2. Claim 2nd ad reward (+1)
+        $res2 = $this->actingAs($user)->postJson('/api/v1/coins/ad-reward');
+        $res2->assertStatus(200)->assertJson([
+            'success' => true,
+            'coins' => 2,
+            'claimed_today' => 2,
+            'remaining_today' => 1,
+        ]);
+
+        // 3. Claim 3rd ad reward (+1, max daily reached)
+        $res3 = $this->actingAs($user)->postJson('/api/v1/coins/ad-reward');
+        $res3->assertStatus(200)->assertJson([
+            'success' => true,
+            'coins' => 3,
+            'claimed_today' => 3,
+            'remaining_today' => 0,
+        ]);
+        $this->assertEquals(3, $user->fresh()->coins);
+
+        // 4. Attempt 4th ad reward on same day (MUST be rejected with 429)
+        $res4 = $this->actingAs($user)->postJson('/api/v1/coins/ad-reward');
+        $res4->assertStatus(429)->assertJson([
+            'success' => false,
+            'claimed_today' => 3,
+            'remaining_today' => 0,
+        ]);
+        $this->assertEquals(3, $user->fresh()->coins);
+
+        // 5. Verify balance endpoint shows ad reward counts
+        $balRes = $this->actingAs($user)->getJson('/api/v1/coins/balance');
+        $balRes->assertStatus(200)->assertJson([
+            'coins' => 3,
+            'ad_rewards_today' => 3,
+            'remaining_ad_rewards_today' => 0,
+        ]);
+    }
+
     /**
      * Test AI Cover Letter Generator endpoint.
      */

@@ -365,7 +365,16 @@
     "quota_exhausted_title": "Jatah AI Harian Habis",
     "quota_exhausted_prompt": "Jatah gratis harian (5x) untuk perbaikan CV AI telah habis hari ini. Gunakan 1 koin untuk bypass kuota dan proses instan.",
     "bypass_with_coin": "Gunakan 1 Koin",
-    "bypass_with_coin_desc": "Bypass kuota harian & proses instan tanpa iklan."
+    "bypass_with_coin_desc": "Bypass kuota harian & proses instan tanpa iklan.",
+    "free_coin_menu": "+1 Koin Gratis",
+    "free_coin_title": "Dapatkan 1 Koin Gratis",
+    "free_coin_subtitle": "Tonton iklan video untuk menambah koin",
+    "free_coin_desc": "Tonton 1 video iklan berdurasi singkat hingga selesai untuk menambahkan 1 koin gratis ke saldo akun Anda.",
+    "free_coin_daily_limit": "Batas Maksimal Harian: 3 Koin",
+    "free_coin_remaining": "Tersisa {0} dari 3 kesempatan hari ini",
+    "free_coin_quota_full": "Batas harian 3 koin telah tercapai. Kuota reset otomatis besok pukul 00:00.",
+    "free_coin_watch_btn": "Tonton Iklan (+1 Koin)",
+    "free_coin_success": "Selamat! +1 Koin berhasil ditambahkan ke saldo Anda."
   },
   "cover_letter": {
     "title": "Surat Lamaran AI",

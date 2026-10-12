@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../constants/colors.dart';
 import '../localization/app_localizations.dart';
+import '../services/ad_service.dart';
 import '../services/coin_service.dart';
 import '../services/iap_service.dart';
 
@@ -62,63 +63,41 @@ class _CoinTopupSheetState extends State<CoinTopupSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Header Title & Current Balance
+          // Header Title & Actions (Top-Right: Watch Ad for Coin & Current Balance)
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isEn ? 'Top-up Resumer Coins' : 'Top-up Koin Resumer',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.midnightNavy,
-                      letterSpacing: -0.5,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isEn ? 'Top-up Resumer Coins' : 'Top-up Koin Resumer',
+                      style: GoogleFonts.outfit(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.midnightNavy,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isEn
-                        ? 'Unlock AI features & skip ads instantly'
-                        : 'Buka fitur AI & lewati iklan secara instan',
-                    style: GoogleFonts.outfit(
-                      fontSize: 12.5,
-                      color: AppColors.textSecondary,
+                    const SizedBox(height: 2),
+                    Text(
+                      isEn
+                          ? 'Unlock AI features & skip ads instantly'
+                          : 'Buka fitur AI & lewati iklan secara instan',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12.5,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    _buildBalancePill(isEn),
+                  ],
+                ),
               ),
-              // Current Coins Pill
-              ValueListenableBuilder<int>(
-                valueListenable: CoinService.instance.coinsNotifier,
-                builder: (context, balance, _) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFFBEB),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFFDE68A)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.toll_rounded, size: 14, color: Color(0xFFD97706)),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$balance ${isEn ? "Coins" : "Koin"}',
-                          style: GoogleFonts.outfit(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF92400E),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+              const SizedBox(width: 8),
+              // Pojok Kanan Atas: Menu Tambah Poin Lihat Iklan
+              _buildWatchAdMenuButton(context, isEn),
             ],
           ),
           const SizedBox(height: 18),
@@ -454,5 +433,533 @@ class _CoinTopupSheetState extends State<CoinTopupSheet> {
         setState(() => _purchasingProductId = null);
       }
     }
+  }
+
+  Widget _buildBalancePill(bool isEn) {
+    return ValueListenableBuilder<int>(
+      valueListenable: CoinService.instance.coinsNotifier,
+      builder: (context, balance, _) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFFDE68A)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.toll_rounded, size: 14, color: Color(0xFFD97706)),
+              const SizedBox(width: 4),
+              Text(
+                '$balance ${isEn ? "Coins" : "Koin"}',
+                style: GoogleFonts.outfit(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF92400E),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Tombol Menu di Pojok Kanan Atas untuk mendapatkan koin dengan melihat iklan
+  Widget _buildWatchAdMenuButton(BuildContext context, bool isEn) {
+    return ValueListenableBuilder<int>(
+      valueListenable: CoinService.instance.adCoinsClaimedTodayNotifier,
+      builder: (context, claimedToday, _) {
+        final isMax = claimedToday >= CoinService.maxDailyAdCoins;
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _showWatchAdExplanationDialog(context, isEn),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isMax
+                      ? [const Color(0xFFF3F4F6), const Color(0xFFE5E7EB)]
+                      : [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isMax ? const Color(0xFFD1D5DB) : const Color(0xFFF59E0B),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isMax ? Colors.black : const Color(0xFFD97706)).withValues(alpha: 0.1),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isMax ? Icons.check_circle_rounded : Icons.play_circle_fill_rounded,
+                    size: 18,
+                    color: isMax ? AppColors.textSecondary : const Color(0xFFD97706),
+                  ),
+                  const SizedBox(width: 5),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isEn ? '+1 Free Coin' : '+1 Koin Gratis',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: isMax ? AppColors.textSecondary : const Color(0xFF92400E),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      Text(
+                        isMax
+                            ? (isEn ? '3/3 Limit' : '3/3 Maks')
+                            : (isEn ? '$claimedToday/3 Today' : '$claimedToday/3 Hari Ini'),
+                        style: GoogleFonts.outfit(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: isMax ? AppColors.textSecondary : const Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 13,
+                    color: isMax ? AppColors.textSecondary : const Color(0xFFD97706),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Modal Penjelasan Mekanisme Perolehan Koin dari Nonton Iklan (Maksimal 3 Koin/Hari)
+  void _showWatchAdExplanationDialog(BuildContext context, bool isEn) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        final bottomInset = MediaQuery.paddingOf(sheetCtx).bottom;
+
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.fromLTRB(22, 12, 22, bottomInset + 20),
+          child: ValueListenableBuilder<int>(
+            valueListenable: CoinService.instance.adCoinsClaimedTodayNotifier,
+            builder: (ctx, claimedToday, _) {
+              const maxDaily = CoinService.maxDailyAdCoins;
+              final remaining = (maxDaily - claimedToday).clamp(0, maxDaily);
+              final isQuotaFull = claimedToday >= maxDaily;
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Drag bar
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.borderHairline,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Header with badge
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF59E0B), width: 1.2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFD97706).withValues(alpha: 0.18),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.play_circle_fill_rounded,
+                            color: Color(0xFFD97706),
+                            size: 26,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isEn ? 'Get 1 Free Coin' : 'Dapatkan 1 Koin Gratis',
+                              style: GoogleFonts.outfit(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.midnightNavy,
+                                letterSpacing: -0.4,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isEn
+                                  ? 'Watch a video ad to add a coin to your balance'
+                                  : 'Tonton iklan video singkat untuk menambah koin',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Info Mechanism Card
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.subtleSlateTint,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.borderHairline),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isEn ? 'HOW IT WORKS' : 'MEKANISME PEROLEHAN KOIN',
+                          style: GoogleFonts.outfit(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildInfoBullet(
+                          icon: Icons.ondemand_video_rounded,
+                          title: isEn ? 'Watch Video Ad' : 'Tonton Iklan Video',
+                          desc: isEn
+                              ? 'Watch 1 short sponsored video ad until it finishes.'
+                              : 'Tonton 1 video iklan berdurasi singkat hingga selesai.',
+                        ),
+                        const SizedBox(height: 8),
+                        _buildInfoBullet(
+                          icon: Icons.toll_rounded,
+                          title: isEn ? '+1 Coin Reward' : '+1 Koin Gratis Ditambahkan',
+                          desc: isEn
+                              ? '1 free coin is automatically added to your account balance.'
+                              : '1 koin gratis langsung masuk ke saldo akun Anda.',
+                        ),
+                        const SizedBox(height: 8),
+                        _buildInfoBullet(
+                          icon: Icons.event_repeat_rounded,
+                          title: isEn ? 'Daily Limit: Max 3 Coins' : 'Batas Maksimal 3 Koin / Hari',
+                          desc: isEn
+                              ? 'You can claim up to 3 coins per day by watching ads. Resets automatically at 00:00 midnight.'
+                              : 'Maksimal 3 koin setiap hari melalui tonton iklan. Kuota reset otomatis pukul 00:00 tengah malam.',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Quota Progress Card
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isQuotaFull
+                          ? AppColors.crimsonBordeaux.withValues(alpha: 0.05)
+                          : const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isQuotaFull
+                            ? AppColors.crimsonBordeauxLight.withValues(alpha: 0.3)
+                            : const Color(0xFFFDE68A),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              isEn ? 'Daily Quota Status' : 'Status Kuota Hari Ini',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isQuotaFull
+                                    ? AppColors.crimsonBordeaux
+                                    : const Color(0xFF92400E),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: isQuotaFull
+                                    ? AppColors.crimsonBordeaux
+                                    : const Color(0xFFD97706),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '$claimedToday / $maxDaily ${isEn ? "Claimed" : "Diklaim"}',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // 3 Visual Coin Step Badges
+                        Row(
+                          children: List.generate(maxDaily, (index) {
+                            final isClaimed = index < claimedToday;
+                            return Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                  right: index < maxDaily - 1 ? 8 : 0,
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isClaimed
+                                      ? const Color(0xFFD1FAE5)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isClaimed
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFFDE68A),
+                                    width: isClaimed ? 1.4 : 1.0,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      isClaimed
+                                          ? Icons.check_circle_rounded
+                                          : Icons.toll_rounded,
+                                      size: 16,
+                                      color: isClaimed
+                                          ? const Color(0xFF059669)
+                                          : const Color(0xFFD97706),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${isEn ? "Coin" : "Koin"} ${index + 1}',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: isClaimed
+                                            ? const Color(0xFF065F46)
+                                            : const Color(0xFF92400E),
+                                      ),
+                                    ),
+                                    Text(
+                                      isClaimed
+                                          ? (isEn ? 'Claimed' : 'Selesai')
+                                          : (isEn ? 'Available' : 'Tersedia'),
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 9,
+                                        color: isClaimed
+                                            ? const Color(0xFF059669)
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isQuotaFull
+                              ? (isEn
+                                  ? 'Daily limit of 3 coins reached. Resets tomorrow at 00:00.'
+                                  : 'Batas harian 3 koin telah tercapai. Kuota reset otomatis besok pukul 00:00.')
+                              : (isEn
+                                  ? '$remaining of 3 chances remaining today.'
+                                  : 'Tersisa $remaining dari 3 kesempatan hari ini.'),
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            color: isQuotaFull
+                                ? AppColors.crimsonBordeaux
+                                : const Color(0xFF92400E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Action Button
+                  if (!isQuotaFull)
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(sheetCtx).pop();
+                        AdService.instance.showAdForCoinReward(context: context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.midnightNavy,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.play_circle_fill_rounded, size: 18, color: Color(0xFFFDE68A)),
+                          const SizedBox(width: 8),
+                          Text(
+                            isEn ? 'Watch Ad (+1 Coin)' : 'Tonton Iklan (+1 Koin)',
+                            style: GoogleFonts.outfit(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE5E7EB),
+                        foregroundColor: AppColors.textSecondary,
+                        disabledBackgroundColor: const Color(0xFFE5E7EB),
+                        disabledForegroundColor: AppColors.textSecondary,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.check_circle_rounded, size: 18, color: AppColors.textSecondary),
+                          const SizedBox(width: 8),
+                          Text(
+                            isEn ? 'Daily Limit Reached (3/3)' : 'Batas Harian Tercapai (3/3)',
+                            style: GoogleFonts.outfit(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.of(sheetCtx).pop(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.textSecondary,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    child: Text(
+                      isEn ? 'Close' : 'Tutup',
+                      style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoBullet({
+    required IconData icon,
+    required String title,
+    required String desc,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.borderHairline),
+          ),
+          child: Icon(icon, size: 14, color: AppColors.midnightNavy),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.midnightNavy,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                desc,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

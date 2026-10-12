@@ -633,6 +633,18 @@ class ApiService {
     return {'success': false, 'message': 'Gagal mengklaim bonus selamat datang.'};
   }
 
+  /// Klaim 1 koin reward dengan menonton iklan video (Maksimal 3 koin / hari)
+  Future<Map<String, dynamic>> claimAdReward() async {
+    final url = Uri.parse('$baseUrl/coins/ad-reward');
+    try {
+      final response = await http.post(url, headers: _buildHeaders(''), body: '{}');
+      final decoded = json.decode(response.body) as Map<String, dynamic>;
+      decoded['statusCode'] = response.statusCode;
+      return decoded;
+    } catch (_) {}
+    return {'success': false, 'message': 'Gagal mengklaim reward koin iklan.'};
+  }
+
   /// Verifikasi pembelian In-App Purchase dari Google Play ke Backend
   Future<Map<String, dynamic>> verifyIapPurchase({
     required String orderId,

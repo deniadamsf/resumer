@@ -27,6 +27,8 @@ Route::prefix('v1')->group(function () {
         Route::prefix('coins')->group(function () {
             Route::get('/balance', [CoinController::class, 'getBalance']);
             Route::post('/claim-welcome', [CoinController::class, 'claimWelcomeBonus']);
+            Route::post('/ad-reward', [CoinController::class, 'claimAdReward']);
+            Route::post('/claim-ad-reward', [CoinController::class, 'claimAdReward']);
             Route::post('/verify-purchase', [CoinController::class, 'verifyPurchase']);
             Route::post('/spend', [CoinController::class, 'spendCoins']);
             Route::post('/refund', [CoinController::class, 'refundCoins']);

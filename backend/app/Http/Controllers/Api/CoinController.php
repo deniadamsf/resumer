@@ -32,11 +32,18 @@ class CoinController extends Controller
             ->limit(10)
             ->get(['id', 'amount', 'action_type', 'description', 'balance_after', 'created_at']);
 
+        $adRewardsToday = $user->coinTransactions()
+            ->where('action_type', 'rewarded_ad')
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
+
         return response()->json([
             'success' => true,
             'coins' => (int) $user->coins,
             'device_uuid' => $deviceUuid,
             'has_claimed_welcome_bonus' => $hasClaimedBonus,
+            'ad_rewards_today' => $adRewardsToday,
+            'remaining_ad_rewards_today' => max(0, 3 - $adRewardsToday),
             'recent_transactions' => $recentTransactions,
         ]);
     }
@@ -92,6 +99,54 @@ class CoinController extends Controller
                 'success' => true,
                 'message' => 'Selamat! Bonus 2 koin berhasil ditambahkan.',
                 'coins' => (int) $user->coins,
+            ]);
+        });
+    }
+
+    /**
+     * Claim 1 coin reward by watching a rewarded ad.
+     * Enforces strict limit of 3 coins per day per user.
+     */
+    public function claimAdReward(Request $request)
+    {
+        $user = $request->user();
+        $today = now()->toDateString();
+
+        $countToday = $user->coinTransactions()
+            ->where('action_type', 'rewarded_ad')
+            ->whereDate('created_at', $today)
+            ->count();
+
+        if ($countToday >= 3) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Batas maksimal harian tercapai. Anda hanya dapat memperoleh maksimal 3 koin per hari dari menonton iklan.',
+                'coins' => (int) $user->coins,
+                'claimed_today' => $countToday,
+                'limit' => 3,
+                'remaining_today' => 0,
+            ], 429);
+        }
+
+        return DB::transaction(function () use ($user, $countToday) {
+            $user->increment('coins', 1);
+            $user->refresh();
+
+            CoinTransaction::create([
+                'user_id' => $user->id,
+                'amount' => 1,
+                'action_type' => 'rewarded_ad',
+                'description' => 'Reward Tonton Iklan (+1 Koin)',
+                'balance_after' => $user->coins,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Selamat! 1 koin gratis berhasil ditambahkan ke saldo Anda.',
+                'coins' => (int) $user->coins,
+                'claimed_today' => $countToday + 1,
+                'limit' => 3,
+                'remaining_today' => 3 - ($countToday + 1),
             ]);
         });
     }

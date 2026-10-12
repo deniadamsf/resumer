@@ -333,6 +333,138 @@ class AdService {
       },
     );
   }
+
+  /// Menampilkan iklan video rewarded khusus untuk mendapatkan +1 Koin.
+  /// Memanggil [CoinService.instance.awardAdCoinReward()] saat user selesai menonton iklan.
+  Future<bool> showAdForCoinReward({
+    required BuildContext context,
+  }) async {
+    // 1. Cek batas kuota harian terlebih dahulu
+    if (!CoinService.instance.canClaimAdCoin) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'ad.free_coin_quota_full'.tr,
+              style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+            ),
+            backgroundColor: AppColors.crimsonBordeaux,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+      return false;
+    }
+
+    final completer = Completer<bool>();
+
+    void onRewarded() async {
+      final success = await CoinService.instance.awardAdCoinReward();
+      if (context.mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.stars_rounded, color: Color(0xFFFDE68A), size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'ad.free_coin_success'.tr,
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF065F46),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.all(16),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          completer.complete(true);
+        } else {
+          completer.complete(false);
+        }
+      } else {
+        completer.complete(success);
+      }
+    }
+
+    // 2. Jika iklan sudah preloaded di memori, tampilkan langsung
+    if (_rewardedAd != null) {
+      _showLoadedRewardedAd(
+        context: context,
+        onRewarded: onRewarded,
+        onDismissed: () {
+          if (!completer.isCompleted) completer.complete(false);
+        },
+      );
+      return completer.future;
+    }
+
+    // 3. Iklan belum siap: Tampilkan dialog tunggu (maksimal 5 detik)
+    _pendingAdCompleter = Completer<RewardedAd?>();
+    preloadRewardedAd();
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const _AdLoadingWaitDialog(),
+    );
+
+    RewardedAd? loadedAd;
+    try {
+      loadedAd = await _pendingAdCompleter!.future.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => null,
+      );
+    } catch (_) {
+      loadedAd = null;
+    } finally {
+      _pendingAdCompleter = null;
+    }
+
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+
+    await Future.delayed(const Duration(milliseconds: 120));
+
+    if (loadedAd != null && context.mounted) {
+      _showLoadedRewardedAd(
+        context: context,
+        onRewarded: onRewarded,
+        onDismissed: () {
+          if (!completer.isCompleted) completer.complete(false);
+        },
+      );
+      return completer.future;
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'ad.ad_not_ready'.tr,
+            style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+          ),
+          backgroundColor: AppColors.midnightNavy,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+      return false;
+    }
+
+    return false;
+  }
 }
 
 /// Quiet Luxury Choice Dialog:
